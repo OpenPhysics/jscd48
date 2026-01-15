@@ -1,0 +1,30 @@
+{
+  "name": "jscd48",
+  "version": "0.1.0",
+  "description": "JavaScript interface for the CD48 Coincidence Counter using Web Serial API",
+  "main": "cd48.js",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . --cors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenPhysics/jscd48.git"
+  },
+  "keywords": [
+    "cd48",
+    "coincidence",
+    "counter",
+    "physics",
+    "web-serial",
+    "serial",
+    "instrumentation",
+    "red-dog-physics"
+  ],
+  "author": "OpenPhysics Contributors",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/OpenPhysics/jscd48/issues"
+  },
+  "homepage": "https://github.com/OpenPhysics/jscd48#readme"
+}

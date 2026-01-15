@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CD48 Coincidence Measurement</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        h1 { color: #e94560; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background: #0f3460;
+        }
+        input {
+            padding: 8px;
+            font-size: 14px;
+            width: 80px;
+            background: #16213e;
+            border: 1px solid #0f3460;
+            color: #eee;
+            border-radius: 4px;
+        }
+        label {
+            margin-right: 20px;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #16213e;
+            border-radius: 8px;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #0f3460;
+        }
+        .result-row:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            color: #888;
+        }
+        .result-value {
+            font-family: monospace;
+            font-size: 18px;
+        }
+        .highlight {
+            color: #4ade80;
+            font-weight: bold;
+        }
+        .progress {
+            margin-top: 20px;
+            padding: 15px;
+            background: #0f3460;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>CD48 Coincidence Measurement</h1>
+    <p>Measure coincidence rates with automatic accidental correction.</p>
+
+    <div style="margin: 20px 0;">
+        <button id="connectBtn" onclick="toggleConnection()">Connect</button>
+
+        <label>
+            Duration (s):
+            <input type="number" id="duration" value="10" min="1" max="3600">
+        </label>
+
+        <button id="measureBtn" onclick="startMeasurement()" disabled class="secondary">
+            Start Measurement
+        </button>
+    </div>
+
+    <div id="progress" class="progress hidden">
+        Measuring... <span id="progressTime">0</span>s / <span id="totalTime">10</span>s
+    </div>
+
+    <div id="results" class="results hidden">
+        <h2>Results</h2>
+
+        <div class="result-row">
+            <span class="result-label">Singles A (Ch0)</span>
+            <span class="result-value" id="singlesA">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Singles B (Ch1)</span>
+            <span class="result-value" id="singlesB">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Measured Coincidences (Ch4)</span>
+            <span class="result-value" id="coincidences">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Rate A</span>
+            <span class="result-value" id="rateA">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Rate B</span>
+            <span class="result-value" id="rateB">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Coincidence Rate</span>
+            <span class="result-value" id="coincidenceRate">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">Expected Accidentals</span>
+            <span class="result-value" id="accidentalRate">-</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">True Coincidence Rate</span>
+            <span class="result-value highlight" id="trueRate">-</span>
+        </div>
+    </div>
+
+    <script src="../cd48.js"></script>
+    <script>
+        let cd48 = null;
+
+        async function toggleConnection() {
+            if (cd48 && cd48.isConnected()) {
+                await cd48.disconnect();
+                cd48 = null;
+                document.getElementById('connectBtn').textContent = 'Connect';
+                document.getElementById('measureBtn').disabled = true;
+            } else {
+                try {
+                    cd48 = new CD48();
+                    await cd48.connect();
+                    document.getElementById('connectBtn').textContent = 'Disconnect';
+                    document.getElementById('measureBtn').disabled = false;
+
+                    const version = await cd48.getVersion();
+                    console.log('Connected:', version);
+                } catch (error) {
+                    alert('Connection failed: ' + error.message);
+                }
+            }
+        }
+
+        async function startMeasurement() {
+            if (!cd48 || !cd48.isConnected()) return;
+
+            const duration = parseInt(document.getElementById('duration').value);
+
+            document.getElementById('measureBtn').disabled = true;
+            document.getElementById('progress').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('totalTime').textContent = duration;
+
+            // Progress timer
+            let elapsed = 0;
+            const progressInterval = setInterval(() => {
+                elapsed++;
+                document.getElementById('progressTime').textContent = elapsed;
+            }, 1000);
+
+            try {
+                const result = await cd48.measureCoincidenceRate({
+                    duration: duration,
+                    singlesAChannel: 0,
+                    singlesBChannel: 1,
+                    coincidenceChannel: 4,
+                    coincidenceWindow: 25e-9
+                });
+
+                clearInterval(progressInterval);
+
+                // Display results
+                document.getElementById('singlesA').textContent = result.singlesA.toLocaleString();
+                document.getElementById('singlesB').textContent = result.singlesB.toLocaleString();
+                document.getElementById('coincidences').textContent = result.coincidences.toLocaleString();
+                document.getElementById('rateA').textContent = result.rateA.toFixed(2) + ' Hz';
+                document.getElementById('rateB').textContent = result.rateB.toFixed(2) + ' Hz';
+                document.getElementById('coincidenceRate').textContent = result.coincidenceRate.toFixed(2) + ' Hz';
+                document.getElementById('accidentalRate').textContent = result.accidentalRate.toFixed(4) + ' Hz';
+                document.getElementById('trueRate').textContent = result.trueCoincidenceRate.toFixed(2) + ' Hz';
+
+                document.getElementById('progress').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Measurement failed: ' + error.message);
+                document.getElementById('progress').classList.add('hidden');
+            }
+
+            document.getElementById('measureBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>
