@@ -3,10 +3,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Chrome](https://img.shields.io/badge/Chrome-89+-green.svg)](https://www.google.com/chrome/)
 [![Edge](https://img.shields.io/badge/Edge-89+-blue.svg)](https://www.microsoft.com/edge)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://openphysics.github.io/jscd48/)
 
 A browser-based JavaScript library and web interface for controlling the [Red Dog Physics CD48 Coincidence Counter](https://www.reddogphysics.com/cd48.html) using the Web Serial API.
 
 **No installation required** - just open the web page in Chrome or Edge and connect to your CD48.
+
+## Live Demo
+
+**[https://openphysics.github.io/jscd48/](https://openphysics.github.io/jscd48/)**
+
+Open the link above in Chrome or Edge, connect your CD48 via USB, and click "Connect".
 
 ## Features
 
