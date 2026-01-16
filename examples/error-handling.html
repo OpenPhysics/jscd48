@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CD48 Error Handling Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .error {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        #log {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .scenario {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .scenario h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CD48 Error Handling Example</h1>
+        <p class="subtitle">Demonstrating robust error handling patterns</p>
+
+        <div class="scenario">
+            <h3>1. Browser Compatibility Check</h3>
+            <p>Always check if the Web Serial API is supported before attempting to connect.</p>
+            <button onclick="checkSupport()">Check Support</button>
+        </div>
+
+        <div class="scenario">
+            <h3>2. Connection with Timeout</h3>
+            <p>Handle connection timeouts and user cancellation gracefully.</p>
+            <button onclick="connectWithTimeout()">Connect (with timeout)</button>
+        </div>
+
+        <div class="scenario">
+            <h3>3. Graceful Disconnection Recovery</h3>
+            <p>Detect and handle unexpected disconnections during operations.</p>
+            <button onclick="testDisconnection()">Test Disconnection</button>
+        </div>
+
+        <div class="scenario">
+            <h3>4. Invalid Command Handling</h3>
+            <p>Handle device errors and invalid commands with retries.</p>
+            <button onclick="testInvalidCommand()">Test Invalid Command</button>
+        </div>
+
+        <div class="scenario">
+            <h3>5. Auto-Reconnect</h3>
+            <p>Implement automatic reconnection on connection loss.</p>
+            <button onclick="enableAutoReconnect()">Enable Auto-Reconnect</button>
+            <button onclick="disableAutoReconnect()">Disable Auto-Reconnect</button>
+        </div>
+
+        <div id="log"></div>
+    </div>
+
+    <script src="../cd48.js"></script>
+    <script>
+        let cd48 = null;
+        let autoReconnect = false;
+        let reconnectInterval = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 1. Check browser support
+        function checkSupport() {
+            if (CD48.isSupported()) {
+                log('✓ Web Serial API is supported in this browser!', 'success');
+                log('You can safely use the CD48 library.', 'info');
+            } else {
+                log('✗ Web Serial API is not supported', 'error');
+                log('Please use Chrome 89+, Edge 89+, or Opera 76+', 'info');
+                log('Firefox and Safari do not support Web Serial API', 'info');
+            }
+        }
+
+        // 2. Connect with timeout
+        async function connectWithTimeout() {
+            if (!CD48.isSupported()) {
+                log('Cannot connect: Web Serial API not supported', 'error');
+                return;
+            }
+
+            try {
+                log('Requesting serial port... (Click Cancel to test error handling)', 'info');
+
+                cd48 = new CD48();
+
+                // Create a timeout promise
+                const timeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Connection timeout')), 30000)
+                );
+
+                // Race between connection and timeout
+                await Promise.race([cd48.connect(), timeout]);
+
+                log('✓ Connected successfully!', 'success');
+
+                // Get version to verify connection
+                const version = await cd48.getVersion();
+                log(`Device firmware: ${version}`, 'success');
+
+            } catch (error) {
+                if (error.message.includes('No CD48 device selected')) {
+                    log('Connection cancelled by user', 'error');
+                } else if (error.message.includes('timeout')) {
+                    log('Connection timeout - device did not respond', 'error');
+                } else {
+                    log(`Connection error: ${error.message}`, 'error');
+                }
+
+                // Clean up on error
+                if (cd48) {
+                    await cd48.disconnect().catch(() => {});
+                    cd48 = null;
+                }
+            }
+        }
+
+        // 3. Test disconnection handling
+        async function testDisconnection() {
+            if (!cd48 || !cd48.isConnected()) {
+                log('Please connect to a device first', 'error');
+                return;
+            }
+
+            try {
+                log('Testing disconnection recovery...', 'info');
+
+                // Try to read counts with error handling
+                const tryReadCounts = async () => {
+                    try {
+                        const counts = await cd48.getCounts();
+                        log(`Read counts: ${counts.counts.join(', ')}`, 'success');
+                        return true;
+                    } catch (error) {
+                        log(`Read failed: ${error.message}`, 'error');
+
+                        // Check if device is still connected
+                        if (!cd48.isConnected()) {
+                            log('Device disconnected!', 'error');
+
+                            if (autoReconnect) {
+                                log('Auto-reconnect is enabled, will retry...', 'info');
+                            }
+                        }
+                        return false;
+                    }
+                };
+
+                await tryReadCounts();
+
+            } catch (error) {
+                log(`Unexpected error: ${error.message}`, 'error');
+            }
+        }
+
+        // 4. Test invalid command handling
+        async function testInvalidCommand() {
+            if (!cd48 || !cd48.isConnected()) {
+                log('Please connect to a device first', 'error');
+                return;
+            }
+
+            try {
+                log('Testing command validation...', 'info');
+
+                // Test 1: Invalid channel number
+                try {
+                    await cd48.setChannel(10, { A: 1 });
+                } catch (error) {
+                    log(`✓ Caught invalid channel: ${error.message}`, 'success');
+                }
+
+                // Test 2: Invalid voltage range (clamping)
+                log('Testing voltage clamping...', 'info');
+                await cd48.setTriggerLevel(10.0); // Will be clamped to 4.08V
+                log('✓ Voltage clamped to valid range (0-4.08V)', 'success');
+
+                // Test 3: Command retry logic
+                const retryCommand = async (fn, maxRetries = 3) => {
+                    for (let i = 0; i < maxRetries; i++) {
+                        try {
+                            return await fn();
+                        } catch (error) {
+                            if (i === maxRetries - 1) throw error;
+                            log(`Retry ${i + 1}/${maxRetries}...`, 'info');
+                            await cd48.sleep(500);
+                        }
+                    }
+                };
+
+                await retryCommand(() => cd48.getVersion());
+                log('✓ Command completed with retry logic', 'success');
+
+            } catch (error) {
+                log(`Command error: ${error.message}`, 'error');
+            }
+        }
+
+        // 5. Enable auto-reconnect
+        function enableAutoReconnect() {
+            autoReconnect = true;
+            log('✓ Auto-reconnect enabled', 'success');
+
+            // Start monitoring connection
+            if (reconnectInterval) clearInterval(reconnectInterval);
+
+            reconnectInterval = setInterval(async () => {
+                if (cd48 && !cd48.isConnected() && autoReconnect) {
+                    log('Connection lost, attempting to reconnect...', 'info');
+                    try {
+                        await cd48.connect();
+                        log('✓ Reconnected successfully!', 'success');
+                    } catch (error) {
+                        log(`Reconnection failed: ${error.message}`, 'error');
+                    }
+                }
+            }, 5000);
+        }
+
+        function disableAutoReconnect() {
+            autoReconnect = false;
+            if (reconnectInterval) {
+                clearInterval(reconnectInterval);
+                reconnectInterval = null;
+            }
+            log('Auto-reconnect disabled', 'info');
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', async () => {
+            disableAutoReconnect();
+            if (cd48 && cd48.isConnected()) {
+                await cd48.disconnect();
+            }
+        });
+
+        // Initial support check
+        window.addEventListener('load', () => {
+            log('Error Handling Example loaded', 'info');
+            log('This example demonstrates robust error handling patterns', 'info');
+            checkSupport();
+        });
+    </script>
+</body>
+</html>

@@ -1,11 +1,27 @@
 {
   "name": "jscd48",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "JavaScript interface for the CD48 Coincidence Counter using Web Serial API",
   "main": "cd48.js",
+  "types": "cd48.d.ts",
+  "files": [
+    "cd48.js",
+    "cd48.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "npx serve .",
-    "dev": "npx serve . --cors"
+    "dev": "npx serve . --cors",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint *.js examples/*.html",
+    "lint:fix": "eslint --fix *.js examples/*.html",
+    "format": "prettier --write \"**/*.{js,json,md,html}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md,html}\"",
+    "docs": "jsdoc -c jsdoc.json",
+    "prepublishOnly": "npm run lint && npm run test && npm run format:check"
   },
   "repository": {
     "type": "git",
@@ -26,5 +42,17 @@
   "bugs": {
     "url": "https://github.com/OpenPhysics/jscd48/issues"
   },
-  "homepage": "https://github.com/OpenPhysics/jscd48#readme"
+  "homepage": "https://github.com/OpenPhysics/jscd48#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.0.4",
+    "@vitest/ui": "^1.0.4",
+    "eslint": "^8.56.0",
+    "jsdoc": "^4.0.2",
+    "prettier": "^3.1.1",
+    "vitest": "^1.0.4",
+    "happy-dom": "^12.10.3"
+  }
 }
