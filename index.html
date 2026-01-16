@@ -6,14 +6,21 @@
     <title>CD48 Coincidence Counter</title>
     <style>
         :root {
-            --bg-color: #1a1a2e;
-            --card-bg: #16213e;
+            --bg-color: #0f0f1e;
+            --bg-gradient: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            --card-bg: #1a1f3a;
+            --card-bg-hover: #1f2542;
             --accent: #0f3460;
+            --accent-light: #1a4a7a;
             --highlight: #e94560;
+            --highlight-dark: #d63853;
             --text: #eee;
             --text-muted: #888;
             --success: #4ade80;
             --warning: #fbbf24;
+            --info: #3b82f6;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --glow: rgba(233, 69, 96, 0.3);
         }
 
         * {
@@ -24,7 +31,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: var(--bg-color);
+            background: var(--bg-gradient);
+            background-attachment: fixed;
             color: var(--text);
             min-height: 100vh;
             padding: 20px;
@@ -41,12 +49,18 @@
         }
 
         h1 {
-            font-size: 2rem;
-            margin-bottom: 5px;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--highlight) 0%, var(--info) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
         }
 
         .subtitle {
             color: var(--text-muted);
+            font-size: 1.1rem;
         }
 
         .status-bar {
@@ -123,6 +137,14 @@
             background: var(--card-bg);
             border-radius: 12px;
             padding: 20px;
+            box-shadow: 0 8px 16px var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px var(--shadow);
         }
 
         .card h2 {
@@ -144,6 +166,14 @@
             padding: 15px 10px;
             border-radius: 8px;
             text-align: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .count-item:hover {
+            background: var(--accent-light);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px var(--glow);
         }
 
         .count-label {
@@ -299,6 +329,132 @@
             display: none !important;
         }
 
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab.active {
+            color: var(--highlight);
+            border-bottom-color: var(--highlight);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Chart */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 16px var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .channel-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .channel-chip {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .channel-chip:hover {
+            border-color: var(--accent-light);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .channel-chip.active {
+            border-color: var(--highlight);
+            background: var(--highlight);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: var(--accent);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
         footer {
             text-align: center;
             margin-top: 30px;
@@ -337,6 +493,12 @@
             </button>
         </div>
 
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('monitor')">Monitor</button>
+            <button class="tab" onclick="switchTab('tracking')">Time Series</button>
+        </div>
+
+        <div id="monitorTab" class="tab-content active">
         <div class="grid">
             <!-- Counts Display -->
             <div class="card">
@@ -453,6 +615,58 @@
                 <div class="log" id="log"></div>
             </div>
         </div>
+        </div>
+
+        <div id="trackingTab" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 style="margin: 0;">Count Rate vs Time</h2>
+                    <div class="chart-controls">
+                        <select id="timeWindow" onchange="updateTimeWindow()">
+                            <option value="60">Last 1 min</option>
+                            <option value="300" selected>Last 5 min</option>
+                            <option value="600">Last 10 min</option>
+                            <option value="1800">Last 30 min</option>
+                            <option value="3600">Last 1 hour</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
+                        <button class="btn btn-secondary" onclick="exportData()">Export CSV</button>
+                    </div>
+                </div>
+                <div class="channel-selector" id="channelSelector">
+                    <button class="channel-chip active" data-channel="0" onclick="toggleChannel(0)">Ch0 (A)</button>
+                    <button class="channel-chip active" data-channel="1" onclick="toggleChannel(1)">Ch1 (B)</button>
+                    <button class="channel-chip active" data-channel="2" onclick="toggleChannel(2)">Ch2 (C)</button>
+                    <button class="channel-chip active" data-channel="3" onclick="toggleChannel(3)">Ch3 (D)</button>
+                    <button class="channel-chip" data-channel="4" onclick="toggleChannel(4)">Ch4 (A+B)</button>
+                    <button class="channel-chip" data-channel="5" onclick="toggleChannel(5)">Ch5 (A+C)</button>
+                    <button class="channel-chip" data-channel="6" onclick="toggleChannel(6)">Ch6 (A+D)</button>
+                    <button class="channel-chip" data-channel="7" onclick="toggleChannel(7)">Ch7 (B+C+D)</button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="rateChart"></canvas>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Data Points</div>
+                    <div class="stat-value" id="totalPoints">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Recording Duration</div>
+                    <div class="stat-value" id="duration">0s</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Average Rate (Ch0)</div>
+                    <div class="stat-value" id="avgRate">0 Hz</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Peak Rate (Ch0)</div>
+                    <div class="stat-value" id="peakRate">0 Hz</div>
+                </div>
+            </div>
+        </div>
 
         <footer>
             <p>
@@ -462,6 +676,7 @@
         </footer>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="cd48.js"></script>
     <script>
         // Global state
@@ -469,6 +684,17 @@
         let autoRefreshInterval = null;
         let lastCounts = null;
         let lastTime = null;
+
+        // Time series tracking
+        let trackingData = {
+            timestamps: [],
+            rates: Array(8).fill(null).map(() => []),
+            counts: Array(8).fill(null).map(() => [])
+        };
+        let chart = null;
+        let visibleChannels = [0, 1, 2, 3]; // Default visible channels
+        let timeWindow = 300; // seconds
+        let trackingInterval = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -478,6 +704,7 @@
             }
             updateTriggerDisplay();
             updateDacDisplay();
+            initChart();
             log('Ready. Click Connect to start.');
         });
 
@@ -725,6 +952,296 @@
                 return (n / 1000).toFixed(1) + 'k';
             }
             return n.toString();
+        }
+
+        // Tab Management
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            if (tab === 'monitor') {
+                tabs[0].classList.add('active');
+                document.getElementById('monitorTab').classList.add('active');
+                if (trackingInterval) {
+                    clearInterval(trackingInterval);
+                    trackingInterval = null;
+                }
+            } else if (tab === 'tracking') {
+                tabs[1].classList.add('active');
+                document.getElementById('trackingTab').classList.add('active');
+                startTracking();
+            }
+        }
+
+        // Chart Initialization
+        function initChart() {
+            const ctx = document.getElementById('rateChart').getContext('2d');
+            const channelColors = [
+                '#e94560', '#3b82f6', '#4ade80', '#fbbf24',
+                '#a855f7', '#ec4899', '#14b8a6', '#f97316'
+            ];
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#eee',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 31, 58, 0.9)',
+                            titleColor: '#eee',
+                            bodyColor: '#eee',
+                            borderColor: '#e94560',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'second',
+                                displayFormats: {
+                                    second: 'HH:mm:ss'
+                                }
+                            },
+                            ticks: {
+                                color: '#888'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#888'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Count Rate (Hz)',
+                                color: '#eee'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Time Series Tracking
+        function startTracking() {
+            if (!cd48 || !cd48.isConnected()) {
+                log('Connect to device first to start tracking', 'error');
+                return;
+            }
+
+            if (!trackingInterval) {
+                trackingInterval = setInterval(recordDataPoint, 1000);
+                log('Time series tracking started');
+            }
+        }
+
+        async function recordDataPoint() {
+            if (!cd48 || !cd48.isConnected()) {
+                if (trackingInterval) {
+                    clearInterval(trackingInterval);
+                    trackingInterval = null;
+                }
+                return;
+            }
+
+            try {
+                const now = Date.now();
+                const data = await cd48.getCounts(false);
+
+                // Store timestamp
+                trackingData.timestamps.push(now);
+
+                // Calculate and store rates
+                for (let i = 0; i < 8; i++) {
+                    let rate = 0;
+                    if (lastCounts && lastTime) {
+                        const dt = (now - lastTime) / 1000;
+                        const countDiff = data.counts[i] - lastCounts[i];
+                        rate = countDiff / dt;
+                    }
+                    trackingData.rates[i].push(rate);
+                    trackingData.counts[i].push(data.counts[i]);
+                }
+
+                lastCounts = data.counts;
+                lastTime = now;
+
+                // Limit data points (keep only data within time window * 2)
+                const maxPoints = timeWindow * 2;
+                if (trackingData.timestamps.length > maxPoints) {
+                    const removeCount = trackingData.timestamps.length - maxPoints;
+                    trackingData.timestamps.splice(0, removeCount);
+                    for (let i = 0; i < 8; i++) {
+                        trackingData.rates[i].splice(0, removeCount);
+                        trackingData.counts[i].splice(0, removeCount);
+                    }
+                }
+
+                updateChart();
+                updateStats();
+
+            } catch (error) {
+                console.error('Error recording data point:', error);
+            }
+        }
+
+        function updateChart() {
+            if (!chart) return;
+
+            const channelNames = ['Ch0 (A)', 'Ch1 (B)', 'Ch2 (C)', 'Ch3 (D)',
+                                  'Ch4 (A+B)', 'Ch5 (A+C)', 'Ch6 (A+D)', 'Ch7 (B+C+D)'];
+            const channelColors = [
+                '#e94560', '#3b82f6', '#4ade80', '#fbbf24',
+                '#a855f7', '#ec4899', '#14b8a6', '#f97316'
+            ];
+
+            // Filter data by time window
+            const cutoffTime = Date.now() - (timeWindow * 1000);
+            const filteredIndices = trackingData.timestamps
+                .map((t, i) => ({ time: t, index: i }))
+                .filter(item => item.time >= cutoffTime);
+
+            const labels = filteredIndices.map(item => trackingData.timestamps[item.index]);
+
+            // Create datasets for visible channels
+            const datasets = visibleChannels.map(ch => ({
+                label: channelNames[ch],
+                data: filteredIndices.map(item => trackingData.rates[ch][item.index]),
+                borderColor: channelColors[ch],
+                backgroundColor: channelColors[ch] + '33',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4
+            }));
+
+            chart.data.labels = labels;
+            chart.data.datasets = datasets;
+            chart.update('none'); // Update without animation for smooth real-time updates
+        }
+
+        function updateStats() {
+            document.getElementById('totalPoints').textContent = trackingData.timestamps.length;
+
+            if (trackingData.timestamps.length > 0) {
+                const duration = (trackingData.timestamps[trackingData.timestamps.length - 1] -
+                                trackingData.timestamps[0]) / 1000;
+                if (duration < 60) {
+                    document.getElementById('duration').textContent = Math.round(duration) + 's';
+                } else if (duration < 3600) {
+                    document.getElementById('duration').textContent = (duration / 60).toFixed(1) + 'm';
+                } else {
+                    document.getElementById('duration').textContent = (duration / 3600).toFixed(1) + 'h';
+                }
+
+                // Calculate average and peak for Ch0
+                const ch0Rates = trackingData.rates[0].filter(r => r > 0);
+                if (ch0Rates.length > 0) {
+                    const avg = ch0Rates.reduce((a, b) => a + b, 0) / ch0Rates.length;
+                    const peak = Math.max(...ch0Rates);
+                    document.getElementById('avgRate').textContent = formatNumber(Math.round(avg)) + ' Hz';
+                    document.getElementById('peakRate').textContent = formatNumber(Math.round(peak)) + ' Hz';
+                }
+            }
+        }
+
+        function toggleChannel(ch) {
+            const chip = document.querySelector(`[data-channel="${ch}"]`);
+            const index = visibleChannels.indexOf(ch);
+
+            if (index > -1) {
+                visibleChannels.splice(index, 1);
+                chip.classList.remove('active');
+            } else {
+                visibleChannels.push(ch);
+                chip.classList.add('active');
+            }
+
+            updateChart();
+        }
+
+        function updateTimeWindow() {
+            timeWindow = parseInt(document.getElementById('timeWindow').value);
+            updateChart();
+        }
+
+        function clearHistory() {
+            trackingData = {
+                timestamps: [],
+                rates: Array(8).fill(null).map(() => []),
+                counts: Array(8).fill(null).map(() => [])
+            };
+            lastCounts = null;
+            lastTime = null;
+            updateChart();
+            updateStats();
+            log('Tracking history cleared');
+        }
+
+        function exportData() {
+            if (trackingData.timestamps.length === 0) {
+                log('No data to export', 'error');
+                return;
+            }
+
+            // Create CSV content
+            let csv = 'Timestamp,';
+            const channelNames = ['Ch0_A', 'Ch1_B', 'Ch2_C', 'Ch3_D',
+                                  'Ch4_AB', 'Ch5_AC', 'Ch6_AD', 'Ch7_BCD'];
+
+            // Header
+            for (let i = 0; i < 8; i++) {
+                csv += `${channelNames[i]}_Rate_Hz,${channelNames[i]}_Count,`;
+            }
+            csv = csv.slice(0, -1) + '\n';
+
+            // Data rows
+            for (let j = 0; j < trackingData.timestamps.length; j++) {
+                const date = new Date(trackingData.timestamps[j]);
+                csv += date.toISOString() + ',';
+                for (let i = 0; i < 8; i++) {
+                    csv += `${trackingData.rates[i][j].toFixed(2)},${trackingData.counts[i][j]},`;
+                }
+                csv = csv.slice(0, -1) + '\n';
+            }
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cd48_data_${new Date().toISOString().replace(/:/g, '-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            log('Data exported to CSV');
         }
     </script>
 </body>
