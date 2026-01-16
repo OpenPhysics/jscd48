@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self';">
     <title>CD48 Coincidence Counter</title>
     <style>
         :root {
@@ -546,11 +547,11 @@
                     </div>
                 </div>
                 <div style="margin-top: 15px;">
-                    <button class="btn btn-secondary" onclick="clearCounts()" id="clearBtn" disabled>
+                    <button class="btn btn-secondary" onclick="clearCounts()" id="clearBtn" disabled aria-label="Clear all channel counts">
                         Clear Counts
                     </button>
                     <label style="margin-left: 15px;">
-                        <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+                        <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()" aria-label="Enable automatic count refresh every second">
                         Auto-refresh (1s)
                     </label>
                 </div>
@@ -580,10 +581,10 @@
                         <span class="value-display" id="dacValue">0.00 V</span>
                     </div>
                     <div class="button-group" style="margin-top: 10px;">
-                        <button class="btn btn-secondary" onclick="testLeds()" id="ledBtn" disabled>
+                        <button class="btn btn-secondary" onclick="testLeds()" id="ledBtn" disabled aria-label="Test device LED indicators">
                             Test LEDs
                         </button>
-                        <button class="btn btn-secondary" onclick="refreshSettings()" id="settingsBtn" disabled>
+                        <button class="btn btn-secondary" onclick="refreshSettings()" id="settingsBtn" disabled aria-label="Refresh device settings">
                             Refresh Settings
                         </button>
                     </div>
@@ -612,7 +613,7 @@
             <!-- Log -->
             <div class="card">
                 <h2>Activity Log</h2>
-                <div class="log" id="log"></div>
+                <div class="log" id="log" role="log" aria-live="polite" aria-atomic="false"></div>
             </div>
         </div>
         </div>
@@ -622,26 +623,26 @@
                 <div class="chart-header">
                     <h2 style="margin: 0;">Count Rate vs Time</h2>
                     <div class="chart-controls">
-                        <select id="timeWindow" onchange="updateTimeWindow()">
+                        <select id="timeWindow" onchange="updateTimeWindow()" aria-label="Select chart time window">
                             <option value="60">Last 1 min</option>
                             <option value="300" selected>Last 5 min</option>
                             <option value="600">Last 10 min</option>
                             <option value="1800">Last 30 min</option>
                             <option value="3600">Last 1 hour</option>
                         </select>
-                        <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
-                        <button class="btn btn-secondary" onclick="exportData()">Export CSV</button>
+                        <button class="btn btn-secondary" onclick="clearHistory()" aria-label="Clear chart history data">Clear History</button>
+                        <button class="btn btn-secondary" onclick="exportData()" aria-label="Export data to CSV file">Export CSV</button>
                     </div>
                 </div>
                 <div class="channel-selector" id="channelSelector">
-                    <button class="channel-chip active" data-channel="0" onclick="toggleChannel(0)">Ch0 (A)</button>
-                    <button class="channel-chip active" data-channel="1" onclick="toggleChannel(1)">Ch1 (B)</button>
-                    <button class="channel-chip active" data-channel="2" onclick="toggleChannel(2)">Ch2 (C)</button>
-                    <button class="channel-chip active" data-channel="3" onclick="toggleChannel(3)">Ch3 (D)</button>
-                    <button class="channel-chip" data-channel="4" onclick="toggleChannel(4)">Ch4 (A+B)</button>
-                    <button class="channel-chip" data-channel="5" onclick="toggleChannel(5)">Ch5 (A+C)</button>
-                    <button class="channel-chip" data-channel="6" onclick="toggleChannel(6)">Ch6 (A+D)</button>
-                    <button class="channel-chip" data-channel="7" onclick="toggleChannel(7)">Ch7 (B+C+D)</button>
+                    <button class="channel-chip active" data-channel="0" onclick="toggleChannel(0)" aria-label="Toggle Channel 0 visibility" aria-pressed="true">Ch0 (A)</button>
+                    <button class="channel-chip active" data-channel="1" onclick="toggleChannel(1)" aria-label="Toggle Channel 1 visibility" aria-pressed="true">Ch1 (B)</button>
+                    <button class="channel-chip active" data-channel="2" onclick="toggleChannel(2)" aria-label="Toggle Channel 2 visibility" aria-pressed="true">Ch2 (C)</button>
+                    <button class="channel-chip active" data-channel="3" onclick="toggleChannel(3)" aria-label="Toggle Channel 3 visibility" aria-pressed="true">Ch3 (D)</button>
+                    <button class="channel-chip" data-channel="4" onclick="toggleChannel(4)" aria-label="Toggle Channel 4 visibility" aria-pressed="false">Ch4 (A+B)</button>
+                    <button class="channel-chip" data-channel="5" onclick="toggleChannel(5)" aria-label="Toggle Channel 5 visibility" aria-pressed="false">Ch5 (A+C)</button>
+                    <button class="channel-chip" data-channel="6" onclick="toggleChannel(6)" aria-label="Toggle Channel 6 visibility" aria-pressed="false">Ch6 (A+D)</button>
+                    <button class="channel-chip" data-channel="7" onclick="toggleChannel(7)" aria-label="Toggle Channel 7 visibility" aria-pressed="false">Ch7 (B+C+D)</button>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="rateChart"></canvas>

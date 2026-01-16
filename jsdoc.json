@@ -6,7 +6,8 @@
   "opts": {
     "destination": "./docs/api",
     "recurse": true,
-    "readme": "README.md"
+    "readme": "README.md",
+    "template": "node_modules/better-docs"
   },
   "plugins": ["plugins/markdown"],
   "templates": {
@@ -15,6 +16,16 @@
     "default": {
       "outputSourceFiles": true,
       "includeDate": false
+    },
+    "better-docs": {
+      "name": "CD48 API Documentation",
+      "title": "CD48 API Documentation",
+      "navigation": [
+        {
+          "label": "GitHub",
+          "href": "https://github.com/OpenPhysics/jscd48"
+        }
+      ]
     }
   },
   "metadata": {

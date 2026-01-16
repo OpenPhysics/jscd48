@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self';">
+    <title>CD48 Multi-Channel Display</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            background-attachment: fixed;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #e94560 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 5px;
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #d63853;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .btn-success:disabled {
+            background: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #1a1f3a;
+            margin-left: 10px;
+        }
+
+        .status.connected {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .channel-card {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .channel-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e94560, #3b82f6);
+        }
+
+        .channel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .channel-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .channel-status {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .channel-count {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4ade80;
+            text-align: center;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .channel-rate {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .channel-bar {
+            height: 8px;
+            background: #0f3460;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .channel-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #3b82f6);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .stats-panel {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .update-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1a1f3a;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .update-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CD48 Multi-Channel Display</h1>
+            <p class="subtitle">Real-time monitoring of all 8 channels</p>
+        </header>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="connectBtn">Connect to CD48</button>
+            <button class="btn btn-success" id="startBtn" disabled>Start Monitoring</button>
+            <button class="btn btn-primary" id="clearBtn" disabled>Clear Counts</button>
+            <span class="status" id="status">Disconnected</span>
+        </div>
+
+        <div class="channels-grid" id="channelsGrid">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <div class="stats-panel">
+            <h2>Global Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Total Counts</div>
+                    <div class="stat-value" id="totalCounts">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Average Rate</div>
+                    <div class="stat-value" id="avgRate">0 Hz</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Max Rate</div>
+                    <div class="stat-value" id="maxRate">0 Hz</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Active Channels</div>
+                    <div class="stat-value" id="activeChannels">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="update-indicator" id="updateIndicator">
+        ⟳ Updating...
+    </div>
+
+    <script type="module">
+        import { CD48 } from '../cd48.js';
+
+        const cd48 = new CD48();
+        let monitoring = false;
+        let monitoringInterval = null;
+        let lastCounts = new Array(8).fill(0);
+        let rates = new Array(8).fill(0);
+        let maxRate = 0;
+
+        const connectBtn = document.getElementById('connectBtn');
+        const startBtn = document.getElementById('startBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const status = document.getElementById('status');
+        const channelsGrid = document.getElementById('channelsGrid');
+        const updateIndicator = document.getElementById('updateIndicator');
+
+        // Initialize channel cards
+        function initChannels() {
+            channelsGrid.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="channel-header">
+                        <div class="channel-number">Channel ${i}</div>
+                        <div class="channel-status" id="chStatus${i}">Idle</div>
+                    </div>
+                    <div class="channel-count" id="count${i}">0</div>
+                    <div class="channel-rate" id="rate${i}">0.0 Hz</div>
+                    <div class="channel-bar">
+                        <div class="channel-bar-fill" id="bar${i}"></div>
+                    </div>
+                `;
+                channelsGrid.appendChild(card);
+            }
+        }
+
+        // Connect to device
+        connectBtn.addEventListener('click', async () => {
+            try {
+                connectBtn.disabled = true;
+                connectBtn.textContent = 'Connecting...';
+
+                const connected = await cd48.connect();
+
+                if (connected) {
+                    status.textContent = 'Connected';
+                    status.classList.add('connected');
+                    connectBtn.textContent = 'Disconnect';
+                    connectBtn.disabled = false;
+                    startBtn.disabled = false;
+                    clearBtn.disabled = false;
+
+                    // Get initial version
+                    const version = await cd48.getVersion();
+                    console.log('CD48 Firmware:', version);
+
+                    connectBtn.onclick = disconnect;
+                } else {
+                    throw new Error('Failed to connect');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Failed to connect to CD48: ' + error.message);
+                connectBtn.textContent = 'Connect to CD48';
+                connectBtn.disabled = false;
+            }
+        });
+
+        // Disconnect
+        async function disconnect() {
+            if (monitoring) {
+                stopMonitoring();
+            }
+            await cd48.disconnect();
+            status.textContent = 'Disconnected';
+            status.classList.remove('connected');
+            connectBtn.textContent = 'Connect to CD48';
+            connectBtn.onclick = () => connectBtn.click();
+            startBtn.disabled = true;
+            clearBtn.disabled = true;
+        }
+
+        // Start monitoring
+        startBtn.addEventListener('click', () => {
+            if (!monitoring) {
+                startMonitoring();
+            } else {
+                stopMonitoring();
+            }
+        });
+
+        function startMonitoring() {
+            monitoring = true;
+            startBtn.textContent = 'Stop Monitoring';
+            startBtn.style.background = '#fbbf24';
+
+            // Update every 500ms
+            monitoringInterval = setInterval(updateDisplay, 500);
+        }
+
+        function stopMonitoring() {
+            monitoring = false;
+            startBtn.textContent = 'Start Monitoring';
+            startBtn.style.background = '#4ade80';
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+            }
+        }
+
+        // Update display
+        async function updateDisplay() {
+            try {
+                // Show update indicator
+                updateIndicator.classList.add('show');
+
+                const data = await cd48.getCounts();
+                let totalCounts = 0;
+                let activeChannels = 0;
+                let totalRate = 0;
+
+                for (let i = 0; i < 8; i++) {
+                    const count = data.counts[i];
+                    const delta = count - lastCounts[i];
+                    const rate = delta * 2; // Update every 500ms, so multiply by 2 for Hz
+
+                    // Update count display
+                    document.getElementById(`count${i}`).textContent = count.toLocaleString();
+
+                    // Update rate display
+                    rates[i] = rate;
+                    document.getElementById(`rate${i}`).textContent = rate.toFixed(1) + ' Hz';
+
+                    // Update status
+                    const statusEl = document.getElementById(`chStatus${i}`);
+                    if (rate > 0) {
+                        statusEl.textContent = 'Active';
+                        statusEl.style.color = '#4ade80';
+                        activeChannels++;
+                    } else {
+                        statusEl.textContent = 'Idle';
+                        statusEl.style.color = '#888';
+                    }
+
+                    // Update bar
+                    const maxDisplayRate = 1000; // Max rate for bar visualization
+                    const barWidth = Math.min((rate / maxDisplayRate) * 100, 100);
+                    document.getElementById(`bar${i}`).style.width = barWidth + '%';
+
+                    // Update stats
+                    totalCounts += count;
+                    totalRate += rate;
+                    if (rate > maxRate) maxRate = rate;
+
+                    lastCounts[i] = count;
+                }
+
+                // Update global stats
+                document.getElementById('totalCounts').textContent = totalCounts.toLocaleString();
+                document.getElementById('avgRate').textContent = (totalRate / 8).toFixed(1) + ' Hz';
+                document.getElementById('maxRate').textContent = maxRate.toFixed(1) + ' Hz';
+                document.getElementById('activeChannels').textContent = activeChannels;
+
+                // Hide update indicator
+                setTimeout(() => {
+                    updateIndicator.classList.remove('show');
+                }, 300);
+
+            } catch (error) {
+                console.error('Update error:', error);
+                updateIndicator.classList.remove('show');
+            }
+        }
+
+        // Clear counts
+        clearBtn.addEventListener('click', async () => {
+            try {
+                clearBtn.disabled = true;
+                await cd48.clearCounts();
+                lastCounts = new Array(8).fill(0);
+                rates = new Array(8).fill(0);
+                maxRate = 0;
+                await updateDisplay();
+                clearBtn.disabled = false;
+            } catch (error) {
+                console.error('Clear error:', error);
+                alert('Failed to clear counts: ' + error.message);
+                clearBtn.disabled = false;
+            }
+        });
+
+        // Initialize
+        if (!CD48.isSupported()) {
+            alert('Web Serial API is not supported in this browser. Please use Chrome 89+ or Edge 89+.');
+            connectBtn.disabled = true;
+        } else {
+            initChannels();
+        }
+    </script>
+</body>
+</html>

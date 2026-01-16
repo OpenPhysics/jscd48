@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self';">
+    <title>CD48 Real-Time Graphing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            background-attachment: fixed;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #e94560 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #d63853;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .btn:disabled {
+            background: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        select, input[type="number"] {
+            background: #0f3460;
+            border: 1px solid #1a4a7a;
+            color: #eee;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #0f3460;
+            font-size: 0.9rem;
+        }
+
+        .status.connected {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .chart-container {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #e94560;
+        }
+
+        .stats-bar {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 CD48 Real-Time Graphing</h1>
+            <p class="subtitle">Visualize count rates over time</p>
+        </header>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="connectBtn">Connect to CD48</button>
+            <button class="btn btn-success" id="startBtn" disabled>Start Recording</button>
+            <button class="btn btn-primary" id="clearBtn" disabled>Clear Data</button>
+
+            <div class="control-group">
+                <label for="channelSelect">Channel:</label>
+                <select id="channelSelect">
+                    <option value="0">Channel 0</option>
+                    <option value="1">Channel 1</option>
+                    <option value="2">Channel 2</option>
+                    <option value="3">Channel 3</option>
+                    <option value="4">Channel 4</option>
+                    <option value="5">Channel 5</option>
+                    <option value="6">Channel 6</option>
+                    <option value="7">Channel 7</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="timeWindow">Time Window:</label>
+                <select id="timeWindow">
+                    <option value="30">30 seconds</option>
+                    <option value="60" selected>60 seconds</option>
+                    <option value="120">2 minutes</option>
+                    <option value="300">5 minutes</option>
+                    <option value="600">10 minutes</option>
+                </select>
+            </div>
+
+            <span class="status" id="status">Disconnected</span>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">Count Rate vs Time</div>
+            <canvas id="rateChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">Cumulative Counts vs Time</div>
+            <canvas id="countsChart"></canvas>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Current Rate</div>
+                <div class="stat-value" id="currentRate">0 Hz</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Average Rate</div>
+                <div class="stat-value" id="avgRate">0 Hz</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Max Rate</div>
+                <div class="stat-value" id="maxRate">0 Hz</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Counts</div>
+                <div class="stat-value" id="totalCounts">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Recording Time</div>
+                <div class="stat-value" id="recordingTime">0 s</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { CD48 } from '../cd48.js';
+
+        const cd48 = new CD48();
+        let recording = false;
+        let recordingInterval = null;
+        let selectedChannel = 0;
+        let timeWindow = 60;
+        let startTime = null;
+        let lastCount = 0;
+
+        // Data arrays
+        const timeData = [];
+        const rateData = [];
+        const countData = [];
+        const maxDataPoints = 200;
+
+        // DOM elements
+        const connectBtn = document.getElementById('connectBtn');
+        const startBtn = document.getElementById('startBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const status = document.getElementById('status');
+        const channelSelect = document.getElementById('channelSelect');
+        const timeWindowSelect = document.getElementById('timeWindow');
+
+        // Chart configurations
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: {
+                        display: true,
+                        text: 'Time (s)',
+                        color: '#888'
+                    },
+                    ticks: {
+                        color: '#888'
+                    },
+                    grid: {
+                        color: '#0f3460'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        color: '#888'
+                    },
+                    ticks: {
+                        color: '#888'
+                    },
+                    grid: {
+                        color: '#0f3460'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        };
+
+        // Initialize rate chart
+        const rateChart = new Chart(document.getElementById('rateChart'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Count Rate',
+                    data: [],
+                    borderColor: '#e94560',
+                    backgroundColor: 'rgba(233, 69, 96, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Rate (Hz)',
+                            color: '#888'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize counts chart
+        const countsChart = new Chart(document.getElementById('countsChart'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Cumulative Counts',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Cumulative Counts',
+                            color: '#888'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Connect to device
+        connectBtn.addEventListener('click', async () => {
+            try {
+                connectBtn.disabled = true;
+                connectBtn.textContent = 'Connecting...';
+
+                const connected = await cd48.connect();
+
+                if (connected) {
+                    status.textContent = 'Connected';
+                    status.classList.add('connected');
+                    connectBtn.textContent = 'Disconnect';
+                    connectBtn.disabled = false;
+                    startBtn.disabled = false;
+                    clearBtn.disabled = false;
+
+                    const version = await cd48.getVersion();
+                    console.log('CD48 Firmware:', version);
+
+                    connectBtn.onclick = disconnect;
+                } else {
+                    throw new Error('Failed to connect');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Failed to connect to CD48: ' + error.message);
+                connectBtn.textContent = 'Connect to CD48';
+                connectBtn.disabled = false;
+            }
+        });
+
+        // Disconnect
+        async function disconnect() {
+            if (recording) {
+                stopRecording();
+            }
+            await cd48.disconnect();
+            status.textContent = 'Disconnected';
+            status.classList.remove('connected');
+            connectBtn.textContent = 'Connect to CD48';
+            connectBtn.onclick = () => connectBtn.click();
+            startBtn.disabled = true;
+            clearBtn.disabled = true;
+        }
+
+        // Start/stop recording
+        startBtn.addEventListener('click', () => {
+            if (!recording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        async function startRecording() {
+            recording = true;
+            startBtn.textContent = 'Stop Recording';
+            startBtn.style.background = '#fbbf24';
+            channelSelect.disabled = true;
+            timeWindowSelect.disabled = true;
+
+            selectedChannel = parseInt(channelSelect.value);
+            timeWindow = parseInt(timeWindowSelect.value);
+            startTime = Date.now();
+
+            // Get initial count
+            const data = await cd48.getCounts();
+            lastCount = data.counts[selectedChannel];
+
+            // Update every 500ms
+            recordingInterval = setInterval(updateData, 500);
+        }
+
+        function stopRecording() {
+            recording = false;
+            startBtn.textContent = 'Start Recording';
+            startBtn.style.background = '#4ade80';
+            channelSelect.disabled = false;
+            timeWindowSelect.disabled = false;
+            if (recordingInterval) {
+                clearInterval(recordingInterval);
+                recordingInterval = null;
+            }
+        }
+
+        // Update data
+        async function updateData() {
+            try {
+                const data = await cd48.getCounts();
+                const currentCount = data.counts[selectedChannel];
+                const now = Date.now();
+                const elapsedTime = (now - startTime) / 1000;
+
+                // Calculate rate
+                const countDelta = currentCount - lastCount;
+                const rate = countDelta * 2; // Update every 500ms
+
+                // Add data points
+                timeData.push(elapsedTime);
+                rateData.push(rate);
+                countData.push(currentCount);
+
+                // Trim data if exceeds max points
+                if (timeData.length > maxDataPoints) {
+                    timeData.shift();
+                    rateData.shift();
+                    countData.shift();
+                }
+
+                // Update charts
+                const chartData = timeData.map((t, i) => ({ x: t, y: rateData[i] }));
+                const chartCounts = timeData.map((t, i) => ({ x: t, y: countData[i] }));
+
+                rateChart.data.datasets[0].data = chartData;
+                countsChart.data.datasets[0].data = chartCounts;
+
+                // Update x-axis range to show only the time window
+                const minTime = Math.max(0, elapsedTime - timeWindow);
+                rateChart.options.scales.x.min = minTime;
+                rateChart.options.scales.x.max = elapsedTime;
+                countsChart.options.scales.x.min = minTime;
+                countsChart.options.scales.x.max = elapsedTime;
+
+                rateChart.update('none');
+                countsChart.update('none');
+
+                // Update stats
+                const avgRate = rateData.reduce((a, b) => a + b, 0) / rateData.length;
+                const maxRate = Math.max(...rateData);
+
+                document.getElementById('currentRate').textContent = rate.toFixed(1) + ' Hz';
+                document.getElementById('avgRate').textContent = avgRate.toFixed(1) + ' Hz';
+                document.getElementById('maxRate').textContent = maxRate.toFixed(1) + ' Hz';
+                document.getElementById('totalCounts').textContent = currentCount.toLocaleString();
+                document.getElementById('recordingTime').textContent = elapsedTime.toFixed(0) + ' s';
+
+                lastCount = currentCount;
+            } catch (error) {
+                console.error('Update error:', error);
+            }
+        }
+
+        // Clear data
+        clearBtn.addEventListener('click', async () => {
+            try {
+                if (recording) {
+                    stopRecording();
+                }
+
+                // Clear arrays
+                timeData.length = 0;
+                rateData.length = 0;
+                countData.length = 0;
+
+                // Clear charts
+                rateChart.data.datasets[0].data = [];
+                countsChart.data.datasets[0].data = [];
+                rateChart.update();
+                countsChart.update();
+
+                // Reset stats
+                document.getElementById('currentRate').textContent = '0 Hz';
+                document.getElementById('avgRate').textContent = '0 Hz';
+                document.getElementById('maxRate').textContent = '0 Hz';
+                document.getElementById('totalCounts').textContent = '0';
+                document.getElementById('recordingTime').textContent = '0 s';
+
+                // Clear device counts
+                await cd48.clearCounts();
+            } catch (error) {
+                console.error('Clear error:', error);
+                alert('Failed to clear data: ' + error.message);
+            }
+        });
+
+        // Channel selection
+        channelSelect.addEventListener('change', () => {
+            if (recording) {
+                alert('Stop recording before changing channel');
+                channelSelect.value = selectedChannel;
+            }
+        });
+
+        // Time window selection
+        timeWindowSelect.addEventListener('change', () => {
+            if (!recording) {
+                timeWindow = parseInt(timeWindowSelect.value);
+            }
+        });
+
+        // Check browser support
+        if (!CD48.isSupported()) {
+            alert('Web Serial API is not supported in this browser. Please use Chrome 89+ or Edge 89+.');
+            connectBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>

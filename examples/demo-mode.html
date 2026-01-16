@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self';">
+    <title>CD48 Demo Mode - No Hardware Required</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            background-attachment: fixed;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #e94560;
+        }
+
+        .demo-banner {
+            background: #fbbf24;
+            color: #000;
+            padding: 10px;
+            text-align: center;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .card {
+            background: #1a1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #e94560;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #d63853;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .counts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .count-item {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .count-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .count-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .rate-display {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            color: #3b82f6;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .info-text {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 CD48 Demo Mode</h1>
+            <p class="subtitle">Try the interface without hardware</p>
+        </header>
+
+        <div class="demo-banner">
+            ⚠️ DEMO MODE - Simulated data, no actual device required
+        </div>
+
+        <div class="card">
+            <h2>Demo Controls</h2>
+            <p class="info-text">This demo simulates a CD48 device with realistic count data. Perfect for testing and development!</p>
+
+            <div class="controls">
+                <button class="btn" id="startDemo">Start Demo</button>
+                <button class="btn" id="stopDemo" disabled>Stop Demo</button>
+                <button class="btn" id="clearCounts">Clear Counts</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Channel Counts</h2>
+            <div class="counts-grid" id="countsGrid">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            <div class="rate-display" id="rateDisplay">
+                Average rate: 0 counts/s
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Simulated Measurements</h2>
+            <div class="controls">
+                <button class="btn" id="measureRate">Measure Rate (Ch 0)</button>
+                <button class="btn" id="measureCoincidence">Measure Coincidence</button>
+            </div>
+            <div id="measurements" style="margin-top: 15px; color: #4ade80;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock CD48 class for demo mode
+        class MockCD48 {
+            constructor() {
+                this.counts = new Array(8).fill(0);
+                this.overflow = 0;
+                this.connected = false;
+                this.updateInterval = null;
+                this.baseRate = 100; // Base count rate per second
+            }
+
+            async connect() {
+                this.connected = true;
+                return true;
+            }
+
+            async disconnect() {
+                this.connected = false;
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                }
+            }
+
+            isConnected() {
+                return this.connected;
+            }
+
+            async getCounts() {
+                return {
+                    counts: [...this.counts],
+                    overflow: this.overflow
+                };
+            }
+
+            async clearCounts() {
+                this.counts = new Array(8).fill(0);
+                this.overflow = 0;
+            }
+
+            async getVersion() {
+                return 'DEMO v1.0.0';
+            }
+
+            async measureRate(channel = 0, duration = 1.0) {
+                const startCount = this.counts[channel];
+                await new Promise(resolve => setTimeout(resolve, duration * 1000));
+                const endCount = this.counts[channel];
+                const counts = endCount - startCount;
+                const rate = counts / duration;
+                return { counts, duration, rate, channel };
+            }
+
+            async measureCoincidence(options = {}) {
+                const duration = options.duration || 1.0;
+                const ch0Start = this.counts[0];
+                const ch1Start = this.counts[1];
+                const ch2Start = this.counts[2];
+
+                await new Promise(resolve => setTimeout(resolve, duration * 1000));
+
+                const singlesA = this.counts[0] - ch0Start;
+                const singlesB = this.counts[1] - ch1Start;
+                const coincidences = this.counts[2] - ch2Start;
+
+                const rateA = singlesA / duration;
+                const rateB = singlesB / duration;
+                const coincRate = coincidences / duration;
+
+                // Calculate accidental rate
+                const coincWindow = options.coincidenceWindow || 10e-9;
+                const accidentalRate = 2 * rateA * rateB * coincWindow;
+                const trueCoincRate = coincRate - accidentalRate;
+
+                return {
+                    duration,
+                    singlesA,
+                    singlesB,
+                    coincidences,
+                    rateA,
+                    rateB,
+                    coincidenceRate: coincRate,
+                    accidentalRate,
+                    trueCoincidenceRate: Math.max(0, trueCoincRate)
+                };
+            }
+
+            // Simulate count accumulation
+            startSimulation() {
+                this.updateInterval = setInterval(() => {
+                    // Add random counts to each channel based on Poisson distribution
+                    for (let i = 0; i < 8; i++) {
+                        // Different rates for different channels
+                        const rate = this.baseRate * (1 + Math.random() * 0.5);
+                        const counts = this.poissonRandom(rate * 0.1); // Update every 100ms
+                        this.counts[i] += counts;
+                    }
+
+                    // Add some coincidences on channel 2
+                    if (Math.random() < 0.8) {
+                        this.counts[2] += Math.floor(Math.random() * 3);
+                    }
+                }, 100);
+            }
+
+            stopSimulation() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            }
+
+            // Simple Poisson random number generator
+            poissonRandom(lambda) {
+                const L = Math.exp(-lambda);
+                let k = 0;
+                let p = 1;
+                do {
+                    k++;
+                    p *= Math.random();
+                } while (p > L);
+                return k - 1;
+            }
+        }
+
+        // UI Logic
+        const cd48 = new MockCD48();
+        let demoRunning = false;
+        let lastTotalCounts = 0;
+        let lastUpdateTime = Date.now();
+
+        const startDemoBtn = document.getElementById('startDemo');
+        const stopDemoBtn = document.getElementById('stopDemo');
+        const clearCountsBtn = document.getElementById('clearCounts');
+        const measureRateBtn = document.getElementById('measureRate');
+        const measureCoincidenceBtn = document.getElementById('measureCoincidence');
+        const countsGrid = document.getElementById('countsGrid');
+        const rateDisplay = document.getElementById('rateDisplay');
+        const measurements = document.getElementById('measurements');
+
+        // Initialize counts display
+        function initCountsDisplay() {
+            countsGrid.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const item = document.createElement('div');
+                item.className = 'count-item';
+                item.innerHTML = `
+                    <div class="count-label">Channel ${i}</div>
+                    <div class="count-value" id="count${i}">0</div>
+                `;
+                countsGrid.appendChild(item);
+            }
+        }
+
+        // Update counts display
+        async function updateCounts() {
+            const data = await cd48.getCounts();
+            let totalCounts = 0;
+            for (let i = 0; i < 8; i++) {
+                document.getElementById(`count${i}`).textContent = data.counts[i].toLocaleString();
+                totalCounts += data.counts[i];
+            }
+
+            // Calculate average rate
+            const now = Date.now();
+            const timeDiff = (now - lastUpdateTime) / 1000;
+            if (timeDiff > 0) {
+                const countsDiff = totalCounts - lastTotalCounts;
+                const avgRate = (countsDiff / timeDiff).toFixed(1);
+                rateDisplay.textContent = `Average rate: ${avgRate} counts/s across all channels`;
+            }
+            lastTotalCounts = totalCounts;
+            lastUpdateTime = now;
+        }
+
+        // Start demo
+        startDemoBtn.addEventListener('click', async () => {
+            await cd48.connect();
+            cd48.startSimulation();
+            demoRunning = true;
+            startDemoBtn.disabled = true;
+            stopDemoBtn.disabled = false;
+
+            // Update display every 500ms
+            const updateInterval = setInterval(() => {
+                if (!demoRunning) {
+                    clearInterval(updateInterval);
+                    return;
+                }
+                updateCounts();
+            }, 500);
+        });
+
+        // Stop demo
+        stopDemoBtn.addEventListener('click', async () => {
+            cd48.stopSimulation();
+            demoRunning = false;
+            startDemoBtn.disabled = false;
+            stopDemoBtn.disabled = true;
+        });
+
+        // Clear counts
+        clearCountsBtn.addEventListener('click', async () => {
+            await cd48.clearCounts();
+            lastTotalCounts = 0;
+            updateCounts();
+        });
+
+        // Measure rate
+        measureRateBtn.addEventListener('click', async () => {
+            measureRateBtn.disabled = true;
+            measurements.innerHTML = '<p>⏱️ Measuring rate for 2 seconds...</p>';
+
+            const result = await cd48.measureRate(0, 2.0);
+
+            measurements.innerHTML = `
+                <p><strong>Rate Measurement Result:</strong></p>
+                <p>Channel: ${result.channel}</p>
+                <p>Counts: ${result.counts}</p>
+                <p>Duration: ${result.duration} s</p>
+                <p>Rate: ${result.rate.toFixed(2)} counts/s</p>
+            `;
+            measureRateBtn.disabled = false;
+        });
+
+        // Measure coincidence
+        measureCoincidenceBtn.addEventListener('click', async () => {
+            measureCoincidenceBtn.disabled = true;
+            measurements.innerHTML = '<p>⏱️ Measuring coincidences for 3 seconds...</p>';
+
+            const result = await cd48.measureCoincidence({
+                duration: 3.0,
+                singlesAChannel: 0,
+                singlesBChannel: 1,
+                coincidenceChannel: 2,
+                coincidenceWindow: 10e-9
+            });
+
+            measurements.innerHTML = `
+                <p><strong>Coincidence Measurement Result:</strong></p>
+                <p>Singles A rate: ${result.rateA.toFixed(2)} counts/s</p>
+                <p>Singles B rate: ${result.rateB.toFixed(2)} counts/s</p>
+                <p>Coincidence rate: ${result.coincidenceRate.toFixed(2)} counts/s</p>
+                <p>Accidental rate: ${result.accidentalRate.toFixed(2)} counts/s</p>
+                <p>True coincidence rate: ${result.trueCoincidenceRate.toFixed(2)} counts/s</p>
+            `;
+            measureCoincidenceBtn.disabled = false;
+        });
+
+        // Initialize
+        initCountsDisplay();
+    </script>
+</body>
+</html>
