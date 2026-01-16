@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CD48 Data Export Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.success {
+            background: #28a745;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #e9ecef;
+        }
+        .data-table {
+            margin: 20px 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th, .data-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CD48 Data Export Example</h1>
+        <p>Record measurements and export data in CSV or JSON format</p>
+
+        <div>
+            <button onclick="connect()">Connect</button>
+            <button onclick="disconnect()" class="danger">Disconnect</button>
+        </div>
+
+        <div id="status">Status: Not connected</div>
+
+        <div class="controls">
+            <h3>Recording Settings</h3>
+            <label>Interval (seconds):</label>
+            <input type="number" id="interval" value="1" min="0.1" step="0.1">
+            <br><br>
+            <button onclick="startRecording()" class="success">Start Recording</button>
+            <button onclick="stopRecording()" class="danger">Stop Recording</button>
+            <button onclick="clearData()">Clear Data</button>
+        </div>
+
+        <div>
+            <h3>Export Data</h3>
+            <button onclick="exportCSV()">Export as CSV</button>
+            <button onclick="exportJSON()">Export as JSON</button>
+            <button onclick="copyToClipboard()">Copy to Clipboard</button>
+        </div>
+
+        <h3>Recorded Data (<span id="recordCount">0</span> records)</h3>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Ch0</th>
+                        <th>Ch1</th>
+                        <th>Ch2</th>
+                        <th>Ch3</th>
+                        <th>Ch4</th>
+                        <th>Ch5</th>
+                        <th>Ch6</th>
+                        <th>Ch7</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../cd48.js"></script>
+    <script>
+        let cd48 = null;
+        let recordingInterval = null;
+        let recordedData = [];
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = 'Status: ' + message;
+        }
+
+        function updateRecordCount() {
+            document.getElementById('recordCount').textContent = recordedData.length;
+        }
+
+        async function connect() {
+            try {
+                cd48 = new CD48();
+                await cd48.connect();
+                updateStatus('Connected');
+            } catch (error) {
+                updateStatus('Connection failed: ' + error.message);
+            }
+        }
+
+        async function disconnect() {
+            if (cd48) {
+                stopRecording();
+                await cd48.disconnect();
+                cd48 = null;
+                updateStatus('Disconnected');
+            }
+        }
+
+        async function startRecording() {
+            if (!cd48 || !cd48.isConnected()) {
+                updateStatus('Please connect first');
+                return;
+            }
+
+            if (recordingInterval) {
+                updateStatus('Already recording');
+                return;
+            }
+
+            const interval = parseFloat(document.getElementById('interval').value) * 1000;
+
+            await cd48.clearCounts();
+
+            recordingInterval = setInterval(async () => {
+                try {
+                    const data = await cd48.getCounts();
+                    const record = {
+                        timestamp: new Date().toISOString(),
+                        counts: data.counts
+                    };
+
+                    recordedData.push(record);
+                    addDataRow(record);
+                    updateRecordCount();
+
+                } catch (error) {
+                    updateStatus('Recording error: ' + error.message);
+                    stopRecording();
+                }
+            }, interval);
+
+            updateStatus('Recording...');
+        }
+
+        function stopRecording() {
+            if (recordingInterval) {
+                clearInterval(recordingInterval);
+                recordingInterval = null;
+                updateStatus('Recording stopped');
+            }
+        }
+
+        function addDataRow(record) {
+            const tbody = document.getElementById('dataTable');
+            const row = tbody.insertRow(0); // Add to top
+
+            const timeCell = row.insertCell(0);
+            timeCell.textContent = new Date(record.timestamp).toLocaleTimeString();
+
+            for (let i = 0; i < 8; i++) {
+                const cell = row.insertCell(i + 1);
+                cell.textContent = record.counts[i];
+            }
+        }
+
+        function clearData() {
+            if (confirm('Clear all recorded data?')) {
+                recordedData = [];
+                document.getElementById('dataTable').innerHTML = '';
+                updateRecordCount();
+                updateStatus('Data cleared');
+            }
+        }
+
+        function exportCSV() {
+            if (recordedData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            // Create CSV header
+            let csv = 'Timestamp,Ch0,Ch1,Ch2,Ch3,Ch4,Ch5,Ch6,Ch7\n';
+
+            // Add data rows
+            recordedData.forEach(record => {
+                csv += record.timestamp + ',' + record.counts.join(',') + '\n';
+            });
+
+            // Download file
+            downloadFile(csv, 'cd48-data.csv', 'text/csv');
+            updateStatus('CSV exported');
+        }
+
+        function exportJSON() {
+            if (recordedData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const json = JSON.stringify(recordedData, null, 2);
+            downloadFile(json, 'cd48-data.json', 'application/json');
+            updateStatus('JSON exported');
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        async function copyToClipboard() {
+            if (recordedData.length === 0) {
+                alert('No data to copy');
+                return;
+            }
+
+            const json = JSON.stringify(recordedData, null, 2);
+
+            try {
+                await navigator.clipboard.writeText(json);
+                updateStatus('Data copied to clipboard');
+            } catch (error) {
+                updateStatus('Failed to copy: ' + error.message);
+            }
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopRecording();
+            if (cd48 && cd48.isConnected()) {
+                cd48.disconnect();
+            }
+        });
+    </script>
+</body>
+</html>

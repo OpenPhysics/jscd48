@@ -1,0 +1,24 @@
+{
+  "source": {
+    "include": ["cd48.js", "README.md"],
+    "includePattern": ".js$"
+  },
+  "opts": {
+    "destination": "./docs/api",
+    "recurse": true,
+    "readme": "README.md"
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": false
+    }
+  },
+  "metadata": {
+    "title": "CD48 API Documentation",
+    "description": "JavaScript interface for the CD48 Coincidence Counter"
+  }
+}
