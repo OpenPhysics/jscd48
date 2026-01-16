@@ -44,7 +44,7 @@ export default defineConfig({
 
   // Run local dev server before starting tests
   webServer: {
-    command: 'npx http-server -p 8080 -c-1',
+    command: 'npx serve -p 8080',
     port: 8080,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
