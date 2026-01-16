@@ -15,23 +15,140 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Build Documentation & Site
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate API documentation
+        run: npm run docs
+
+      - name: Create deployment directory
+        run: |
+          mkdir -p _site
+
+          # Copy main files
+          cp index.html _site/
+          cp cd48.js _site/
+          cp cd48.d.ts _site/
+          cp README.md _site/
+          cp LICENSE _site/
+
+          # Copy examples
+          mkdir -p _site/examples
+          cp -r examples/* _site/examples/
+
+          # Copy documentation
+          if [ -d "docs/api" ]; then
+            mkdir -p _site/docs
+            cp -r docs/api _site/docs/
+          fi
+
+          # Create a simple index for docs if it doesn't exist
+          if [ ! -f "_site/docs/index.html" ]; then
+            cat > _site/docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>CD48 Documentation</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #0f0f1e;
+                color: #eee;
+              }
+              h1 { color: #e94560; }
+              a {
+                color: #3b82f6;
+                text-decoration: none;
+              }
+              a:hover { text-decoration: underline; }
+              .card {
+                background: #1a1f3a;
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>CD48 Documentation</h1>
+            <div class="card">
+              <h2>Resources</h2>
+              <ul>
+                <li><a href="api/">API Documentation</a></li>
+                <li><a href="../">Main Application</a></li>
+                <li><a href="../examples/">Examples</a></li>
+                <li><a href="https://github.com/OpenPhysics/jscd48">GitHub Repository</a></li>
+              </ul>
+            </div>
+          </body>
+          </html>
+          EOF
+          fi
+
+      - name: List deployment contents
+        run: |
+          echo "📦 Deployment contents:"
+          find _site -type f | head -20
+          echo ""
+          echo "Total files: $(find _site -type f | wc -l)"
+          echo "Total size: $(du -sh _site | cut -f1)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: _site/
+          retention-days: 1
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload artifact
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: _site
+
+      - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Your site is now live at:" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,117 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Review Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-2.0, GPL-3.0
+          comment-summary-in-pr: always
+
+  check-licenses:
+    name: Check License Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check licenses
+        run: |
+          echo "## License Compliance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Install license checker
+          npm install -g license-checker
+
+          # Check licenses
+          license-checker --summary > licenses.txt
+
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat licenses.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: |
+          echo "## Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Run audit and capture output
+          if npm audit --audit-level=moderate --json > audit.json; then
+            echo "✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  Vulnerabilities detected:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Parse and display vulnerabilities
+            TOTAL=$(jq '.metadata.vulnerabilities.total' audit.json)
+            INFO=$(jq '.metadata.vulnerabilities.info' audit.json)
+            LOW=$(jq '.metadata.vulnerabilities.low' audit.json)
+            MODERATE=$(jq '.metadata.vulnerabilities.moderate' audit.json)
+            HIGH=$(jq '.metadata.vulnerabilities.high' audit.json)
+            CRITICAL=$(jq '.metadata.vulnerabilities.critical' audit.json)
+
+            echo "- Total: $TOTAL" >> $GITHUB_STEP_SUMMARY
+            echo "- Info: $INFO" >> $GITHUB_STEP_SUMMARY
+            echo "- Low: $LOW" >> $GITHUB_STEP_SUMMARY
+            echo "- Moderate: $MODERATE" >> $GITHUB_STEP_SUMMARY
+            echo "- High: $HIGH" >> $GITHUB_STEP_SUMMARY
+            echo "- Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Fail if high or critical vulnerabilities
+            if [ $HIGH -gt 0 ] || [ $CRITICAL -gt 0 ]; then
+              echo "❌ High or critical vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          fi
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit
+          path: audit.json
+          retention-days: 30

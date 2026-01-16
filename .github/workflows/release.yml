@@ -7,9 +7,57 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  release:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Generate coverage report
+        run: npm run test:coverage
+
+      - name: Validate version match
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_VERSION=$(node -p "require('./package.json').version")
+
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "❌ Version mismatch!"
+            echo "Tag version: $TAG_VERSION"
+            echo "Package version: $PKG_VERSION"
+            exit 1
+          fi
+
+          echo "✅ Version matches: $TAG_VERSION"
+
+  build:
+    name: Build Release Assets
+    needs: validate
     runs-on: ubuntu-latest
 
     steps:
@@ -20,59 +68,149 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
-
-      - name: Run linting
-        run: npm run lint
-
-      - name: Check formatting
-        run: npm run format:check
-
       - name: Generate documentation
         run: npm run docs
 
+      - name: Create release bundle
+        run: |
+          mkdir -p release
+
+          # Copy main files
+          cp cd48.js release/
+          cp cd48.d.ts release/
+          cp index.html release/
+          cp README.md release/
+          cp LICENSE release/
+          cp CHANGELOG.md release/
+          cp package.json release/
+
+          # Copy examples
+          mkdir -p release/examples
+          cp -r examples/* release/examples/
+
+          # Copy documentation
+          if [ -d "docs/api" ]; then
+            mkdir -p release/docs
+            cp -r docs/api release/docs/
+          fi
+
+      - name: Create archives
+        run: |
+          cd release
+
+          # Create zip archive
+          zip -r ../jscd48-${GITHUB_REF#refs/tags/v}.zip .
+
+          # Create tarball
+          tar -czf ../jscd48-${GITHUB_REF#refs/tags/v}.tar.gz .
+
+          cd ..
+          ls -lh *.zip *.tar.gz
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            *.zip
+            *.tar.gz
+            release/
+          retention-days: 90
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Extract version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+
+          # Try to extract changelog section for this version
+          if [ -f CHANGELOG.md ]; then
+            # Extract content between version headers
+            CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d')
+
+            if [ -z "$CHANGELOG" ]; then
+              CHANGELOG="See [CHANGELOG.md](https://github.com/OpenPhysics/jscd48/blob/main/CHANGELOG.md) for details."
+            fi
+          else
+            CHANGELOG="No changelog available."
+          fi
+
+          # Save to file for multiline output
+          echo "$CHANGELOG" > changelog.txt
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            ## Changes in this Release
-
-            See [CHANGELOG.md](https://github.com/OpenPhysics/jscd48/blob/main/CHANGELOG.md) for details.
-
-            ## Installation
-
-            ### Via npm
-            ```bash
-            npm install jscd48
-            ```
-
-            ### Via CDN
-            ```html
-            <script src="https://unpkg.com/jscd48@${{ steps.get_version.outputs.VERSION }}/cd48.js"></script>
-            ```
-
-            ### Direct Download
-            Download the library files from the assets below.
-
+          name: Release ${{ steps.get_version.outputs.TAG_NAME }}
+          body_path: changelog.txt
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, '-') }}
+          files: |
+            jscd48-${{ steps.get_version.outputs.VERSION }}.zip
+            jscd48-${{ steps.get_version.outputs.VERSION }}.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: true
+
+  publish-npm:
+    name: Publish to npm
+    needs: release
+    runs-on: ubuntu-latest
+    if: "!contains(github.ref, '-')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Publish to npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        continue-on-error: true
+
+      - name: Publish summary
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "## Package Published! 📦" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Successfully published jscd48@$VERSION to npm" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install with:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install jscd48@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

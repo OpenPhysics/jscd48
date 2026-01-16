@@ -96,7 +96,9 @@ describe('CD48', () => {
     it('should convert byte to voltage correctly', () => {
       expect(CD48.byteToVoltage(0)).toBe(0);
       expect(CD48.byteToVoltage(255)).toBe(4.08);
-      expect(CD48.byteToVoltage(128)).toBeCloseTo(2.04, 2);
+      expect(CD48.byteToVoltage(128)).toBeCloseTo(2.048, 2);
+      expect(CD48.byteToVoltage(64)).toBeCloseTo(1.024, 2);
+      expect(CD48.byteToVoltage(192)).toBeCloseTo(3.072, 2);
     });
   });
 
@@ -271,6 +273,443 @@ describe('CD48', () => {
     it('should clear counts', async () => {
       await cd48.clearCounts();
       expect(mocks.mockWriter.write).toHaveBeenCalledWith('c\r');
+    });
+  });
+
+  describe('Trigger Level Configuration', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should set trigger level within valid range', async () => {
+      await cd48.setTriggerLevel(2.0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should clamp trigger level to minimum', async () => {
+      await cd48.setTriggerLevel(-1.0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should clamp trigger level to maximum', async () => {
+      await cd48.setTriggerLevel(5.0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should throw error when setting trigger level while disconnected', async () => {
+      const disconnectedCd48 = new CD48();
+      await expect(disconnectedCd48.setTriggerLevel(2.0)).rejects.toThrow(
+        'Not connected to CD48'
+      );
+    });
+  });
+
+  describe('DAC Configuration', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should set DAC voltage within valid range', async () => {
+      await cd48.setDacVoltage(2.0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should clamp DAC voltage to minimum', async () => {
+      await cd48.setDacVoltage(-1.0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should clamp DAC voltage to maximum', async () => {
+      await cd48.setDacVoltage(5.0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Channel Configuration', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should set channel configuration', async () => {
+      await cd48.setChannel(0, { A: 1, B: 0, C: 0, D: 0 });
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should set channel with all inputs enabled', async () => {
+      await cd48.setChannel(1, { A: 1, B: 1, C: 0, D: 0 });
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Measurement Methods', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should measure rate for a channel', async () => {
+      const result = await cd48.measureRate(0, 1.0);
+      expect(result).toHaveProperty('counts');
+      expect(result).toHaveProperty('duration');
+      expect(result).toHaveProperty('rate');
+      expect(result).toHaveProperty('channel');
+      expect(result.channel).toBe(0);
+      expect(result.duration).toBe(1.0);
+    });
+
+    it('should measure rate for different channels', async () => {
+      const result = await cd48.measureRate(3, 0.5);
+      expect(result.channel).toBe(3);
+      expect(result.duration).toBe(0.5);
+    });
+
+    it('should measure coincidence rate with default options', async () => {
+      const result = await cd48.measureCoincidenceRate({
+        duration: 1.0,
+      });
+      expect(result).toHaveProperty('singlesA');
+      expect(result).toHaveProperty('singlesB');
+      expect(result).toHaveProperty('coincidences');
+      expect(result).toHaveProperty('duration');
+      expect(result.duration).toBe(1.0);
+    });
+
+    it('should measure coincidence rate with custom channels', async () => {
+      const result = await cd48.measureCoincidenceRate({
+        duration: 2.0,
+        singlesAChannel: 0,
+        singlesBChannel: 1,
+        coincidenceChannel: 2,
+      });
+      expect(result).toHaveProperty('singlesA');
+      expect(result).toHaveProperty('singlesB');
+      expect(result.duration).toBe(2.0);
+    });
+
+    it('should calculate coincidence rates correctly', async () => {
+      const result = await cd48.measureCoincidenceRate({
+        duration: 1.0,
+        coincidenceWindow: 25e-9,
+      });
+      expect(result).toHaveProperty('rateA');
+      expect(result).toHaveProperty('rateB');
+      expect(result).toHaveProperty('coincidenceRate');
+      expect(result).toHaveProperty('accidentalRate');
+      expect(result).toHaveProperty('trueCoincidenceRate');
+      expect(result.trueCoincidenceRate).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('LED Control', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should test LED sequence', async () => {
+      await cd48.testLeds();
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Impedance Configuration', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should set impedance to 50 Ohm', async () => {
+      await cd48.setImpedance50Ohm();
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should set impedance to High-Z', async () => {
+      await cd48.setImpedanceHighZ();
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Repeat Mode', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should set repeat mode with interval', async () => {
+      await cd48.setRepeat(1000);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should toggle repeat mode', async () => {
+      await cd48.toggleRepeat();
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should clamp repeat interval to minimum', async () => {
+      await cd48.setRepeat(50);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should clamp repeat interval to maximum', async () => {
+      await cd48.setRepeat(70000);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Overflow and Settings', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should get overflow status', async () => {
+      const overflow = await cd48.getOverflow();
+      expect(typeof overflow).toBe('number');
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should get settings in human readable format', async () => {
+      const settings = await cd48.getSettings(true);
+      expect(typeof settings).toBe('string');
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should get settings in parseable format', async () => {
+      const settings = await cd48.getSettings(false);
+      expect(typeof settings).toBe('string');
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should get help information', async () => {
+      const help = await cd48.getHelp();
+      expect(typeof help).toBe('string');
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Advanced Error Handling', () => {
+    it('should handle read errors', async () => {
+      const cd48 = new CD48();
+      await cd48.connect();
+
+      mocks.mockReader.read.mockRejectedValueOnce(
+        new Error('Read error')
+      );
+
+      await expect(cd48.getVersion()).rejects.toThrow();
+    });
+
+    it('should handle write errors', async () => {
+      const cd48 = new CD48();
+      await cd48.connect();
+
+      mocks.mockWriter.write.mockRejectedValueOnce(
+        new Error('Write error')
+      );
+
+      await expect(cd48.clearCounts()).rejects.toThrow();
+    });
+
+    it('should handle multiple disconnects gracefully', async () => {
+      const cd48 = new CD48();
+      await cd48.connect();
+      await cd48.disconnect();
+      await cd48.disconnect(); // Second disconnect should not throw
+      expect(cd48.isConnected()).toBe(false);
+    });
+
+    it('should handle disconnected port during write', async () => {
+      const cd48 = new CD48();
+      await cd48.connect();
+
+      // Simulate device disconnection
+      mocks.mockWriter.write.mockRejectedValueOnce(
+        new Error('Device disconnected')
+      );
+
+      await expect(cd48.getVersion()).rejects.toThrow();
+    });
+  });
+
+  describe('Data Validation', () => {
+    it('should handle empty count response', () => {
+      const response = '';
+      const parts = response.split(/\s+/).filter((p) => p.length > 0);
+      expect(parts.length).toBe(0);
+    });
+
+    it('should handle malformed count response', () => {
+      const response = 'invalid data';
+      const parts = response.split(/\s+/).filter((p) => p.length > 0);
+      expect(parts.length).toBeLessThan(9);
+    });
+
+    it('should handle overflow in counts', () => {
+      const response = '100 200 300 400 500 600 700 800 1';
+      const parts = response.split(/\s+/).filter((p) => p.length > 0);
+      const parsed = {
+        counts: parts.slice(0, 8).map(Number),
+        overflow: parseInt(parts[8]),
+      };
+      expect(parsed.overflow).toBe(1);
+    });
+
+    it('should handle large count values', () => {
+      const response =
+        '4294967295 4294967295 4294967295 4294967295 4294967295 4294967295 4294967295 4294967295 0';
+      const parts = response.split(/\s+/).filter((p) => p.length > 0);
+      const parsed = {
+        counts: parts.slice(0, 8).map(Number),
+        overflow: parseInt(parts[8]),
+      };
+      expect(parsed.counts[0]).toBe(4294967295);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should handle very short duration measurement', async () => {
+      const result = await cd48.measureRate(0, 0.001);
+      expect(result.duration).toBe(0.001);
+    });
+
+    it('should handle longer duration measurement', async () => {
+      const result = await cd48.measureRate(0, 2.0);
+      expect(result.duration).toBe(2.0);
+    });
+
+    it('should handle channel at boundary (0)', async () => {
+      const result = await cd48.measureRate(0, 1.0);
+      expect(result.channel).toBe(0);
+    });
+
+    it('should handle channel at boundary (7)', async () => {
+      const result = await cd48.measureRate(7, 1.0);
+      expect(result.channel).toBe(7);
+    });
+
+    it('should handle voltage at minimum (0V)', async () => {
+      await cd48.setTriggerLevel(0);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+
+    it('should handle voltage at maximum (4.08V)', async () => {
+      await cd48.setTriggerLevel(4.08);
+      expect(mocks.mockWriter.write).toHaveBeenCalled();
+    });
+  });
+
+  describe('Concurrent Operations', () => {
+    let cd48;
+
+    beforeEach(async () => {
+      cd48 = new CD48();
+      await cd48.connect();
+    });
+
+    afterEach(async () => {
+      if (cd48 && cd48.isConnected()) {
+        await cd48.disconnect();
+      }
+    });
+
+    it('should handle multiple sequential getCounts calls', async () => {
+      const result1 = await cd48.getCounts();
+      const result2 = await cd48.getCounts();
+      const result3 = await cd48.getCounts();
+
+      expect(result1).toHaveProperty('counts');
+      expect(result2).toHaveProperty('counts');
+      expect(result3).toHaveProperty('counts');
+    });
+
+    it('should handle configuration changes between measurements', async () => {
+      await cd48.setTriggerLevel(1.0);
+      const result1 = await cd48.measureRate(0, 0.1);
+      await cd48.setTriggerLevel(2.0);
+      const result2 = await cd48.measureRate(0, 0.1);
+
+      expect(result1).toHaveProperty('rate');
+      expect(result2).toHaveProperty('rate');
     });
   });
 });

@@ -20,17 +20,20 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 1. **Fork the repository** on GitHub
 
 2. **Clone your fork** locally:
+
    ```bash
    git clone https://github.com/YOUR-USERNAME/jscd48.git
    cd jscd48
    ```
 
 3. **Add the upstream repository**:
+
    ```bash
    git remote add upstream https://github.com/OpenPhysics/jscd48.git
    ```
 
 4. **Install dependencies**:
+
    ```bash
    npm install
    ```
@@ -40,11 +43,80 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
    npm run dev
    ```
 
+### Git Hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) to enforce code quality through Git hooks. When you run `npm install`, the following hooks are automatically set up:
+
+#### Pre-commit Hook
+
+Runs **before** each commit to ensure code quality:
+
+- ✅ Lints JavaScript files with ESLint (auto-fixes issues)
+- ✅ Formats all files with Prettier
+- ✅ Only checks staged files (via lint-staged)
+
+If any check fails, the commit will be aborted. Fix the issues and try again.
+
+#### Commit Message Hook
+
+Validates commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+- Must start with a type: `feat:`, `fix:`, `docs:`, etc.
+- Subject must be lowercase
+- Maximum header length: 100 characters
+
+**Valid examples:**
+
+```bash
+git commit -m "feat: add support for custom baud rates"
+git commit -m "fix: resolve count parsing issue"
+git commit -m "docs: update installation guide"
+```
+
+**Invalid examples:**
+
+```bash
+git commit -m "Added feature"           # Missing type
+git commit -m "Feat: Add feature"       # Subject not lowercase
+git commit -m "fix."                    # Ends with period
+```
+
+#### Pre-push Hook
+
+Runs **before** pushing to remote:
+
+- ✅ Runs all tests with `npm test`
+- ✅ Ensures tests pass before pushing
+
+If tests fail, the push will be aborted.
+
+#### Using Commitizen (Optional)
+
+For an interactive commit experience:
+
+```bash
+npm run commit
+```
+
+This launches an interactive prompt to help you write proper commit messages.
+
+#### Bypassing Hooks (Not Recommended)
+
+If you absolutely need to bypass hooks (e.g., work in progress):
+
+```bash
+git commit --no-verify -m "wip: work in progress"
+git push --no-verify
+```
+
+⚠️ **Warning:** Only use this for temporary commits. All commits to main must pass hook checks.
+
 ## Development Workflow
 
 ### Making Changes
 
 1. **Create a new branch** for your feature or fix:
+
    ```bash
    git checkout -b feature/my-new-feature
    # or
@@ -54,6 +126,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 2. **Make your changes** following our coding standards (see below)
 
 3. **Test your changes**:
+
    ```bash
    npm test                # Run tests
    npm run test:coverage   # Check coverage
@@ -62,6 +135,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
    ```
 
 4. **Format your code**:
+
    ```bash
    npm run format
    ```
@@ -87,6 +161,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` - Maintenance tasks
 
 **Examples:**
+
 ```
 feat: add support for custom baud rates
 fix: correct count parsing for overflow conditions
@@ -97,6 +172,7 @@ test: add tests for coincidence rate calculations
 ### Submitting a Pull Request
 
 1. **Push to your fork**:
+
    ```bash
    git push origin feature/my-new-feature
    ```
@@ -141,6 +217,7 @@ test: add tests for coincidence rate calculations
 - Update TypeScript definitions (cd48.d.ts)
 
 **Example:**
+
 ```javascript
 /**
  * Measure count rate on a channel.
@@ -161,6 +238,7 @@ async measureRate(channel = 0, duration = 1.0) {
 - Use descriptive test names
 
 **Example:**
+
 ```javascript
 describe('measureRate', () => {
   it('should calculate rate correctly for valid channel', async () => {
@@ -278,6 +356,7 @@ By contributing to jscd48, you agree that your contributions will be licensed un
 ## Recognition
 
 Contributors will be recognized in:
+
 - GitHub contributors list
 - Release notes for significant contributions
 

@@ -21,7 +21,10 @@
     "format": "prettier --write \"**/*.{js,json,md,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,html}\"",
     "docs": "jsdoc -c jsdoc.json",
-    "prepublishOnly": "npm run lint && npm run test && npm run format:check"
+    "prepublishOnly": "npm run lint && npm run test && npm run format:check",
+    "prepare": "husky",
+    "pre-commit": "lint-staged",
+    "commit": "cz"
   },
   "repository": {
     "type": "git",
@@ -47,12 +50,33 @@
     "access": "public"
   },
   "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
     "@vitest/coverage-v8": "^1.0.4",
     "@vitest/ui": "^1.0.4",
+    "better-docs": "^2.7.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.56.0",
+    "happy-dom": "^12.10.3",
+    "husky": "^9.0.0",
     "jsdoc": "^4.0.2",
+    "lint-staged": "^15.2.0",
     "prettier": "^3.1.1",
-    "vitest": "^1.0.4",
-    "happy-dom": "^12.10.3"
+    "vitest": "^1.0.4"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,html}": [
+      "prettier --write"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
