@@ -7,7 +7,7 @@ export default [
     files: ['**/*.js'],
     ignores: ['node_modules/', 'dist/', 'docs/', 'coverage/'],
     languageOptions: {
-      ecmaVersion: 2021,
+      ecmaVersion: 2022, // Support top-level await
       sourceType: 'module',
       globals: {
         // Browser globals

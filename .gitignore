@@ -25,6 +25,9 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
+tests/e2e-report/
+playwright-report/
+test-results/
 
 # Documentation
 docs/api/
