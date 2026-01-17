@@ -6,9 +6,11 @@
  * Base error class for CD48-related errors
  */
 export class CD48Error extends Error {
-  constructor(message) {
+  public override readonly name: string = 'CD48Error';
+
+  constructor(message: string) {
     super(message);
-    this.name = 'CD48Error';
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
@@ -16,11 +18,12 @@ export class CD48Error extends Error {
  * Error thrown when Web Serial API is not supported
  */
 export class UnsupportedBrowserError extends CD48Error {
+  public override readonly name: string = 'UnsupportedBrowserError';
+
   constructor() {
     super(
       'Web Serial API not supported. Use Chrome 89+, Edge 89+, or Opera 76+.'
     );
-    this.name = 'UnsupportedBrowserError';
   }
 }
 
@@ -28,11 +31,13 @@ export class UnsupportedBrowserError extends CD48Error {
  * Error thrown when device is not connected
  */
 export class NotConnectedError extends CD48Error {
-  constructor(operation) {
+  public override readonly name: string = 'NotConnectedError';
+  public readonly operation: string;
+
+  constructor(operation: string) {
     super(
       `Cannot perform operation '${operation}' - device not connected. Call connect() first.`
     );
-    this.name = 'NotConnectedError';
     this.operation = operation;
   }
 }
@@ -41,10 +46,12 @@ export class NotConnectedError extends CD48Error {
  * Error thrown when connection fails
  */
 export class ConnectionError extends CD48Error {
-  constructor(message, cause) {
+  public override readonly name: string = 'ConnectionError';
+  public readonly originalError: Error | undefined;
+
+  constructor(message: string, cause?: Error) {
     super(`Connection failed: ${message}`);
-    this.name = 'ConnectionError';
-    this.cause = cause;
+    this.originalError = cause;
   }
 }
 
@@ -52,9 +59,10 @@ export class ConnectionError extends CD48Error {
  * Error thrown when user cancels device selection
  */
 export class DeviceSelectionCancelledError extends CD48Error {
+  public override readonly name: string = 'DeviceSelectionCancelledError';
+
   constructor() {
     super('No CD48 device selected by user');
-    this.name = 'DeviceSelectionCancelledError';
   }
 }
 
@@ -62,9 +70,12 @@ export class DeviceSelectionCancelledError extends CD48Error {
  * Error thrown when command times out
  */
 export class CommandTimeoutError extends CD48Error {
-  constructor(command, timeout) {
+  public override readonly name: string = 'CommandTimeoutError';
+  public readonly command: string;
+  public readonly timeout: number;
+
+  constructor(command: string, timeout: number) {
     super(`Command '${command}' timed out after ${timeout}ms`);
-    this.name = 'CommandTimeoutError';
     this.command = command;
     this.timeout = timeout;
   }
@@ -74,9 +85,12 @@ export class CommandTimeoutError extends CD48Error {
  * Error thrown when response format is invalid
  */
 export class InvalidResponseError extends CD48Error {
-  constructor(response, expected) {
+  public override readonly name: string = 'InvalidResponseError';
+  public readonly response: string;
+  public readonly expected: string;
+
+  constructor(response: string, expected: string) {
     super(`Invalid response format. Got: '${response}', expected: ${expected}`);
-    this.name = 'InvalidResponseError';
     this.response = response;
     this.expected = expected;
   }
@@ -86,11 +100,15 @@ export class InvalidResponseError extends CD48Error {
  * Error thrown when parameter validation fails
  */
 export class ValidationError extends CD48Error {
-  constructor(parameter, value, constraints) {
+  public override readonly name: string = 'ValidationError';
+  public readonly parameter: string;
+  public readonly value: unknown;
+  public readonly constraints: string;
+
+  constructor(parameter: string, value: unknown, constraints: string) {
     super(
-      `Invalid parameter '${parameter}': ${value}. Constraints: ${constraints}`
+      `Invalid parameter '${parameter}': ${String(value)}. Constraints: ${constraints}`
     );
-    this.name = 'ValidationError';
     this.parameter = parameter;
     this.value = value;
     this.constraints = constraints;
@@ -101,9 +119,10 @@ export class ValidationError extends CD48Error {
  * Error thrown when channel number is out of range
  */
 export class InvalidChannelError extends ValidationError {
-  constructor(channel) {
+  public override readonly name: string = 'InvalidChannelError';
+
+  constructor(channel: number) {
     super('channel', channel, '0-7');
-    this.name = 'InvalidChannelError';
   }
 }
 
@@ -111,9 +130,10 @@ export class InvalidChannelError extends ValidationError {
  * Error thrown when voltage is out of range
  */
 export class InvalidVoltageError extends ValidationError {
-  constructor(voltage) {
+  public override readonly name: string = 'InvalidVoltageError';
+
+  constructor(voltage: number) {
     super('voltage', voltage, '0.0-4.08V');
-    this.name = 'InvalidVoltageError';
   }
 }
 
@@ -121,9 +141,11 @@ export class InvalidVoltageError extends ValidationError {
  * Error thrown when communication with device fails
  */
 export class CommunicationError extends CD48Error {
-  constructor(message, cause) {
+  public override readonly name: string = 'CommunicationError';
+  public readonly originalError: Error | undefined;
+
+  constructor(message: string, cause?: Error) {
     super(`Communication error: ${message}`);
-    this.name = 'CommunicationError';
-    this.cause = cause;
+    this.originalError = cause;
   }
 }

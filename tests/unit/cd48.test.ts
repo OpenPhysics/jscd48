@@ -5,14 +5,13 @@ import {
 } from '../mocks/web-serial.js';
 
 // Import error classes
-import { NotConnectedError, InvalidChannelError } from '../../errors.js';
+import { NotConnectedError, InvalidChannelError } from '../../src/errors.js';
 
-// Import CD48 after mocks are set up
-const CD48Module = await import('../../cd48.js');
-const CD48 = CD48Module.default || CD48Module;
+// Import CD48
+import CD48 from '../../src/cd48.js';
 
 describe('CD48', () => {
-  let mocks;
+  let mocks: ReturnType<typeof setupWebSerialMock>;
 
   beforeEach(() => {
     mocks = setupWebSerialMock();
@@ -25,15 +24,15 @@ describe('CD48', () => {
   describe('Constructor', () => {
     it('should create instance with default options', () => {
       const cd48 = new CD48();
-      expect(cd48.baudRate).toBe(115200);
-      expect(cd48.commandDelay).toBe(50);
-      expect(cd48.port).toBeNull();
+      expect((cd48 as unknown as { baudRate: number }).baudRate).toBe(115200);
+      expect((cd48 as unknown as { commandDelay: number }).commandDelay).toBe(50);
+      expect((cd48 as unknown as { port: unknown }).port).toBeNull();
     });
 
     it('should create instance with custom options', () => {
       const cd48 = new CD48({ baudRate: 9600, commandDelay: 100 });
-      expect(cd48.baudRate).toBe(9600);
-      expect(cd48.commandDelay).toBe(100);
+      expect((cd48 as unknown as { baudRate: number }).baudRate).toBe(9600);
+      expect((cd48 as unknown as { commandDelay: number }).commandDelay).toBe(100);
     });
   });
 
@@ -43,14 +42,14 @@ describe('CD48', () => {
     });
 
     it('should return false when Web Serial API is not available', () => {
-      delete global.navigator.serial;
+      delete (global.navigator as { serial?: unknown }).serial;
       expect(CD48.isSupported()).toBe(false);
     });
   });
 
   describe('Connection', () => {
     it('should throw error if Web Serial API not supported', async () => {
-      delete global.navigator.serial;
+      delete (global.navigator as { serial?: unknown }).serial;
       const cd48 = new CD48();
       await expect(cd48.connect()).rejects.toThrow(
         'Web Serial API not supported'
@@ -106,7 +105,7 @@ describe('CD48', () => {
   });
 
   describe('Channel configuration validation', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(() => {
       cd48 = new CD48();
@@ -133,7 +132,7 @@ describe('CD48', () => {
 
   describe('Voltage calculations', () => {
     it('should clamp trigger level voltage to valid range', () => {
-      const calculateByte = (voltage) =>
+      const calculateByte = (voltage: number): number =>
         Math.max(0, Math.min(255, Math.round((voltage / 4.08) * 255)));
 
       expect(calculateByte(-1.0)).toBe(0);
@@ -144,7 +143,7 @@ describe('CD48', () => {
     });
 
     it('should clamp DAC voltage to valid range', () => {
-      const calculateByte = (voltage) =>
+      const calculateByte = (voltage: number): number =>
         Math.max(0, Math.min(255, Math.round((voltage / 4.08) * 255)));
 
       expect(calculateByte(-1.0)).toBe(0);
@@ -164,7 +163,7 @@ describe('CD48', () => {
 
       const parsed = {
         counts: parts.slice(0, 8).map(Number),
-        overflow: parseInt(parts[8]),
+        overflow: parseInt(parts[8] ?? '0', 10),
       };
 
       expect(parsed.counts).toEqual([100, 200, 300, 400, 500, 600, 700, 800]);
@@ -204,18 +203,18 @@ describe('CD48', () => {
 
   describe('Repeat interval validation', () => {
     it('should clamp repeat interval to valid range', () => {
-      const clamp = (ms) => Math.max(100, Math.min(65535, ms));
+      const clampVal = (ms: number): number => Math.max(100, Math.min(65535, ms));
 
-      expect(clamp(50)).toBe(100);
-      expect(clamp(100)).toBe(100);
-      expect(clamp(1000)).toBe(1000);
-      expect(clamp(65535)).toBe(65535);
-      expect(clamp(70000)).toBe(65535);
+      expect(clampVal(50)).toBe(100);
+      expect(clampVal(100)).toBe(100);
+      expect(clampVal(1000)).toBe(1000);
+      expect(clampVal(65535)).toBe(65535);
+      expect(clampVal(70000)).toBe(65535);
     });
   });
 
   describe('Error handling', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(() => {
       cd48 = new CD48();
@@ -235,7 +234,7 @@ describe('CD48', () => {
   });
 
   describe('Commands', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -276,7 +275,7 @@ describe('CD48', () => {
   });
 
   describe('Trigger Level Configuration', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -313,7 +312,7 @@ describe('CD48', () => {
   });
 
   describe('DAC Configuration', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -343,7 +342,7 @@ describe('CD48', () => {
   });
 
   describe('Channel Configuration', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -368,7 +367,7 @@ describe('CD48', () => {
   });
 
   describe('Measurement Methods', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -435,7 +434,7 @@ describe('CD48', () => {
   });
 
   describe('LED Control', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -455,7 +454,7 @@ describe('CD48', () => {
   });
 
   describe('Impedance Configuration', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -480,7 +479,7 @@ describe('CD48', () => {
   });
 
   describe('Repeat Mode', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -515,7 +514,7 @@ describe('CD48', () => {
   });
 
   describe('Overflow and Settings', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -611,7 +610,7 @@ describe('CD48', () => {
       const parts = response.split(/\s+/).filter((p) => p.length > 0);
       const parsed = {
         counts: parts.slice(0, 8).map(Number),
-        overflow: parseInt(parts[8]),
+        overflow: parseInt(parts[8] ?? '0', 10),
       };
       expect(parsed.overflow).toBe(1);
     });
@@ -622,14 +621,14 @@ describe('CD48', () => {
       const parts = response.split(/\s+/).filter((p) => p.length > 0);
       const parsed = {
         counts: parts.slice(0, 8).map(Number),
-        overflow: parseInt(parts[8]),
+        overflow: parseInt(parts[8] ?? '0', 10),
       };
       expect(parsed.counts[0]).toBe(4294967295);
     });
   });
 
   describe('Edge Cases', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();
@@ -674,7 +673,7 @@ describe('CD48', () => {
   });
 
   describe('Concurrent Operations', () => {
-    let cd48;
+    let cd48: CD48;
 
     beforeEach(async () => {
       cd48 = new CD48();

@@ -1,48 +1,42 @@
 {
   "name": "jscd48",
-  "version": "1.0.0",
-  "description": "JavaScript interface for the CD48 Coincidence Counter using Web Serial API",
+  "version": "2.0.0",
+  "description": "TypeScript interface for the CD48 Coincidence Counter using Web Serial API",
   "type": "module",
-  "main": "cd48.js",
-  "types": "cd48.d.ts",
+  "main": "./dist/cd48.umd.js",
+  "module": "./dist/cd48.esm.js",
+  "types": "./dist/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./cd48.d.ts",
-      "import": "./cd48.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/cd48.esm.js",
       "require": "./dist/cd48.umd.js"
     },
     "./errors": {
-      "types": "./types/errors.d.ts",
-      "import": "./errors.js"
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js"
     },
     "./validation": {
-      "types": "./types/validation.d.ts",
-      "import": "./validation.js"
+      "types": "./dist/validation.d.ts",
+      "import": "./dist/validation.js"
     },
     "./analysis": {
-      "types": "./types/analysis.d.ts",
-      "import": "./analysis.js"
+      "types": "./dist/analysis.d.ts",
+      "import": "./dist/analysis.js"
     },
     "./calibration": {
-      "types": "./types/calibration.d.ts",
-      "import": "./calibration.js"
+      "types": "./dist/calibration.d.ts",
+      "import": "./dist/calibration.js"
     },
     "./dev-utils": {
-      "types": "./types/dev-utils.d.ts",
-      "import": "./dev-utils.js"
+      "types": "./dist/dev-utils.d.ts",
+      "import": "./dist/dev-utils.js"
     },
     "./dist/*": "./dist/*"
   },
   "files": [
-    "cd48.js",
-    "cd48.d.ts",
-    "errors.js",
-    "validation.js",
-    "analysis.js",
-    "calibration.js",
-    "dev-utils.js",
-    "types",
+    "src",
     "dist",
     "README.md",
     "LICENSE",
@@ -53,15 +47,17 @@
     "dev": "vite",
     "dev:legacy": "npx serve . --cors",
     "preview": "vite preview",
-    "build": "npm run build:unminified && npm run build:minified",
-    "build:unminified": "vite build --config vite.config.build.js",
-    "build:minified": "vite build --config vite.config.min.js",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "test:integration": "vitest --run tests/integration",
-    "test:bench": "vitest bench --run",
-    "test:bench:watch": "vitest bench",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && npm run build:types && npm run build:unminified && npm run build:minified",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build:unminified": "vite build --config vite.config.build.ts",
+    "build:minified": "vite build --config vite.config.min.ts",
+    "test": "vitest --config vitest.config.ts",
+    "test:ui": "vitest --ui --config vitest.config.ts",
+    "test:coverage": "vitest --coverage --config vitest.config.ts",
+    "test:integration": "vitest --run tests/integration --config vitest.config.ts",
+    "test:bench": "vitest bench --run --config vitest.config.ts",
+    "test:bench:watch": "vitest bench --config vitest.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:examples": "playwright test tests/e2e/examples.spec.js",
     "test:e2e:visual": "playwright test tests/e2e/visual-regression.spec.js",
@@ -72,10 +68,10 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report tests/e2e-report",
     "test:all": "npm run test && npm run test:integration && npm run test:e2e",
-    "lint": "eslint *.js examples/*.html",
-    "lint:fix": "eslint --fix *.js examples/*.html",
-    "format": "prettier --write \"**/*.{js,json,md,html}\"",
-    "format:check": "prettier --check \"**/*.{js,json,md,html}\"",
+    "lint": "eslint src tests --ext .ts,.js",
+    "lint:fix": "eslint --fix src tests --ext .ts,.js",
+    "format": "prettier --write \"**/*.{ts,js,json,md,html}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md,html}\"",
     "docs": "jsdoc -c jsdoc.json",
     "docs:serve": "npm run docs && npx serve docs",
     "prepublishOnly": "npm run build && npm run lint && npm run test && npm run format:check",
@@ -105,7 +101,8 @@
     "histogram",
     "time-series",
     "data-acquisition",
-    "lab-equipment"
+    "lab-equipment",
+    "typescript"
   ],
   "author": "OpenPhysics Contributors",
   "license": "MIT",
@@ -121,6 +118,8 @@
     "@commitlint/config-conventional": "^20.3.1",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.9",
+    "@types/w3c-web-serial": "^1.0.8",
     "@vitejs/plugin-legacy": "^7.2.1",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
@@ -137,6 +136,7 @@
     "prettier": "^3.8.0",
     "serve": "^14.2.4",
     "terser": "^5.46.0",
+    "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.17"
   },
@@ -144,7 +144,7 @@
     "tmp": "^0.2.5"
   },
   "lint-staged": {
-    "*.js": [
+    "*.{ts,js}": [
       "eslint --fix",
       "prettier --write"
     ],

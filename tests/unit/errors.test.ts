@@ -11,7 +11,7 @@ import {
   InvalidChannelError,
   InvalidVoltageError,
   CommunicationError,
-} from '../../errors.js';
+} from '../../src/errors.js';
 
 describe('CD48 Error Classes', () => {
   describe('CD48Error', () => {
@@ -50,7 +50,7 @@ describe('CD48 Error Classes', () => {
       expect(error.message).toContain('Connection failed');
       expect(error.message).toContain('port busy');
       expect(error.name).toBe('ConnectionError');
-      expect(error.cause).toBe(cause);
+      expect(error.originalError).toBe(cause);
       expect(error instanceof CD48Error).toBe(true);
     });
   });
@@ -134,7 +134,7 @@ describe('CD48 Error Classes', () => {
       expect(error.message).toContain('Communication error');
       expect(error.message).toContain('read failed');
       expect(error.name).toBe('CommunicationError');
-      expect(error.cause).toBe(cause);
+      expect(error.originalError).toBe(cause);
       expect(error instanceof CD48Error).toBe(true);
     });
   });

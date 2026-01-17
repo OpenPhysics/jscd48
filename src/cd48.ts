@@ -1,7 +1,7 @@
 /**
  * CD48 Coincidence Counter - Web Serial API Interface
  *
- * A JavaScript library for controlling the Red Dog Physics CD48
+ * A TypeScript library for controlling the Red Dog Physics CD48
  * Coincidence Counter via the Web Serial API.
  *
  * Requires Chrome 89+ or Edge 89+
@@ -28,24 +28,158 @@ import {
 
 import { validateChannel, voltageToByte } from './validation.js';
 
+/**
+ * CD48 configuration options
+ */
+export interface CD48Options {
+  /** Baud rate (default: 115200) */
+  baudRate?: number;
+  /** Delay after commands in ms (default: 50) */
+  commandDelay?: number;
+  /** Enable auto-reconnection (default: false) */
+  autoReconnect?: boolean;
+  /** Max reconnection attempts (default: 3) */
+  reconnectAttempts?: number;
+  /** Delay between reconnect attempts in ms (default: 1000) */
+  reconnectDelay?: number;
+  /** Minimum ms between commands (default: 0) */
+  rateLimitMs?: number;
+}
+
+/**
+ * Channel input configuration
+ */
+export interface ChannelInputs {
+  A?: 0 | 1;
+  B?: 0 | 1;
+  C?: 0 | 1;
+  D?: 0 | 1;
+}
+
+/**
+ * Count data from device
+ */
+export interface CountData {
+  counts: number[];
+  overflow: number;
+}
+
+/**
+ * Measurement uncertainty data
+ */
+export interface MeasurementUncertainty {
+  counts: number;
+  rate: number;
+  relative: number;
+}
+
+/**
+ * Rate measurement result
+ */
+export interface RateMeasurement {
+  counts: number;
+  duration: number;
+  rate: number;
+  channel: number;
+  uncertainty: MeasurementUncertainty;
+}
+
+/**
+ * Coincidence measurement uncertainty
+ */
+export interface CoincidenceUncertainty {
+  singlesA: number;
+  singlesB: number;
+  coincidences: number;
+  rateA: number;
+  rateB: number;
+  coincidenceRate: number;
+  accidentalRate: number;
+  trueCoincidenceRate: number;
+}
+
+/**
+ * Coincidence measurement options
+ */
+export interface CoincidenceMeasurementOptions {
+  /** Measurement duration in seconds */
+  duration?: number;
+  /** Channel for singles A (default: 0) */
+  singlesAChannel?: number;
+  /** Channel for singles B (default: 1) */
+  singlesBChannel?: number;
+  /** Channel for coincidences (default: 4) */
+  coincidenceChannel?: number;
+  /** Window in seconds (default: 25e-9) */
+  coincidenceWindow?: number;
+}
+
+/**
+ * Coincidence measurement result
+ */
+export interface CoincidenceMeasurement {
+  singlesA: number;
+  singlesB: number;
+  coincidences: number;
+  duration: number;
+  rateA: number;
+  rateB: number;
+  coincidenceRate: number;
+  accidentalRate: number;
+  trueCoincidenceRate: number;
+  uncertainty: CoincidenceUncertainty;
+}
+
+/**
+ * Disconnect callback type
+ */
+export type DisconnectCallback = () => void;
+
+/**
+ * Reconnect callback type
+ */
+export type ReconnectCallback = () => void;
+
+/**
+ * Read result with timeout flag
+ */
+interface ReadResult {
+  value: string;
+  done: boolean;
+  timeout?: boolean;
+}
+
+/**
+ * CD48 Coincidence Counter interface class
+ */
 class CD48 {
+  private readonly baudRate: number;
+  private readonly commandDelay: number;
+  private readonly autoReconnect: boolean;
+  private readonly reconnectAttempts: number;
+  private readonly reconnectDelay: number;
+  private readonly rateLimitMs: number;
+  private port: SerialPort | null;
+  private reader: ReadableStreamDefaultReader<string> | null;
+  private writer: WritableStreamDefaultWriter<string> | null;
+  private readableStreamClosed: Promise<void> | null;
+  private writableStreamClosed: Promise<void> | null;
+  private _lastCommandTime: number;
+  private _reconnecting: boolean;
+  private _onDisconnect: DisconnectCallback | null;
+  private _onReconnect: ReconnectCallback | null;
+
   /**
    * Create a CD48 interface instance.
-   * @param {Object} options - Configuration options
-   * @param {number} options.baudRate - Baud rate (default: 115200)
-   * @param {number} options.commandDelay - Delay after commands in ms (default: 50)
-   * @param {boolean} options.autoReconnect - Enable auto-reconnection (default: false)
-   * @param {number} options.reconnectAttempts - Max reconnection attempts (default: 3)
-   * @param {number} options.reconnectDelay - Delay between reconnect attempts in ms (default: 1000)
-   * @param {number} options.rateLimitMs - Minimum ms between commands (default: 0)
+   * @param options - Configuration options
    */
-  constructor(options = {}) {
-    this.baudRate = options.baudRate || 115200;
-    this.commandDelay = options.commandDelay || 50;
-    this.autoReconnect = options.autoReconnect || false;
-    this.reconnectAttempts = options.reconnectAttempts || 3;
-    this.reconnectDelay = options.reconnectDelay || 1000;
-    this.rateLimitMs = options.rateLimitMs || 0;
+  constructor(options: CD48Options = {}) {
+    this.baudRate = options.baudRate ?? 115200;
+    this.commandDelay = options.commandDelay ?? 50;
+    this.autoReconnect = options.autoReconnect ?? false;
+    this.reconnectAttempts = options.reconnectAttempts ?? 3;
+    this.reconnectDelay = options.reconnectDelay ?? 1000;
+    this.rateLimitMs = options.rateLimitMs ?? 0;
     this.port = null;
     this.reader = null;
     this.writer = null;
@@ -59,34 +193,34 @@ class CD48 {
 
   /**
    * Set callback for disconnect events.
-   * @param {Function} callback - Function called on disconnect
+   * @param callback - Function called on disconnect
    */
-  onDisconnect(callback) {
+  onDisconnect(callback: DisconnectCallback): void {
     this._onDisconnect = callback;
   }
 
   /**
    * Set callback for reconnect events.
-   * @param {Function} callback - Function called on successful reconnect
+   * @param callback - Function called on successful reconnect
    */
-  onReconnect(callback) {
+  onReconnect(callback: ReconnectCallback): void {
     this._onReconnect = callback;
   }
 
   /**
    * Check if Web Serial API is supported.
-   * @returns {boolean}
+   * @returns True if supported
    */
-  static isSupported() {
+  static isSupported(): boolean {
     return 'serial' in navigator;
   }
 
   /**
    * Connect to the CD48 device.
    * Opens a serial port picker dialog for the user.
-   * @returns {Promise<boolean>} True if connected successfully
+   * @returns True if connected successfully
    */
-  async connect() {
+  async connect(): Promise<boolean> {
     if (!CD48.isSupported()) {
       throw new UnsupportedBrowserError();
     }
@@ -100,27 +234,45 @@ class CD48 {
       await this._setupConnection();
       return true;
     } catch (error) {
-      if (error.name === 'NotFoundError') {
+      if (error instanceof Error && error.name === 'NotFoundError') {
         throw new DeviceSelectionCancelledError();
       }
-      throw new ConnectionError(error.message, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCause = error instanceof Error ? error : undefined;
+      throw new ConnectionError(errorMessage, errorCause);
     }
   }
 
   /**
    * Set up connection streams after port is opened.
-   * @private
    */
-  async _setupConnection() {
+  private async _setupConnection(): Promise<void> {
+    if (!this.port) {
+      throw new ConnectionError('No port available');
+    }
+
     await this.port.open({ baudRate: this.baudRate });
 
     // Set up reader and writer
     const textDecoder = new TextDecoderStream();
-    this.readableStreamClosed = this.port.readable.pipeTo(textDecoder.writable);
+    const readable = this.port.readable;
+    if (!readable) {
+      throw new ConnectionError('Port readable stream not available');
+    }
+    // Use type assertion for Web Serial API compatibility
+    this.readableStreamClosed = (readable as ReadableStream<Uint8Array>).pipeTo(
+      textDecoder.writable as WritableStream<Uint8Array>
+    );
     this.reader = textDecoder.readable.getReader();
 
     const textEncoder = new TextEncoderStream();
-    this.writableStreamClosed = textEncoder.readable.pipeTo(this.port.writable);
+    const writable = this.port.writable;
+    if (!writable) {
+      throw new ConnectionError('Port writable stream not available');
+    }
+    this.writableStreamClosed = textEncoder.readable.pipeTo(
+      writable as WritableStream<Uint8Array>
+    );
     this.writer = textEncoder.writable.getWriter();
 
     // Wait for device to initialize
@@ -129,9 +281,9 @@ class CD48 {
 
   /**
    * Attempt to reconnect to the device.
-   * @returns {Promise<boolean>} True if reconnected successfully
+   * @returns True if reconnected successfully
    */
-  async reconnect() {
+  async reconnect(): Promise<boolean> {
     if (this._reconnecting) {
       return false;
     }
@@ -168,10 +320,9 @@ class CD48 {
 
   /**
    * Attempt auto-reconnection with retries.
-   * @returns {Promise<boolean>} True if reconnected successfully
-   * @private
+   * @returns True if reconnected successfully
    */
-  async _attemptAutoReconnect() {
+  private async _attemptAutoReconnect(): Promise<boolean> {
     if (!this.autoReconnect || this._reconnecting) {
       return false;
     }
@@ -193,13 +344,14 @@ class CD48 {
 
   /**
    * Clean up connection resources.
-   * @private
    */
-  async _cleanupConnection() {
+  private async _cleanupConnection(): Promise<void> {
     if (this.reader) {
       try {
         await this.reader.cancel();
-        await this.readableStreamClosed.catch(() => {});
+        if (this.readableStreamClosed) {
+          await this.readableStreamClosed.catch(() => {});
+        }
       } catch {
         // Ignore cleanup errors
       }
@@ -208,7 +360,9 @@ class CD48 {
     if (this.writer) {
       try {
         await this.writer.close();
-        await this.writableStreamClosed;
+        if (this.writableStreamClosed) {
+          await this.writableStreamClosed;
+        }
       } catch {
         // Ignore cleanup errors
       }
@@ -227,7 +381,7 @@ class CD48 {
   /**
    * Disconnect from the CD48 device.
    */
-  async disconnect() {
+  async disconnect(): Promise<void> {
     await this._cleanupConnection();
     if (this._onDisconnect) {
       this._onDisconnect();
@@ -236,26 +390,24 @@ class CD48 {
 
   /**
    * Check if connected to device.
-   * @returns {boolean}
+   * @returns True if connected
    */
-  isConnected() {
+  isConnected(): boolean {
     return this.port !== null && this.reader !== null;
   }
 
   /**
    * Sleep for specified milliseconds.
-   * @param {number} ms - Milliseconds to sleep
-   * @returns {Promise}
+   * @param ms - Milliseconds to sleep
    */
-  sleep(ms) {
+  sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
    * Apply rate limiting between commands.
-   * @private
    */
-  async _applyRateLimit() {
+  private async _applyRateLimit(): Promise<void> {
     if (this.rateLimitMs > 0) {
       const elapsed = Date.now() - this._lastCommandTime;
       if (elapsed < this.rateLimitMs) {
@@ -267,10 +419,10 @@ class CD48 {
 
   /**
    * Send a command and read the response.
-   * @param {string} command - Command to send
-   * @returns {Promise<string>} Response from device
+   * @param command - Command to send
+   * @returns Response from device
    */
-  async sendCommand(command) {
+  async sendCommand(command: string): Promise<string> {
     if (!this.isConnected()) {
       // Attempt auto-reconnect if enabled
       if (this.autoReconnect) {
@@ -287,6 +439,10 @@ class CD48 {
     await this._applyRateLimit();
 
     try {
+      if (!this.writer || !this.reader) {
+        throw new NotConnectedError('sendCommand');
+      }
+
       // Clear any pending data
       await this.writer.write(command + '\r');
       await this.sleep(this.commandDelay);
@@ -297,17 +453,19 @@ class CD48 {
       const timeout = 1000;
 
       while (Date.now() - startTime < timeout) {
-        const { value, done } = await Promise.race([
-          this.reader.read(),
-          this.sleep(100).then(() => ({
-            value: '',
-            done: false,
-            timeout: true,
-          })),
-        ]);
+        const readPromise: Promise<ReadResult> = this.reader.read().then(
+          (result) => ({ value: result.value ?? '', done: result.done })
+        );
+        const timeoutPromise: Promise<ReadResult> = this.sleep(100).then(() => ({
+          value: '',
+          done: false,
+          timeout: true,
+        }));
 
-        if (done) break;
-        if (value) response += value;
+        const result = await Promise.race([readPromise, timeoutPromise]);
+
+        if (result.done) break;
+        if (result.value) response += result.value;
 
         // Check if we have a complete response
         if (response.includes('\r') || response.includes('\n')) {
@@ -328,32 +486,36 @@ class CD48 {
       ) {
         throw error;
       }
-      throw new CommunicationError(error.message, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCause = error instanceof Error ? error : undefined;
+      throw new CommunicationError(errorMessage, errorCause);
     }
   }
 
   /**
    * Get firmware version.
-   * @returns {Promise<string>}
+   * @returns Firmware version string
    */
-  async getVersion() {
+  async getVersion(): Promise<string> {
     return await this.sendCommand('v');
   }
 
   /**
    * Get help text from device.
-   * @returns {Promise<string>}
+   * @returns Help text
    */
-  async getHelp() {
+  async getHelp(): Promise<string> {
     return await this.sendCommand('H');
   }
 
   /**
    * Get current counts from all channels.
-   * @param {boolean} humanReadable - If true, returns formatted string
-   * @returns {Promise<Object|string>} Counts data or formatted string
+   * @param humanReadable - If true, returns formatted string
+   * @returns Counts data or formatted string
    */
-  async getCounts(humanReadable = false) {
+  async getCounts(humanReadable: true): Promise<string>;
+  async getCounts(humanReadable?: false): Promise<CountData>;
+  async getCounts(humanReadable = false): Promise<CountData | string> {
     if (humanReadable) {
       return await this.sendCommand('C');
     }
@@ -364,7 +526,7 @@ class CD48 {
     if (parts.length >= 9) {
       return {
         counts: parts.slice(0, 8).map(Number),
-        overflow: parseInt(parts[8]),
+        overflow: parseInt(parts[8] ?? '0', 10),
       };
     }
 
@@ -374,40 +536,37 @@ class CD48 {
   /**
    * Clear all counters by reading them.
    */
-  async clearCounts() {
+  async clearCounts(): Promise<void> {
     await this.getCounts(false);
   }
 
   /**
    * Get current settings.
-   * @param {boolean} humanReadable - If true, returns formatted string
-   * @returns {Promise<string>}
+   * @param humanReadable - If true, returns formatted string
+   * @returns Settings string
    */
-  async getSettings(humanReadable = true) {
+  async getSettings(humanReadable = true): Promise<string> {
     return await this.sendCommand(humanReadable ? 'P' : 'p');
   }
 
   /**
    * Configure a counter channel.
-   * @param {number} channel - Channel number (0-7)
-   * @param {Object} inputs - Input configuration
-   * @param {number} inputs.A - Enable input A (0 or 1)
-   * @param {number} inputs.B - Enable input B (0 or 1)
-   * @param {number} inputs.C - Enable input C (0 or 1)
-   * @param {number} inputs.D - Enable input D (0 or 1)
-   * @returns {Promise<string>}
+   * @param channel - Channel number (0-7)
+   * @param inputs - Input configuration
+   * @returns Response from device
    */
-  async setChannel(channel, { A = 0, B = 0, C = 0, D = 0 } = {}) {
+  async setChannel(channel: number, inputs: ChannelInputs = {}): Promise<string> {
     validateChannel(channel);
+    const { A = 0, B = 0, C = 0, D = 0 } = inputs;
     return await this.sendCommand(`S${channel}${A}${B}${C}${D}`);
   }
 
   /**
    * Set trigger level voltage.
-   * @param {number} voltage - Voltage threshold (0.0 to 4.08V)
-   * @returns {Promise<string>}
+   * @param voltage - Voltage threshold (0.0 to 4.08V)
+   * @returns Response from device
    */
-  async setTriggerLevel(voltage) {
+  async setTriggerLevel(voltage: number): Promise<string> {
     // Clamp voltage to valid range instead of throwing
     const byteVal = voltageToByte(voltage);
     return await this.sendCommand(`L${byteVal}`);
@@ -415,53 +574,53 @@ class CD48 {
 
   /**
    * Get trigger level as voltage.
-   * @param {number} byteValue - Raw byte value (0-255)
-   * @returns {number} Voltage (0.0 to 4.08V)
+   * @param byteValue - Raw byte value (0-255)
+   * @returns Voltage (0.0 to 4.08V)
    */
-  static byteToVoltage(byteValue) {
+  static byteToVoltage(byteValue: number): number {
     return (byteValue / 255) * 4.08;
   }
 
   /**
    * Set input impedance to 50 Ohms.
-   * @returns {Promise<string>}
+   * @returns Response from device
    */
-  async setImpedance50Ohm() {
+  async setImpedance50Ohm(): Promise<string> {
     return await this.sendCommand('z');
   }
 
   /**
    * Set input impedance to High-Z.
-   * @returns {Promise<string>}
+   * @returns Response from device
    */
-  async setImpedanceHighZ() {
+  async setImpedanceHighZ(): Promise<string> {
     return await this.sendCommand('Z');
   }
 
   /**
    * Set automatic repeat interval.
-   * @param {number} intervalMs - Interval in milliseconds (100-65535)
-   * @returns {Promise<string>}
+   * @param intervalMs - Interval in milliseconds (100-65535)
+   * @returns Response from device
    */
-  async setRepeat(intervalMs) {
+  async setRepeat(intervalMs: number): Promise<string> {
     const clamped = Math.max(100, Math.min(65535, intervalMs));
     return await this.sendCommand(`r${clamped}`);
   }
 
   /**
    * Toggle automatic repeat mode.
-   * @returns {Promise<string>}
+   * @returns Response from device
    */
-  async toggleRepeat() {
+  async toggleRepeat(): Promise<string> {
     return await this.sendCommand('R');
   }
 
   /**
    * Set DAC output voltage.
-   * @param {number} voltage - Output voltage (0.0 to 4.08V)
-   * @returns {Promise<string>}
+   * @param voltage - Output voltage (0.0 to 4.08V)
+   * @returns Response from device
    */
-  async setDacVoltage(voltage) {
+  async setDacVoltage(voltage: number): Promise<string> {
     const byteVal = Math.max(
       0,
       Math.min(255, Math.round((voltage / 4.08) * 255))
@@ -471,34 +630,34 @@ class CD48 {
 
   /**
    * Get and clear overflow status.
-   * @returns {Promise<number>} 8-bit overflow flag
+   * @returns 8-bit overflow flag
    */
-  async getOverflow() {
+  async getOverflow(): Promise<number> {
     const response = await this.sendCommand('E');
-    return parseInt(response);
+    return parseInt(response, 10);
   }
 
   /**
    * Test all LEDs (lights for 1 second).
-   * @returns {Promise<string>}
+   * @returns Response from device
    */
-  async testLeds() {
+  async testLeds(): Promise<string> {
     return await this.sendCommand('T');
   }
 
   /**
    * Measure count rate on a channel with Poisson uncertainty.
-   * @param {number} channel - Channel number (0-7)
-   * @param {number} duration - Measurement duration in seconds
-   * @returns {Promise<Object>} Rate measurement result with uncertainties
+   * @param channel - Channel number (0-7)
+   * @param duration - Measurement duration in seconds
+   * @returns Rate measurement result with uncertainties
    */
-  async measureRate(channel = 0, duration = 1.0) {
+  async measureRate(channel = 0, duration = 1.0): Promise<RateMeasurement> {
     validateChannel(channel);
 
     await this.clearCounts();
     await this.sleep(duration * 1000);
     const data = await this.getCounts(false);
-    const counts = data.counts[channel];
+    const counts = data.counts[channel] ?? 0;
     const rate = counts / duration;
 
     // Poisson uncertainty: sigma_N = sqrt(N)
@@ -524,28 +683,27 @@ class CD48 {
 
   /**
    * Measure coincidence rate with accidental correction and uncertainties.
-   * @param {Object} options - Measurement options
-   * @param {number} options.duration - Measurement duration in seconds
-   * @param {number} options.singlesAChannel - Channel for singles A (default: 0)
-   * @param {number} options.singlesBChannel - Channel for singles B (default: 1)
-   * @param {number} options.coincidenceChannel - Channel for coincidences (default: 4)
-   * @param {number} options.coincidenceWindow - Window in seconds (default: 25e-9)
-   * @returns {Promise<Object>} Coincidence measurement result with uncertainties
+   * @param options - Measurement options
+   * @returns Coincidence measurement result with uncertainties
    */
-  async measureCoincidenceRate({
-    duration = 1.0,
-    singlesAChannel = 0,
-    singlesBChannel = 1,
-    coincidenceChannel = 4,
-    coincidenceWindow = 25e-9,
-  } = {}) {
+  async measureCoincidenceRate(
+    options: CoincidenceMeasurementOptions = {}
+  ): Promise<CoincidenceMeasurement> {
+    const {
+      duration = 1.0,
+      singlesAChannel = 0,
+      singlesBChannel = 1,
+      coincidenceChannel = 4,
+      coincidenceWindow = 25e-9,
+    } = options;
+
     await this.clearCounts();
     await this.sleep(duration * 1000);
     const data = await this.getCounts(false);
 
-    const singlesA = data.counts[singlesAChannel];
-    const singlesB = data.counts[singlesBChannel];
-    const coincidences = data.counts[coincidenceChannel];
+    const singlesA = data.counts[singlesAChannel] ?? 0;
+    const singlesB = data.counts[singlesBChannel] ?? 0;
+    const coincidences = data.counts[coincidenceChannel] ?? 0;
 
     const rateA = singlesA / duration;
     const rateB = singlesB / duration;
@@ -599,7 +757,4 @@ class CD48 {
   }
 }
 
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = CD48;
-}
+export default CD48;

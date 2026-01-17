@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 
 /**
  * Mock Web Serial API for testing CD48 library
@@ -7,14 +7,69 @@ import { vi } from 'vitest';
  * that can be used in unit and integration tests.
  */
 
+interface MockSerialPortOptions {
+  responses?: Record<string, string | (() => string)>;
+  simulateDisconnect?: boolean;
+  simulateNoDeviceSelected?: boolean;
+  responseDelay?: number;
+  hasPreviousPort?: boolean;
+}
+
+interface MockReader {
+  read: Mock<() => Promise<{ value: string; done: boolean }>>;
+  cancel: Mock<() => Promise<void>>;
+  releaseLock: Mock<() => void>;
+}
+
+interface MockWriter {
+  write: Mock<(data: string) => Promise<void>>;
+  close: Mock<() => Promise<void>>;
+  releaseLock: Mock<() => void>;
+}
+
+interface MockReadable {
+  getReader: Mock<() => MockReader>;
+  pipeTo: Mock<() => Promise<void>>;
+}
+
+interface MockWritable {
+  getWriter: Mock<() => MockWriter>;
+  pipeTo: Mock<() => Promise<void>>;
+}
+
+interface MockSerialPort {
+  open: Mock<(options: { baudRate: number }) => Promise<void>>;
+  close: Mock<() => Promise<void>>;
+  readable: MockReadable;
+  writable: MockWritable;
+  getInfo: Mock<() => { usbVendorId: number; usbProductId: number }>;
+  _getCommandQueue: () => string[];
+  _clearCommandQueue: () => void;
+  _setResponse: (command: string, response: string) => void;
+  _queueResponse: (response: string) => void;
+  _mockReader: MockReader;
+  _mockWriter: MockWriter;
+}
+
+interface MockNavigatorSerial {
+  requestPort: Mock<(filters?: SerialPortRequestOptions) => Promise<MockSerialPort>>;
+  getPorts: Mock<() => Promise<MockSerialPort[]>>;
+  addEventListener: Mock<() => void>;
+  removeEventListener: Mock<() => void>;
+  _mockPort: MockSerialPort;
+}
+
+interface SetupMockResult {
+  mockSerial: MockNavigatorSerial;
+  mockPort: MockSerialPort;
+  mockReader: MockReader;
+  mockWriter: MockWriter;
+}
+
 /**
  * Create a mock serial port with configurable behavior
- * @param {Object} options - Configuration options
- * @param {Object} options.responses - Map of commands to responses
- * @param {boolean} options.simulateDisconnect - Whether to simulate disconnection
- * @param {number} options.responseDelay - Delay in ms before responses
  */
-export function createMockSerialPort(options = {}) {
+export function createMockSerialPort(options: MockSerialPortOptions = {}): MockSerialPort {
   const {
     responses = {
       'v\r': 'CD48 v1.0.0\r\n',
@@ -32,18 +87,18 @@ export function createMockSerialPort(options = {}) {
   } = options;
 
   let isOpen = false;
-  let commandQueue = [];
-  let responseQueue = [];
+  let commandQueue: string[] = [];
+  let responseQueue: string[] = [];
 
   // Mock reader
-  const mockReader = {
+  const mockReader: MockReader = {
     read: vi.fn(async () => {
       if (simulateDisconnect) {
         return { value: '', done: true };
       }
 
       if (responseQueue.length > 0) {
-        const value = responseQueue.shift();
+        const value = responseQueue.shift()!;
         if (responseDelay > 0) {
           await new Promise((resolve) => setTimeout(resolve, responseDelay));
         }
@@ -60,8 +115,8 @@ export function createMockSerialPort(options = {}) {
   };
 
   // Mock writer
-  const mockWriter = {
-    write: vi.fn(async (data) => {
+  const mockWriter: MockWriter = {
+    write: vi.fn(async (data: string) => {
       if (simulateDisconnect) {
         throw new Error('Device disconnected');
       }
@@ -69,7 +124,8 @@ export function createMockSerialPort(options = {}) {
       commandQueue.push(data);
 
       // Add response to queue based on command
-      const response = responses[data] || 'OK\r\n';
+      const responseValue = responses[data];
+      const response = typeof responseValue === 'function' ? responseValue() : (responseValue ?? 'OK\r\n');
       responseQueue.push(response);
     }),
     close: vi.fn(async () => {
@@ -79,7 +135,7 @@ export function createMockSerialPort(options = {}) {
   };
 
   // Mock readable stream
-  const mockReadable = {
+  const mockReadable: MockReadable = {
     getReader: vi.fn(() => mockReader),
     pipeTo: vi.fn(async () => {
       // Simulate stream setup
@@ -88,7 +144,7 @@ export function createMockSerialPort(options = {}) {
   };
 
   // Mock writable stream
-  const mockWritable = {
+  const mockWritable: MockWritable = {
     getWriter: vi.fn(() => mockWriter),
     pipeTo: vi.fn(async () => {
       // Simulate stream setup
@@ -97,8 +153,8 @@ export function createMockSerialPort(options = {}) {
   };
 
   // Mock serial port
-  const mockPort = {
-    open: vi.fn(async ({ baudRate }) => {
+  const mockPort: MockSerialPort = {
+    open: vi.fn(async () => {
       if (isOpen) {
         throw new Error('Port already open');
       }
@@ -120,10 +176,10 @@ export function createMockSerialPort(options = {}) {
     _clearCommandQueue: () => {
       commandQueue = [];
     },
-    _setResponse: (command, response) => {
-      responses[command] = response;
+    _setResponse: (command: string, response: string) => {
+      (responses as Record<string, string>)[command] = response;
     },
-    _queueResponse: (response) => {
+    _queueResponse: (response: string) => {
       responseQueue.push(response);
     },
     _mockReader: mockReader,
@@ -135,15 +191,16 @@ export function createMockSerialPort(options = {}) {
 
 /**
  * Create a mock navigator.serial object
- * @param {Object} options - Configuration options
  */
-export function createMockNavigatorSerial(options = {}) {
+export function createMockNavigatorSerial(options: MockSerialPortOptions = {}): MockNavigatorSerial {
   const mockPort = createMockSerialPort(options);
 
   return {
-    requestPort: vi.fn(async (filters) => {
+    requestPort: vi.fn(async () => {
       if (options.simulateNoDeviceSelected) {
-        throw new Error('No port selected by the user');
+        const error = new Error('No port selected by the user');
+        (error as Error & { name: string }).name = 'NotFoundError';
+        throw error;
       }
       return mockPort;
     }),
@@ -159,13 +216,47 @@ export function createMockNavigatorSerial(options = {}) {
   };
 }
 
+// Extend global types for the mock
+declare global {
+  // eslint-disable-next-line no-var
+  var navigator: Navigator & { serial?: MockNavigatorSerial };
+  // eslint-disable-next-line no-var
+  var TextDecoderStream: typeof MockTextDecoderStream;
+  // eslint-disable-next-line no-var
+  var TextEncoderStream: typeof MockTextEncoderStream;
+}
+
+class MockTextDecoderStream {
+  public writable: object;
+  public readable: { getReader: () => MockReader };
+
+  constructor(mockReader: MockReader) {
+    this.writable = {};
+    this.readable = {
+      getReader: () => mockReader,
+    };
+  }
+}
+
+class MockTextEncoderStream {
+  public readable: { pipeTo: Mock<() => Promise<void>> };
+  public writable: { getWriter: () => MockWriter };
+
+  constructor(mockWriter: MockWriter) {
+    this.readable = {
+      pipeTo: vi.fn(async () => Promise.resolve()),
+    };
+    this.writable = {
+      getWriter: () => mockWriter,
+    };
+  }
+}
+
 /**
  * Setup global Web Serial API mocks
  * Call this in your test setup (beforeEach)
- * @param {Object} options - Configuration options
- * @returns {Object} Mock objects for inspection
  */
-export function setupWebSerialMock(options = {}) {
+export function setupWebSerialMock(options: MockSerialPortOptions = {}): SetupMockResult {
   const mockSerial = createMockNavigatorSerial(options);
   const mockPort = mockSerial._mockPort;
 
@@ -173,29 +264,21 @@ export function setupWebSerialMock(options = {}) {
   global.navigator = {
     ...global.navigator,
     serial: mockSerial,
-  };
+  } as Navigator & { serial: MockNavigatorSerial };
 
   // Setup TextDecoderStream
-  global.TextDecoderStream = class MockTextDecoderStream {
+  global.TextDecoderStream = class extends MockTextDecoderStream {
     constructor() {
-      this.writable = {};
-      this.readable = {
-        getReader: () => mockPort._mockReader,
-      };
+      super(mockPort._mockReader);
     }
-  };
+  } as typeof MockTextDecoderStream;
 
   // Setup TextEncoderStream
-  global.TextEncoderStream = class MockTextEncoderStream {
+  global.TextEncoderStream = class extends MockTextEncoderStream {
     constructor() {
-      this.readable = {
-        pipeTo: vi.fn(async () => Promise.resolve()),
-      };
-      this.writable = {
-        getWriter: () => mockPort._mockWriter,
-      };
+      super(mockPort._mockWriter);
     }
-  };
+  } as typeof MockTextEncoderStream;
 
   return {
     mockSerial,
@@ -209,23 +292,23 @@ export function setupWebSerialMock(options = {}) {
  * Cleanup Web Serial API mocks
  * Call this in your test teardown (afterEach)
  */
-export function cleanupWebSerialMock() {
-  delete global.navigator.serial;
-  delete global.TextDecoderStream;
-  delete global.TextEncoderStream;
+export function cleanupWebSerialMock(): void {
+  delete (global.navigator as Navigator & { serial?: MockNavigatorSerial }).serial;
+  delete (global as { TextDecoderStream?: typeof MockTextDecoderStream }).TextDecoderStream;
+  delete (global as { TextEncoderStream?: typeof MockTextEncoderStream }).TextEncoderStream;
 }
 
 /**
  * Create a mock port that simulates realistic CD48 responses
  */
-export function createRealisticMockPort() {
-  let counts = [100, 200, 150, 80, 25, 10, 5, 120];
+export function createRealisticMockPort(): MockSerialPort {
+  const counts = [100, 200, 150, 80, 25, 10, 5, 120];
   let overflow = 0;
-  let triggerLevel = 128;
-  let dacVoltage = 0;
+  const triggerLevel = 128;
+  const dacVoltage = 0;
   let impedance = 'highz';
-  let repeatInterval = 1000;
   let repeatEnabled = false;
+  const repeatInterval = 1000;
 
   return createMockSerialPort({
     responses: {
