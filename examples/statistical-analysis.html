@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,8 +12,9 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
         background: linear-gradient(135deg, #0f0f1e 0%, #1a1f3a 100%);
         color: #eee;
         min-height: 100vh;
@@ -227,9 +228,7 @@
         <button id="collectBtn" class="secondary" disabled>
           Collect Data (30s)
         </button>
-        <button id="analyzeBtn" class="secondary" disabled>
-          Analyze Data
-        </button>
+        <button id="analyzeBtn" class="secondary" disabled>Analyze Data</button>
         <button id="generateHistBtn" class="secondary" disabled>
           Generate Histogram
         </button>
@@ -363,7 +362,10 @@
           const channel = parseInt(channelSelect.value);
           const duration = 30; // seconds
           collectBtn.disabled = true;
-          log(`Starting ${duration}s data collection on channel ${channel}...`, 'info');
+          log(
+            `Starting ${duration}s data collection on channel ${channel}...`,
+            'info'
+          );
 
           collectedData = [];
           timeStamps = [];
@@ -384,7 +386,10 @@
                 collectBtn.disabled = false;
                 analyzeBtn.disabled = false;
                 generateHistBtn.disabled = false;
-                log(`Data collection complete: ${collectedData.length} samples`, 'success');
+                log(
+                  `Data collection complete: ${collectedData.length} samples`,
+                  'success'
+                );
               }
             } catch (error) {
               clearInterval(interval);
@@ -410,27 +415,42 @@
           // Calculate summary statistics
           const stats = Statistics.summary(collectedData);
           document.getElementById('statCount').textContent = stats.count;
-          document.getElementById('statMean').textContent = stats.mean.toFixed(2);
-          document.getElementById('statMedian').textContent = stats.median.toFixed(2);
+          document.getElementById('statMean').textContent =
+            stats.mean.toFixed(2);
+          document.getElementById('statMedian').textContent =
+            stats.median.toFixed(2);
           document.getElementById('statStd').textContent = stats.std.toFixed(2);
-          document.getElementById('statVariance').textContent = stats.variance.toFixed(2);
+          document.getElementById('statVariance').textContent =
+            stats.variance.toFixed(2);
           document.getElementById('statMin').textContent = stats.min;
           document.getElementById('statMax').textContent = stats.max;
 
           // Time series analysis
-          const regression = Statistics.linearRegression(timeStamps, collectedData);
+          const regression = Statistics.linearRegression(
+            timeStamps,
+            collectedData
+          );
           const outliers = TimeSeries.detectOutliers(collectedData);
           const autocorr = TimeSeries.autocorrelation(collectedData, 1);
 
           document.getElementById('tsCount').textContent = collectedData.length;
-          document.getElementById('tsTrend').textContent = regression.slope.toFixed(4);
-          document.getElementById('tsR2').textContent = regression.r2.toFixed(4);
+          document.getElementById('tsTrend').textContent =
+            regression.slope.toFixed(4);
+          document.getElementById('tsR2').textContent =
+            regression.r2.toFixed(4);
           document.getElementById('tsOutliers').textContent = outliers.length;
-          document.getElementById('tsAutocorr').textContent = autocorr.toFixed(4);
+          document.getElementById('tsAutocorr').textContent =
+            autocorr.toFixed(4);
 
           log('Analysis complete', 'success');
-          log(`Mean: ${stats.mean.toFixed(2)}, StdDev: ${stats.std.toFixed(2)}`, 'info');
-          log(`Trend: ${regression.slope > 0 ? 'Increasing' : 'Decreasing'} (R²=${regression.r2.toFixed(3)})`, 'info');
+          log(
+            `Mean: ${stats.mean.toFixed(2)}, StdDev: ${stats.std.toFixed(2)}`,
+            'info'
+          );
+          log(
+            `Trend: ${regression.slope > 0 ? 'Increasing' : 'Decreasing'} (R²=${regression.r2.toFixed(3)})`,
+            'info'
+          );
         } catch (error) {
           log(`Analysis error: ${error.message}`, 'error');
         }

@@ -472,7 +472,8 @@ export class CalibrationWizard {
         date: this.profile.date,
         channelsCalibrated: Object.keys(this.profile.voltages).length,
         hasGainCalibration: Object.keys(this.profile.gains).length > 0,
-        hasThresholdCalibration: Object.keys(this.profile.thresholds).length > 0,
+        hasThresholdCalibration:
+          Object.keys(this.profile.thresholds).length > 0,
       },
     };
   }

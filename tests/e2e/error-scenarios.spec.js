@@ -6,13 +6,14 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Error Scenarios - User Interface', () => {
-  test('code playground - handles syntax errors gracefully', async ({ page }) => {
+  test('code playground - handles syntax errors gracefully', async ({
+    page,
+  }) => {
     await page.goto('/examples/code-playground.html');
     await page.waitForSelector('.CodeMirror');
 
     // Inject invalid code
     await page.evaluate(() => {
-      /* global CodeMirror */
       const editors = document.querySelectorAll('.CodeMirror');
       if (editors.length > 0) {
         const cm = editors[0].CodeMirror;
@@ -29,7 +30,9 @@ test.describe('Error Scenarios - User Interface', () => {
     // Check that error is displayed
     const consoleOutput = page.locator('#consoleOutput');
     const hasError = await consoleOutput.evaluate((el) => {
-      return el.textContent.includes('error') || el.textContent.includes('Error');
+      return (
+        el.textContent.includes('error') || el.textContent.includes('Error')
+      );
     });
 
     expect(hasError).toBeTruthy();
@@ -58,7 +61,9 @@ test.describe('Error Scenarios - User Interface', () => {
     expect(text).toContain('Test error');
   });
 
-  test('examples index - handles missing examples gracefully', async ({ page }) => {
+  test('examples index - handles missing examples gracefully', async ({
+    page,
+  }) => {
     await page.goto('/examples/');
 
     // Try to navigate to non-existent example
@@ -66,7 +71,10 @@ test.describe('Error Scenarios - User Interface', () => {
 
     // Should show 404 or error page
     const statusCode = await page.evaluate(() => {
-      return document.title.includes('404') || document.body.textContent.includes('not found');
+      return (
+        document.title.includes('404') ||
+        document.body.textContent.includes('not found')
+      );
     });
 
     // We expect some kind of error indication
@@ -103,7 +111,9 @@ test.describe('Error Scenarios - Network Failures', () => {
 });
 
 test.describe('Error Scenarios - JavaScript Errors', () => {
-  test('catches and displays unhandled errors in dev mode', async ({ page }) => {
+  test('catches and displays unhandled errors in dev mode', async ({
+    page,
+  }) => {
     // Navigate to code playground which has dev mode enabled
     await page.goto('/examples/code-playground.html');
 
@@ -194,7 +204,9 @@ test.describe('Error Scenarios - User Input Validation', () => {
 });
 
 test.describe('Error Scenarios - Browser Compatibility', () => {
-  test('shows appropriate message for missing Web Serial API', async ({ page }) => {
+  test('shows appropriate message for missing Web Serial API', async ({
+    page,
+  }) => {
     // Override Web Serial API support
     await page.addInitScript(() => {
       delete navigator.serial;
@@ -219,8 +231,12 @@ test.describe('Error Scenarios - Data Validation', () => {
 
     // Try to set invalid template
     await page.evaluate(() => {
+      /* eslint-disable no-undef */
       document.getElementById('templateSelect').value = 'nonexistent';
-      document.getElementById('templateSelect').dispatchEvent(new Event('change'));
+      document
+        .getElementById('templateSelect')
+        .dispatchEvent(new Event('change'));
+      /* eslint-enable no-undef */
     });
 
     await page.waitForTimeout(200);
@@ -232,7 +248,9 @@ test.describe('Error Scenarios - Data Validation', () => {
 });
 
 test.describe('Error Scenarios - Recovery', () => {
-  test('code playground - clears errors when new code is run', async ({ page }) => {
+  test('code playground - clears errors when new code is run', async ({
+    page,
+  }) => {
     await page.goto('/examples/code-playground.html');
     await page.waitForSelector('.CodeMirror');
 

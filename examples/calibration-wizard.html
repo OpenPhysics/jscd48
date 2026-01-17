@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,8 +12,9 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
         background: linear-gradient(135deg, #0f0f1e 0%, #1a1f3a 100%);
         color: #eee;
         min-height: 100vh;
@@ -364,7 +365,11 @@
             </button>
             <div id="backgroundProgress" class="hidden">
               <div class="progress-bar">
-                <div id="backgroundProgressFill" class="progress-fill" style="width: 0%">
+                <div
+                  id="backgroundProgressFill"
+                  class="progress-fill"
+                  style="width: 0%"
+                >
                   0%
                 </div>
               </div>
@@ -495,8 +500,12 @@
       const prevBtn = document.getElementById('prevBtn');
       const nextBtn = document.getElementById('nextBtn');
       const connectBtn = document.getElementById('connectBtn');
-      const measureBackgroundBtn = document.getElementById('measureBackgroundBtn');
-      const calibrateVoltageBtn = document.getElementById('calibrateVoltageBtn');
+      const measureBackgroundBtn = document.getElementById(
+        'measureBackgroundBtn'
+      );
+      const calibrateVoltageBtn = document.getElementById(
+        'calibrateVoltageBtn'
+      );
       const calibrateGainBtn = document.getElementById('calibrateGainBtn');
       const saveProfileBtn = document.getElementById('saveProfileBtn');
       const calibType = document.getElementById('calibType');
@@ -540,7 +549,8 @@
         try {
           await cd48.connect();
           const version = await cd48.getVersion();
-          document.getElementById('firmwareVersion').textContent = `Firmware: ${version}`;
+          document.getElementById('firmwareVersion').textContent =
+            `Firmware: ${version}`;
           document.getElementById('deviceInfo').classList.remove('hidden');
           connectBtn.disabled = true;
           connectBtn.textContent = '✓ Connected';
@@ -554,7 +564,9 @@
       measureBackgroundBtn.addEventListener('click', async () => {
         try {
           measureBackgroundBtn.disabled = true;
-          document.getElementById('backgroundProgress').classList.remove('hidden');
+          document
+            .getElementById('backgroundProgress')
+            .classList.remove('hidden');
 
           const channels = [0, 1, 2, 3, 4, 5, 6, 7];
           const backgrounds = await wizard.measureBackground(channels, 10.0);
@@ -586,14 +598,20 @@
       // Step 2: Calibration type toggle
       calibType.addEventListener('change', () => {
         const isVoltage = calibType.value === 'voltage';
-        document.getElementById('voltageCalibration').classList.toggle('hidden', !isVoltage);
-        document.getElementById('gainCalibration').classList.toggle('hidden', isVoltage);
+        document
+          .getElementById('voltageCalibration')
+          .classList.toggle('hidden', !isVoltage);
+        document
+          .getElementById('gainCalibration')
+          .classList.toggle('hidden', isVoltage);
       });
 
       // Voltage calibration
       calibrateVoltageBtn.addEventListener('click', async () => {
         const channel = parseInt(document.getElementById('calibChannel').value);
-        const voltage = parseFloat(document.getElementById('knownVoltage').value);
+        const voltage = parseFloat(
+          document.getElementById('knownVoltage').value
+        );
 
         if (isNaN(voltage)) {
           alert('Please enter a valid voltage');
@@ -612,7 +630,9 @@
       // Gain calibration
       calibrateGainBtn.addEventListener('click', async () => {
         const channel = parseInt(document.getElementById('calibChannel').value);
-        const refRate = parseFloat(document.getElementById('referenceRate').value);
+        const refRate = parseFloat(
+          document.getElementById('referenceRate').value
+        );
 
         if (isNaN(refRate)) {
           alert('Please enter a valid reference rate');
@@ -655,7 +675,9 @@
       // Step 3: Save profile
       saveProfileBtn.addEventListener('click', () => {
         const name = document.getElementById('profileName').value.trim();
-        const description = document.getElementById('profileDescription').value.trim();
+        const description = document
+          .getElementById('profileDescription')
+          .value.trim();
 
         if (!name) {
           alert('Please enter a profile name');

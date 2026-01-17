@@ -18,12 +18,14 @@ This guide helps you diagnose and resolve common issues when using the jscd48 li
 **Symptoms:** Cannot connect to device, error indicates port is already in use
 
 **Solutions:**
+
 1. Close any other applications using the serial port (Arduino IDE, serial monitors, etc.)
 2. Ensure only one instance of your web application is running
 3. Refresh your browser page to release the port
 4. Check Chrome DevTools console for stuck connections
 
 **Code example:**
+
 ```javascript
 // Always disconnect before reconnecting
 if (cd48.isConnected()) {
@@ -37,6 +39,7 @@ await cd48.connect();
 **Symptoms:** Device disconnects during operation, commands fail with "Not connected" error
 
 **Solutions:**
+
 1. Check USB cable connection - try a different cable
 2. Verify USB port is providing adequate power
 3. Update your browser to the latest version
@@ -44,6 +47,7 @@ await cd48.connect();
 5. Ensure the CD48 firmware is up to date
 
 **Prevention code:**
+
 ```javascript
 // Implement connection monitoring
 setInterval(async () => {
@@ -63,6 +67,7 @@ setInterval(async () => {
 **Symptoms:** `CommandTimeoutError` thrown when calling device methods
 
 **Solutions:**
+
 1. Increase the command delay:
    ```javascript
    const cd48 = new CD48({ commandDelay: 100 }); // Increase from default 50ms
@@ -76,6 +81,7 @@ setInterval(async () => {
 **Symptoms:** First few commands work, then device stops responding
 
 **Solutions:**
+
 1. Clear the input buffer before critical operations:
    ```javascript
    await cd48.clearCounts(); // Clears counters and buffer
@@ -97,6 +103,7 @@ setInterval(async () => {
 **Symptoms:** `UnsupportedBrowserError` thrown when attempting to connect
 
 **Solutions:**
+
 1. Use a supported browser:
    - Chrome 89+
    - Edge 89+
@@ -115,6 +122,7 @@ setInterval(async () => {
 **Symptoms:** `DeviceSelectionCancelledError` thrown
 
 **Solutions:**
+
 1. Provide clear UI instructions before triggering port selection
 2. Implement graceful error handling:
    ```javascript
@@ -134,6 +142,7 @@ setInterval(async () => {
 **Symptoms:** Permission denied errors, no port selection dialog appears
 
 **Solutions:**
+
 1. Check browser settings (chrome://settings/content/serialPorts)
 2. Ensure page is served over HTTPS or localhost
 3. Clear browser permissions and try again
@@ -141,6 +150,7 @@ setInterval(async () => {
 5. Verify user gesture initiated the connection (must be from click/touch event)
 
 **Good example:**
+
 ```javascript
 // Connection must be initiated by user action
 connectButton.addEventListener('click', async () => {
@@ -149,6 +159,7 @@ connectButton.addEventListener('click', async () => {
 ```
 
 **Bad example:**
+
 ```javascript
 // This will likely fail - not from user gesture
 window.addEventListener('load', async () => {
@@ -165,6 +176,7 @@ window.addEventListener('load', async () => {
 **Symptoms:** No devices listed, or CD48 not in the list
 
 **Solutions:**
+
 1. Verify the device is connected via USB
 2. Check device drivers are installed (Cypress USB drivers)
 3. Test the device in another application (Arduino Serial Monitor)
@@ -177,11 +189,12 @@ window.addEventListener('load', async () => {
 **Symptoms:** Communication errors, invalid responses
 
 **Solutions:**
+
 1. The library filters for Cypress vendor ID (0x04b4):
    ```javascript
    // This is done automatically in connect()
    navigator.serial.requestPort({
-     filters: [{ usbVendorId: 0x04b4 }]
+     filters: [{ usbVendorId: 0x04b4 }],
    });
    ```
 2. Disconnect other Cypress-based devices
@@ -196,6 +209,7 @@ window.addEventListener('load', async () => {
 **Symptoms:** Device manager shows unknown device, not detected by browser
 
 **Solutions:**
+
 1. Install Cypress USB drivers manually
 2. Update Windows USB drivers
 3. Check for Windows USB power management settings
@@ -207,6 +221,7 @@ window.addEventListener('load', async () => {
 **Symptoms:** Need to connect to specific device among multiple units
 
 **Solutions:**
+
 1. Connect devices one at a time
 2. Label devices physically
 3. Implement device identification:
@@ -227,7 +242,9 @@ window.addEventListener('load', async () => {
 **Issue:** Slow data acquisition
 
 **Solutions:**
+
 1. Use the repeat mode for continuous monitoring:
+
    ```javascript
    // Set automatic repeat every 100ms
    await cd48.setRepeat(100);
@@ -237,6 +254,7 @@ window.addEventListener('load', async () => {
    ```
 
 2. Batch read operations when possible:
+
    ```javascript
    // Good - single call gets all channels
    const data = await cd48.getCounts();
@@ -258,13 +276,16 @@ window.addEventListener('load', async () => {
 **Issue:** UI freezes or lags during continuous monitoring
 
 **Solutions:**
+
 1. Use Web Workers for data processing:
+
    ```javascript
    // In worker: process and aggregate data
    // In main thread: just update UI
    ```
 
 2. Throttle UI updates:
+
    ```javascript
    let lastUpdate = 0;
    const updateInterval = 100; // ms
@@ -278,6 +299,7 @@ window.addEventListener('load', async () => {
    ```
 
 3. Use requestAnimationFrame for smooth rendering:
+
    ```javascript
    let dataQueue = [];
 
@@ -296,7 +318,9 @@ window.addEventListener('load', async () => {
 **Issue:** Memory leak during long-running sessions
 
 **Solutions:**
+
 1. Implement circular buffers for data storage:
+
    ```javascript
    class CircularBuffer {
      constructor(size) {
@@ -315,6 +339,7 @@ window.addEventListener('load', async () => {
    ```
 
 2. Clean up old chart data:
+
    ```javascript
    // Limit chart data points
    if (chartData.length > 500) {
@@ -337,7 +362,9 @@ window.addEventListener('load', async () => {
 **Issue:** Slow coincidence rate measurements
 
 **Solutions:**
+
 1. Choose optimal measurement duration:
+
    ```javascript
    // Too short: poor statistics
    // Too long: slow updates
@@ -346,6 +373,7 @@ window.addEventListener('load', async () => {
    ```
 
 2. Pre-clear counters before critical measurements:
+
    ```javascript
    await cd48.clearCounts();
    // Ensures clean start
@@ -364,6 +392,7 @@ window.addEventListener('load', async () => {
 ### Network and Browser Optimization
 
 **Solutions:**
+
 1. Use local development server, not file:// protocol
 2. Disable browser extensions that may interfere
 3. Use Chrome's Task Manager to monitor resource usage
@@ -392,7 +421,7 @@ If you're still experiencing issues:
 3. Enable debug logging to gather more information:
    ```javascript
    // Add detailed logging
-   cd48.sendCommand = async function(command) {
+   cd48.sendCommand = async function (command) {
      console.log('Sending:', command);
      const response = await originalSendCommand.call(this, command);
      console.log('Received:', response);

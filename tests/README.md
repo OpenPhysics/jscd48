@@ -19,11 +19,13 @@ tests/
 ## Running Tests
 
 ### All Tests
+
 ```bash
 npm run test:all              # Run all tests (unit + integration + E2E)
 ```
 
 ### Unit Tests (Vitest)
+
 ```bash
 npm test                      # Run unit tests
 npm run test:ui               # Run with Vitest UI
@@ -32,11 +34,13 @@ npm run test:bench            # Run benchmark tests
 ```
 
 ### Integration Tests
+
 ```bash
 npm run test:integration      # Run integration tests with mock hardware
 ```
 
 ### E2E Tests (Playwright)
+
 ```bash
 npm run test:e2e              # Run all E2E tests
 npm run test:e2e:examples     # Test all example pages
@@ -49,6 +53,7 @@ npm run test:e2e:report       # View HTML report
 ```
 
 ### Visual Regression Tests
+
 ```bash
 npm run test:e2e:visual               # Compare against baselines
 npm run test:e2e:update-snapshots     # Update baseline screenshots
@@ -57,7 +62,9 @@ npm run test:e2e:update-snapshots     # Update baseline screenshots
 ## Test Coverage
 
 ### Unit Tests
+
 Located in project root and individual module directories:
+
 - Core CD48 functionality
 - Validation utilities
 - Error classes
@@ -65,7 +72,9 @@ Located in project root and individual module directories:
 - Calibration utilities
 
 ### Integration Tests
+
 Tests using MockCD48 device:
+
 - ✅ Connection lifecycle
 - ✅ Rapid connect/disconnect cycles
 - ✅ Data acquisition
@@ -78,7 +87,9 @@ Tests using MockCD48 device:
 - ✅ Data consistency
 
 ### E2E Tests - Example Pages
+
 Tests for all 11 example pages:
+
 - ✅ Examples Index
 - ✅ Simple Monitor
 - ✅ Error Handling Demo
@@ -93,6 +104,7 @@ Tests for all 11 example pages:
 - ✅ Code Playground
 
 ### E2E Tests - Functionality
+
 - ✅ Page loading without errors
 - ✅ Search functionality
 - ✅ Category filtering
@@ -103,6 +115,7 @@ Tests for all 11 example pages:
 - ✅ Accessibility
 
 ### Error Scenario Tests
+
 - ✅ Syntax errors in code playground
 - ✅ Runtime errors
 - ✅ Missing resources
@@ -117,7 +130,9 @@ Tests for all 11 example pages:
 - ✅ Error recovery
 
 ### Visual Regression Tests
+
 Screenshots captured for:
+
 - ✅ Examples index (initial, search, filtered)
 - ✅ Code playground (initial, with code)
 - ✅ Simple monitor
@@ -147,6 +162,7 @@ const data = await cd48.getCounts();
 ```
 
 ### Mock Features
+
 - Simulates all CD48 methods
 - Auto-incrementing counts (configurable)
 - Configurable delays and error conditions
@@ -158,7 +174,9 @@ const data = await cd48.getCounts();
 Visual tests capture screenshots and compare against baseline images.
 
 ### Initial Setup
+
 1. Run tests to create baseline screenshots:
+
    ```bash
    npm run test:e2e:update-snapshots
    ```
@@ -166,17 +184,21 @@ Visual tests capture screenshots and compare against baseline images.
 2. Baselines are stored in `tests/e2e/*.spec.js-snapshots/`
 
 ### Running Visual Tests
+
 ```bash
 npm run test:e2e:visual
 ```
 
 ### Updating Baselines
+
 When intentional UI changes are made:
+
 ```bash
 npm run test:e2e:update-snapshots
 ```
 
 ### Screenshot Locations
+
 - Desktop: `tests/e2e/visual-regression.spec.js-snapshots/chromium/`
 - Mobile: `tests/e2e/visual-regression.spec.js-snapshots/chromium/*-mobile.png`
 - Tablet: `tests/e2e/visual-regression.spec.js-snapshots/chromium/*-tablet.png`
@@ -184,11 +206,13 @@ npm run test:e2e:update-snapshots
 ## Continuous Integration
 
 Tests run automatically on:
+
 - Pull requests
 - Main branch commits
 - Manual workflow dispatch
 
 ### CI Configuration
+
 - Runs all test suites
 - Retries flaky tests (2 retries)
 - Uploads test artifacts
@@ -198,6 +222,7 @@ Tests run automatically on:
 ## Writing New Tests
 
 ### Unit Tests (Vitest)
+
 ```javascript
 import { describe, it, expect } from 'vitest';
 
@@ -209,6 +234,7 @@ describe('MyFeature', () => {
 ```
 
 ### Integration Tests
+
 ```javascript
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockCD48 } from '../mock-cd48.js';
@@ -229,6 +255,7 @@ describe('Integration Test', () => {
 ```
 
 ### E2E Tests (Playwright)
+
 ```javascript
 import { test, expect } from '@playwright/test';
 
@@ -239,6 +266,7 @@ test('my new feature', async ({ page }) => {
 ```
 
 ### Visual Regression Tests
+
 ```javascript
 test('my visual test', async ({ page }) => {
   await page.goto('/my-page');
@@ -263,6 +291,7 @@ test('my visual test', async ({ page }) => {
 ## Debugging Tests
 
 ### Vitest
+
 ```bash
 # Run specific test file
 npm test tests/integration/cd48-integration.test.js
@@ -275,6 +304,7 @@ npm run test:ui
 ```
 
 ### Playwright
+
 ```bash
 # Run with browser visible
 npm run test:e2e:headed
@@ -290,6 +320,7 @@ npm run test:e2e -- --trace on
 ```
 
 ### Visual Regression
+
 ```bash
 # Compare and show diff
 npm run test:e2e:visual
@@ -309,18 +340,21 @@ npm run test:e2e:report
 ## Troubleshooting
 
 ### Tests Failing Locally
+
 1. Ensure dev server is not already running
 2. Clear test artifacts: `rm -rf tests/e2e-report`
 3. Update dependencies: `npm install`
 4. Check for port conflicts (8080)
 
 ### Visual Tests Failing
+
 1. Different screen resolution? Update viewport settings
 2. Font rendering differences? Update baselines
 3. Animation timing? Increase wait times
 4. Legitimate change? Update snapshots
 
 ### Flaky Tests
+
 1. Increase timeouts
 2. Add explicit waits
 3. Check for race conditions
@@ -329,6 +363,7 @@ npm run test:e2e:report
 ## Contributing
 
 When adding new features:
+
 1. Add unit tests for core functionality
 2. Add integration tests for workflows
 3. Add E2E tests for UI features

@@ -444,9 +444,7 @@ export function setupDevMode(options = {}) {
       perfMonitor,
       version: '1.0.0',
     };
-    logger.info(
-      '🛠️  Dev mode enabled. Access utilities via window.__DEV__'
-    );
+    logger.info('🛠️  Dev mode enabled. Access utilities via window.__DEV__');
   }
 
   return { logger, errorOverlay, perfMonitor };

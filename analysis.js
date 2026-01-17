@@ -168,7 +168,10 @@ export const Histogram = {
     const binWidth = (max - min) / bins;
 
     const counts = new Array(bins).fill(0);
-    const edges = Array.from({ length: bins + 1 }, (_, i) => min + i * binWidth);
+    const edges = Array.from(
+      { length: bins + 1 },
+      (_, i) => min + i * binWidth
+    );
 
     // Count values in each bin
     data.forEach((value) => {

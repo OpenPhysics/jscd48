@@ -222,8 +222,10 @@ test.describe('Demo Mode - Functionality', () => {
     // Check for success message in console or UI
     // This depends on the actual implementation
     const hasStarted = await page.locator('body').evaluate(() => {
-      return document.body.textContent.includes('Demo') ||
-             document.body.textContent.includes('Simulated');
+      return (
+        document.body.textContent.includes('Demo') ||
+        document.body.textContent.includes('Simulated')
+      );
     });
 
     expect(hasStarted).toBeTruthy();
@@ -238,7 +240,9 @@ test.describe('Visual Elements - Responsiveness', () => {
   ];
 
   for (const viewport of viewports) {
-    test(`Examples index is responsive on ${viewport.name}`, async ({ page }) => {
+    test(`Examples index is responsive on ${viewport.name}`, async ({
+      page,
+    }) => {
       await page.setViewportSize({
         width: viewport.width,
         height: viewport.height,

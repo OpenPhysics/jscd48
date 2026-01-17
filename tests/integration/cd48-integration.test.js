@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockCD48 } from '../mock-cd48.js';
 
 describe('CD48 Integration Tests - Mock Hardware', () => {
@@ -77,7 +77,9 @@ describe('CD48 Integration Tests - Mock Hardware', () => {
       const after = await cd48.getCounts();
 
       // At least some channels should have increased
-      const increased = before.counts.some((count, i) => after.counts[i] > count);
+      const increased = before.counts.some(
+        (count, i) => after.counts[i] > count
+      );
       expect(increased).toBe(true);
     });
   });
@@ -96,7 +98,9 @@ describe('CD48 Integration Tests - Mock Hardware', () => {
     });
 
     it('should throw error for invalid channel', async () => {
-      await expect(cd48.measureRate(10, 1.0)).rejects.toThrow('Invalid channel');
+      await expect(cd48.measureRate(10, 1.0)).rejects.toThrow(
+        'Invalid channel'
+      );
     });
 
     it('should measure coincidence rate', async () => {

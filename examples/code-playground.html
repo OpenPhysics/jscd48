@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -25,8 +25,9 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-          Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
         background: #0f0f1e;
         color: #eee;
         height: 100vh;
@@ -310,7 +311,10 @@
         <div class="tab-content" data-tab="device">
           <div class="device-status">
             <div>
-              <span id="statusIndicator" class="status-indicator disconnected"></span>
+              <span
+                id="statusIndicator"
+                class="status-indicator disconnected"
+              ></span>
               <strong id="statusText">Disconnected</strong>
             </div>
           </div>
@@ -482,40 +486,46 @@ console.log('Channel 0 gain:', profile.getGain(0));`,
       });
 
       // Template selection
-      document.getElementById('templateSelect').addEventListener('change', (e) => {
-        editor.setValue(templates[e.target.value]);
-      });
+      document
+        .getElementById('templateSelect')
+        .addEventListener('change', (e) => {
+          editor.setValue(templates[e.target.value]);
+        });
 
       // Connect button
-      document.getElementById('connectBtn').addEventListener('click', async () => {
-        try {
-          if (deviceConnected) {
-            await cd48.disconnect();
-            deviceConnected = false;
-            document.getElementById('connectBtn').textContent = 'Connect Device';
-            document.getElementById('connectBtn').className = 'secondary';
-            document.getElementById('statusIndicator').className =
-              'status-indicator disconnected';
-            document.getElementById('statusText').textContent = 'Disconnected';
-            console.log('Device disconnected');
-          } else {
-            await cd48.connect();
-            deviceConnected = true;
-            document.getElementById('connectBtn').textContent = 'Disconnect';
-            document.getElementById('connectBtn').className = 'success';
-            document.getElementById('statusIndicator').className =
-              'status-indicator connected';
-            document.getElementById('statusText').textContent = 'Connected';
-            console.log('Device connected successfully!');
+      document
+        .getElementById('connectBtn')
+        .addEventListener('click', async () => {
+          try {
+            if (deviceConnected) {
+              await cd48.disconnect();
+              deviceConnected = false;
+              document.getElementById('connectBtn').textContent =
+                'Connect Device';
+              document.getElementById('connectBtn').className = 'secondary';
+              document.getElementById('statusIndicator').className =
+                'status-indicator disconnected';
+              document.getElementById('statusText').textContent =
+                'Disconnected';
+              console.log('Device disconnected');
+            } else {
+              await cd48.connect();
+              deviceConnected = true;
+              document.getElementById('connectBtn').textContent = 'Disconnect';
+              document.getElementById('connectBtn').className = 'success';
+              document.getElementById('statusIndicator').className =
+                'status-indicator connected';
+              document.getElementById('statusText').textContent = 'Connected';
+              console.log('Device connected successfully!');
 
-            const version = await cd48.getVersion();
-            document.getElementById('deviceInfo').innerHTML =
-              '<pre>Firmware: ' + version + '</pre>';
+              const version = await cd48.getVersion();
+              document.getElementById('deviceInfo').innerHTML =
+                '<pre>Firmware: ' + version + '</pre>';
+            }
+          } catch (error) {
+            console.error('Connection error:', error.message);
           }
-        } catch (error) {
-          console.error('Connection error:', error.message);
-        }
-      });
+        });
 
       // Run code
       async function runCode() {
@@ -528,7 +538,9 @@ console.log('Channel 0 gain:', profile.getGain(0));`,
         console.log('--- Running code ---');
         try {
           // Create async function to allow await
-          const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+          const AsyncFunction = Object.getPrototypeOf(
+            async function () {}
+          ).constructor;
           const fn = new AsyncFunction('cd48', code);
           await fn(cd48);
           console.log('--- Code executed successfully ---');
