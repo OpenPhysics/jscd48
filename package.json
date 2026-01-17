@@ -12,6 +12,12 @@
       "import": "./cd48.js",
       "require": "./dist/cd48.umd.js"
     },
+    "./analysis": {
+      "import": "./analysis.js"
+    },
+    "./calibration": {
+      "import": "./calibration.js"
+    },
     "./dist/*": "./dist/*"
   },
   "files": [
@@ -19,9 +25,12 @@
     "cd48.d.ts",
     "errors.js",
     "validation.js",
+    "analysis.js",
+    "calibration.js",
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "TROUBLESHOOTING.md"
   ],
   "scripts": {
     "start": "npx serve .",
@@ -62,7 +71,17 @@
     "web-serial",
     "serial",
     "instrumentation",
-    "red-dog-physics"
+    "red-dog-physics",
+    "radiation",
+    "detector",
+    "geiger",
+    "scintillator",
+    "calibration",
+    "statistical-analysis",
+    "histogram",
+    "time-series",
+    "data-acquisition",
+    "lab-equipment"
   ],
   "author": "OpenPhysics Contributors",
   "license": "MIT",

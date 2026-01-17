@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CD48 - Calibration Wizard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1f3a 100%);
+        color: #eee;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: #e94560;
+        margin-bottom: 10px;
+        font-size: 2em;
+      }
+
+      .subtitle {
+        color: #aaa;
+        margin-bottom: 30px;
+      }
+
+      .card {
+        background: #1a1f3a;
+        padding: 25px;
+        border-radius: 8px;
+        border: 1px solid #2a2f4a;
+        margin-bottom: 20px;
+      }
+
+      .card h2 {
+        color: #3b82f6;
+        font-size: 1.3em;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .wizard-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        position: relative;
+      }
+
+      .wizard-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #2a2f4a;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: bold;
+        border: 2px solid #2a2f4a;
+      }
+
+      .wizard-step.active .step-circle {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
+
+      .wizard-step.completed .step-circle {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+      }
+
+      .step-label {
+        font-size: 12px;
+        color: #aaa;
+      }
+
+      .wizard-step.active .step-label {
+        color: #3b82f6;
+        font-weight: 600;
+      }
+
+      .wizard-content {
+        min-height: 300px;
+      }
+
+      button {
+        background: #e94560;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      button:hover:not(:disabled) {
+        background: #d63851;
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+
+      button.secondary {
+        background: #3b82f6;
+      }
+
+      button.secondary:hover:not(:disabled) {
+        background: #2563eb;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #aaa;
+        font-size: 14px;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        background: #0f0f1e;
+        color: #eee;
+        border: 1px solid #2a2f4a;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .channel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .channel-card {
+        background: #0f0f1e;
+        padding: 15px;
+        border-radius: 6px;
+        border: 2px solid #2a2f4a;
+        text-align: center;
+      }
+
+      .channel-card.calibrated {
+        border-color: #10b981;
+      }
+
+      .channel-card h3 {
+        color: #3b82f6;
+        margin-bottom: 10px;
+        font-size: 1em;
+      }
+
+      .channel-value {
+        font-family: 'Courier New', monospace;
+        font-size: 1.2em;
+        color: #10b981;
+        margin: 5px 0;
+      }
+
+      .profile-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .profile-item {
+        background: #0f0f1e;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #2a2f4a;
+      }
+
+      .profile-item:hover {
+        border-color: #3b82f6;
+      }
+
+      .profile-info h4 {
+        color: #eee;
+        margin-bottom: 5px;
+      }
+
+      .profile-meta {
+        color: #aaa;
+        font-size: 12px;
+      }
+
+      .profile-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: #0f0f1e;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 20px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+        transition: width 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 10px;
+      }
+
+      .status-badge.success {
+        background: #10b981;
+        color: white;
+      }
+
+      .status-badge.warning {
+        background: #f59e0b;
+        color: white;
+      }
+
+      .status-badge.error {
+        background: #ef4444;
+        color: white;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .measurement-display {
+        background: #0f0f1e;
+        padding: 20px;
+        border-radius: 6px;
+        text-align: center;
+        margin: 20px 0;
+      }
+
+      .measurement-value {
+        font-size: 2.5em;
+        color: #3b82f6;
+        font-family: 'Courier New', monospace;
+        margin: 10px 0;
+      }
+
+      .measurement-label {
+        color: #aaa;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎯 Calibration Wizard</h1>
+      <p class="subtitle">
+        Step-by-step calibration for CD48 detector channels
+      </p>
+
+      <div class="card">
+        <div class="wizard-steps">
+          <div class="wizard-step active" data-step="0">
+            <div class="step-circle">1</div>
+            <div class="step-label">Connect</div>
+          </div>
+          <div class="wizard-step" data-step="1">
+            <div class="step-circle">2</div>
+            <div class="step-label">Background</div>
+          </div>
+          <div class="wizard-step" data-step="2">
+            <div class="step-circle">3</div>
+            <div class="step-label">Calibrate</div>
+          </div>
+          <div class="wizard-step" data-step="3">
+            <div class="step-circle">4</div>
+            <div class="step-label">Save</div>
+          </div>
+        </div>
+
+        <div class="wizard-content">
+          <!-- Step 0: Connect -->
+          <div id="step0" class="step-content">
+            <h2>🔌 Connect to CD48</h2>
+            <p style="margin-bottom: 20px; color: #aaa">
+              Connect your CD48 device to begin the calibration process.
+            </p>
+            <button id="connectBtn" class="secondary">Connect Device</button>
+            <div id="deviceInfo" class="hidden" style="margin-top: 20px">
+              <p>
+                <strong>Device Connected</strong
+                ><span class="status-badge success">Ready</span>
+              </p>
+              <p style="color: #aaa; margin-top: 10px" id="firmwareVersion"></p>
+            </div>
+          </div>
+
+          <!-- Step 1: Background -->
+          <div id="step1" class="step-content hidden">
+            <h2>📊 Background Measurement</h2>
+            <p style="margin-bottom: 20px; color: #aaa">
+              Measuring background radiation levels for all channels. Remove any
+              sources and ensure clean environment.
+            </p>
+            <button id="measureBackgroundBtn" class="secondary">
+              Measure Background (10s)
+            </button>
+            <div id="backgroundProgress" class="hidden">
+              <div class="progress-bar">
+                <div id="backgroundProgressFill" class="progress-fill" style="width: 0%">
+                  0%
+                </div>
+              </div>
+            </div>
+            <div id="backgroundResults" class="channel-grid hidden"></div>
+          </div>
+
+          <!-- Step 2: Calibrate -->
+          <div id="step2" class="step-content hidden">
+            <h2>⚙️ Channel Calibration</h2>
+            <p style="margin-bottom: 20px; color: #aaa">
+              Calibrate individual channels with known sources or voltages.
+            </p>
+
+            <div class="form-group">
+              <label>Select Channel</label>
+              <select id="calibChannel">
+                <option value="0">Channel 0</option>
+                <option value="1">Channel 1</option>
+                <option value="2">Channel 2</option>
+                <option value="3">Channel 3</option>
+                <option value="4">Channel 4</option>
+                <option value="5">Channel 5</option>
+                <option value="6">Channel 6</option>
+                <option value="7">Channel 7</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Calibration Type</label>
+              <select id="calibType">
+                <option value="voltage">Voltage Calibration</option>
+                <option value="gain">Gain Calibration</option>
+              </select>
+            </div>
+
+            <div id="voltageCalibration">
+              <div class="form-group">
+                <label>Known Voltage (V)</label>
+                <input
+                  type="number"
+                  id="knownVoltage"
+                  placeholder="e.g., 5.0"
+                  step="0.1"
+                />
+              </div>
+              <button id="calibrateVoltageBtn" class="secondary">
+                Apply Voltage Calibration
+              </button>
+            </div>
+
+            <div id="gainCalibration" class="hidden">
+              <div class="form-group">
+                <label>Known Reference Rate (counts/sec)</label>
+                <input
+                  type="number"
+                  id="referenceRate"
+                  placeholder="e.g., 1000"
+                  step="1"
+                />
+              </div>
+              <button id="calibrateGainBtn" class="secondary">
+                Measure and Calibrate Gain (10s)
+              </button>
+            </div>
+
+            <div id="currentMeasurement" class="measurement-display hidden">
+              <div class="measurement-label">Current Measurement</div>
+              <div class="measurement-value" id="currentRate">-</div>
+              <div class="measurement-label">counts/sec</div>
+            </div>
+
+            <div class="channel-grid" id="calibrationStatus"></div>
+          </div>
+
+          <!-- Step 3: Save -->
+          <div id="step3" class="step-content hidden">
+            <h2>💾 Save Calibration Profile</h2>
+            <p style="margin-bottom: 20px; color: #aaa">
+              Save your calibration profile for future use.
+            </p>
+
+            <div class="form-group">
+              <label>Profile Name</label>
+              <input
+                type="text"
+                id="profileName"
+                placeholder="e.g., Lab Setup 2025-01-17"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description (optional)</label>
+              <input
+                type="text"
+                id="profileDescription"
+                placeholder="e.g., Calibrated with Cs-137 source"
+              />
+            </div>
+
+            <button id="saveProfileBtn" class="secondary">Save Profile</button>
+
+            <h3 style="margin-top: 30px; color: #3b82f6">Saved Profiles</h3>
+            <div id="profileList" class="profile-list"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="prevBtn" disabled>Previous</button>
+          <div style="flex: 1"></div>
+          <button id="nextBtn">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import CD48 from '../cd48.js';
+      import { CalibrationWizard, CalibrationStorage } from '../calibration.js';
+
+      const cd48 = new CD48();
+      const wizard = new CalibrationWizard(cd48);
+      const storage = new CalibrationStorage();
+
+      let currentStep = 0;
+      const maxSteps = 3;
+
+      // UI Elements
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const connectBtn = document.getElementById('connectBtn');
+      const measureBackgroundBtn = document.getElementById('measureBackgroundBtn');
+      const calibrateVoltageBtn = document.getElementById('calibrateVoltageBtn');
+      const calibrateGainBtn = document.getElementById('calibrateGainBtn');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const calibType = document.getElementById('calibType');
+
+      function updateStepUI() {
+        // Update step indicators
+        document.querySelectorAll('.wizard-step').forEach((step, index) => {
+          step.classList.remove('active', 'completed');
+          if (index < currentStep) step.classList.add('completed');
+          if (index === currentStep) step.classList.add('active');
+        });
+
+        // Update step content
+        document.querySelectorAll('.step-content').forEach((content, index) => {
+          content.classList.toggle('hidden', index !== currentStep);
+        });
+
+        // Update navigation buttons
+        prevBtn.disabled = currentStep === 0;
+        nextBtn.textContent = currentStep === maxSteps ? 'Finish' : 'Next';
+      }
+
+      prevBtn.addEventListener('click', () => {
+        if (currentStep > 0) {
+          currentStep--;
+          updateStepUI();
+        }
+      });
+
+      nextBtn.addEventListener('click', () => {
+        if (currentStep < maxSteps) {
+          currentStep++;
+          updateStepUI();
+        } else {
+          alert('Calibration complete!');
+        }
+      });
+
+      // Step 0: Connect
+      connectBtn.addEventListener('click', async () => {
+        try {
+          await cd48.connect();
+          const version = await cd48.getVersion();
+          document.getElementById('firmwareVersion').textContent = `Firmware: ${version}`;
+          document.getElementById('deviceInfo').classList.remove('hidden');
+          connectBtn.disabled = true;
+          connectBtn.textContent = '✓ Connected';
+          alert('Device connected! Click Next to continue.');
+        } catch (error) {
+          alert(`Connection error: ${error.message}`);
+        }
+      });
+
+      // Step 1: Background
+      measureBackgroundBtn.addEventListener('click', async () => {
+        try {
+          measureBackgroundBtn.disabled = true;
+          document.getElementById('backgroundProgress').classList.remove('hidden');
+
+          const channels = [0, 1, 2, 3, 4, 5, 6, 7];
+          const backgrounds = await wizard.measureBackground(channels, 10.0);
+
+          // Display results
+          const resultsDiv = document.getElementById('backgroundResults');
+          resultsDiv.innerHTML = '';
+          resultsDiv.classList.remove('hidden');
+
+          Object.entries(backgrounds).forEach(([ch, rate]) => {
+            const card = document.createElement('div');
+            card.className = 'channel-card calibrated';
+            card.innerHTML = `
+              <h3>Channel ${ch}</h3>
+              <div class="channel-value">${rate.toFixed(2)}</div>
+              <div style="color: #aaa; font-size: 12px">counts/sec</div>
+            `;
+            resultsDiv.appendChild(card);
+          });
+
+          measureBackgroundBtn.disabled = false;
+          alert('Background measurement complete! Click Next to continue.');
+        } catch (error) {
+          measureBackgroundBtn.disabled = false;
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      // Step 2: Calibration type toggle
+      calibType.addEventListener('change', () => {
+        const isVoltage = calibType.value === 'voltage';
+        document.getElementById('voltageCalibration').classList.toggle('hidden', !isVoltage);
+        document.getElementById('gainCalibration').classList.toggle('hidden', isVoltage);
+      });
+
+      // Voltage calibration
+      calibrateVoltageBtn.addEventListener('click', async () => {
+        const channel = parseInt(document.getElementById('calibChannel').value);
+        const voltage = parseFloat(document.getElementById('knownVoltage').value);
+
+        if (isNaN(voltage)) {
+          alert('Please enter a valid voltage');
+          return;
+        }
+
+        try {
+          await wizard.calibrateVoltage(channel, voltage);
+          updateCalibrationStatus();
+          alert(`Channel ${channel} voltage calibrated to ${voltage}V`);
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      // Gain calibration
+      calibrateGainBtn.addEventListener('click', async () => {
+        const channel = parseInt(document.getElementById('calibChannel').value);
+        const refRate = parseFloat(document.getElementById('referenceRate').value);
+
+        if (isNaN(refRate)) {
+          alert('Please enter a valid reference rate');
+          return;
+        }
+
+        try {
+          calibrateGainBtn.disabled = true;
+          const gain = await wizard.calibrateGain(channel, refRate, 10.0);
+          calibrateGainBtn.disabled = false;
+          updateCalibrationStatus();
+          alert(`Channel ${channel} gain calibrated: ${gain.toFixed(4)}`);
+        } catch (error) {
+          calibrateGainBtn.disabled = false;
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      function updateCalibrationStatus() {
+        const statusDiv = document.getElementById('calibrationStatus');
+        statusDiv.innerHTML = '';
+
+        for (let ch = 0; ch < 8; ch++) {
+          const hasVoltage = wizard.profile.getVoltage(ch) !== null;
+          const hasGain = wizard.profile.getGain(ch) !== null;
+          const calibrated = hasVoltage || hasGain;
+
+          const card = document.createElement('div');
+          card.className = `channel-card ${calibrated ? 'calibrated' : ''}`;
+          card.innerHTML = `
+            <h3>Ch ${ch}</h3>
+            ${hasVoltage ? '<div style="color: #10b981; font-size: 12px">✓ Voltage</div>' : ''}
+            ${hasGain ? '<div style="color: #10b981; font-size: 12px">✓ Gain</div>' : ''}
+            ${!calibrated ? '<div style="color: #666; font-size: 12px">Not calibrated</div>' : ''}
+          `;
+          statusDiv.appendChild(card);
+        }
+      }
+
+      // Step 3: Save profile
+      saveProfileBtn.addEventListener('click', () => {
+        const name = document.getElementById('profileName').value.trim();
+        const description = document.getElementById('profileDescription').value.trim();
+
+        if (!name) {
+          alert('Please enter a profile name');
+          return;
+        }
+
+        wizard.profile.name = name;
+        wizard.profile.description = description;
+        wizard.save();
+
+        alert('Profile saved successfully!');
+        loadProfileList();
+      });
+
+      function loadProfileList() {
+        const listDiv = document.getElementById('profileList');
+        listDiv.innerHTML = '';
+
+        const profiles = storage.loadAll();
+        Object.entries(profiles).forEach(([name, profile]) => {
+          const item = document.createElement('div');
+          item.className = 'profile-item';
+          item.innerHTML = `
+            <div class="profile-info">
+              <h4>${name}</h4>
+              <div class="profile-meta">
+                ${new Date(profile.date).toLocaleDateString()} -
+                ${Object.keys(profile.voltages).length} channels calibrated
+              </div>
+            </div>
+            <div class="profile-actions">
+              <button class="btn-small secondary" onclick="loadProfile('${name}')">Load</button>
+              <button class="btn-small" onclick="deleteProfile('${name}')">Delete</button>
+            </div>
+          `;
+          listDiv.appendChild(item);
+        });
+      }
+
+      window.loadProfile = (name) => {
+        wizard.load(name);
+        updateCalibrationStatus();
+        alert(`Profile "${name}" loaded`);
+      };
+
+      window.deleteProfile = (name) => {
+        if (confirm(`Delete profile "${name}"?`)) {
+          storage.delete(name);
+          loadProfileList();
+        }
+      };
+
+      // Initialize
+      updateStepUI();
+      updateCalibrationStatus();
+      loadProfileList();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CD48 - Statistical Analysis Tools</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1f3a 100%);
+        color: #eee;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: #e94560;
+        margin-bottom: 10px;
+        font-size: 2em;
+      }
+
+      .subtitle {
+        color: #aaa;
+        margin-bottom: 30px;
+      }
+
+      .controls {
+        background: #1a1f3a;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      button {
+        background: #e94560;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      button:hover:not(:disabled) {
+        background: #d63851;
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+
+      button.secondary {
+        background: #3b82f6;
+      }
+
+      button.secondary:hover:not(:disabled) {
+        background: #2563eb;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .card {
+        background: #1a1f3a;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #2a2f4a;
+      }
+
+      .card h2 {
+        color: #3b82f6;
+        font-size: 1.2em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .stats-table td {
+        padding: 8px;
+        border-bottom: 1px solid #2a2f4a;
+      }
+
+      .stats-table td:first-child {
+        color: #aaa;
+        width: 50%;
+      }
+
+      .stats-table td:last-child {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+        color: #3b82f6;
+      }
+
+      .histogram-container {
+        height: 300px;
+        background: #0f0f1e;
+        border-radius: 6px;
+        padding: 10px;
+        position: relative;
+      }
+
+      .histogram-bar {
+        position: absolute;
+        bottom: 10px;
+        background: linear-gradient(to top, #e94560, #ff6b7a);
+        border-radius: 2px 2px 0 0;
+        transition: all 0.3s;
+      }
+
+      .histogram-bar:hover {
+        opacity: 0.8;
+      }
+
+      .time-series {
+        height: 200px;
+        background: #0f0f1e;
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .status {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status.connected {
+        background: #10b981;
+        color: white;
+      }
+
+      .status.disconnected {
+        background: #ef4444;
+        color: white;
+      }
+
+      select {
+        background: #0f0f1e;
+        color: #eee;
+        border: 1px solid #2a2f4a;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .log {
+        background: #0f0f1e;
+        padding: 15px;
+        border-radius: 6px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
+
+      .log-entry {
+        margin: 4px 0;
+        padding: 4px;
+      }
+
+      .log-entry.info {
+        color: #3b82f6;
+      }
+      .log-entry.success {
+        color: #10b981;
+      }
+      .log-entry.warning {
+        color: #f59e0b;
+      }
+      .log-entry.error {
+        color: #ef4444;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📊 Statistical Analysis Tools</h1>
+      <p class="subtitle">
+        Advanced statistical analysis and data visualization for CD48
+      </p>
+
+      <div class="controls">
+        <button id="connectBtn">Connect to CD48</button>
+        <span id="status" class="status disconnected">Disconnected</span>
+        <select id="channelSelect">
+          <option value="0">Channel 0</option>
+          <option value="1">Channel 1</option>
+          <option value="2">Channel 2</option>
+          <option value="3">Channel 3</option>
+          <option value="4">Channel 4</option>
+          <option value="5">Channel 5</option>
+          <option value="6">Channel 6</option>
+          <option value="7">Channel 7</option>
+        </select>
+        <button id="collectBtn" class="secondary" disabled>
+          Collect Data (30s)
+        </button>
+        <button id="analyzeBtn" class="secondary" disabled>
+          Analyze Data
+        </button>
+        <button id="generateHistBtn" class="secondary" disabled>
+          Generate Histogram
+        </button>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>📈 Summary Statistics</h2>
+          <table class="stats-table" id="statsTable">
+            <tr>
+              <td>Sample Size</td>
+              <td id="statCount">-</td>
+            </tr>
+            <tr>
+              <td>Mean</td>
+              <td id="statMean">-</td>
+            </tr>
+            <tr>
+              <td>Median</td>
+              <td id="statMedian">-</td>
+            </tr>
+            <tr>
+              <td>Std Deviation</td>
+              <td id="statStd">-</td>
+            </tr>
+            <tr>
+              <td>Variance</td>
+              <td id="statVariance">-</td>
+            </tr>
+            <tr>
+              <td>Min</td>
+              <td id="statMin">-</td>
+            </tr>
+            <tr>
+              <td>Max</td>
+              <td id="statMax">-</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>📉 Time Series Analysis</h2>
+          <table class="stats-table">
+            <tr>
+              <td>Data Points</td>
+              <td id="tsCount">-</td>
+            </tr>
+            <tr>
+              <td>Trend (slope)</td>
+              <td id="tsTrend">-</td>
+            </tr>
+            <tr>
+              <td>R² Fit</td>
+              <td id="tsR2">-</td>
+            </tr>
+            <tr>
+              <td>Outliers Detected</td>
+              <td id="tsOutliers">-</td>
+            </tr>
+            <tr>
+              <td>Autocorrelation (lag=1)</td>
+              <td id="tsAutocorr">-</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📊 Histogram</h2>
+        <div id="histogram" class="histogram-container"></div>
+      </div>
+
+      <div class="card">
+        <h2>📝 Activity Log</h2>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import CD48 from '../cd48.js';
+      import { Statistics, Histogram, TimeSeries } from '../analysis.js';
+
+      const cd48 = new CD48();
+      let collectedData = [];
+      let timeStamps = [];
+
+      // UI Elements
+      const connectBtn = document.getElementById('connectBtn');
+      const collectBtn = document.getElementById('collectBtn');
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const generateHistBtn = document.getElementById('generateHistBtn');
+      const status = document.getElementById('status');
+      const channelSelect = document.getElementById('channelSelect');
+      const logDiv = document.getElementById('log');
+
+      function log(message, type = 'info') {
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        const timestamp = new Date().toLocaleTimeString();
+        entry.textContent = `[${timestamp}] ${message}`;
+        logDiv.insertBefore(entry, logDiv.firstChild);
+      }
+
+      connectBtn.addEventListener('click', async () => {
+        try {
+          if (cd48.isConnected()) {
+            await cd48.disconnect();
+            connectBtn.textContent = 'Connect to CD48';
+            status.textContent = 'Disconnected';
+            status.className = 'status disconnected';
+            collectBtn.disabled = true;
+            log('Disconnected from CD48', 'info');
+          } else {
+            await cd48.connect();
+            connectBtn.textContent = 'Disconnect';
+            status.textContent = 'Connected';
+            status.className = 'status connected';
+            collectBtn.disabled = false;
+            log('Connected to CD48', 'success');
+
+            const version = await cd48.getVersion();
+            log(`Firmware version: ${version}`, 'info');
+          }
+        } catch (error) {
+          log(`Error: ${error.message}`, 'error');
+        }
+      });
+
+      collectBtn.addEventListener('click', async () => {
+        try {
+          const channel = parseInt(channelSelect.value);
+          const duration = 30; // seconds
+          collectBtn.disabled = true;
+          log(`Starting ${duration}s data collection on channel ${channel}...`, 'info');
+
+          collectedData = [];
+          timeStamps = [];
+          const startTime = Date.now();
+
+          // Collect data every 0.5 seconds
+          const interval = setInterval(async () => {
+            try {
+              const counts = await cd48.getCounts();
+              const elapsedSec = (Date.now() - startTime) / 1000;
+              collectedData.push(counts.counts[channel]);
+              timeStamps.push(elapsedSec);
+
+              log(`Collected ${collectedData.length} samples...`, 'info');
+
+              if (elapsedSec >= duration) {
+                clearInterval(interval);
+                collectBtn.disabled = false;
+                analyzeBtn.disabled = false;
+                generateHistBtn.disabled = false;
+                log(`Data collection complete: ${collectedData.length} samples`, 'success');
+              }
+            } catch (error) {
+              clearInterval(interval);
+              collectBtn.disabled = false;
+              log(`Collection error: ${error.message}`, 'error');
+            }
+          }, 500);
+        } catch (error) {
+          collectBtn.disabled = false;
+          log(`Error: ${error.message}`, 'error');
+        }
+      });
+
+      analyzeBtn.addEventListener('click', () => {
+        try {
+          if (collectedData.length === 0) {
+            log('No data to analyze', 'warning');
+            return;
+          }
+
+          log('Performing statistical analysis...', 'info');
+
+          // Calculate summary statistics
+          const stats = Statistics.summary(collectedData);
+          document.getElementById('statCount').textContent = stats.count;
+          document.getElementById('statMean').textContent = stats.mean.toFixed(2);
+          document.getElementById('statMedian').textContent = stats.median.toFixed(2);
+          document.getElementById('statStd').textContent = stats.std.toFixed(2);
+          document.getElementById('statVariance').textContent = stats.variance.toFixed(2);
+          document.getElementById('statMin').textContent = stats.min;
+          document.getElementById('statMax').textContent = stats.max;
+
+          // Time series analysis
+          const regression = Statistics.linearRegression(timeStamps, collectedData);
+          const outliers = TimeSeries.detectOutliers(collectedData);
+          const autocorr = TimeSeries.autocorrelation(collectedData, 1);
+
+          document.getElementById('tsCount').textContent = collectedData.length;
+          document.getElementById('tsTrend').textContent = regression.slope.toFixed(4);
+          document.getElementById('tsR2').textContent = regression.r2.toFixed(4);
+          document.getElementById('tsOutliers').textContent = outliers.length;
+          document.getElementById('tsAutocorr').textContent = autocorr.toFixed(4);
+
+          log('Analysis complete', 'success');
+          log(`Mean: ${stats.mean.toFixed(2)}, StdDev: ${stats.std.toFixed(2)}`, 'info');
+          log(`Trend: ${regression.slope > 0 ? 'Increasing' : 'Decreasing'} (R²=${regression.r2.toFixed(3)})`, 'info');
+        } catch (error) {
+          log(`Analysis error: ${error.message}`, 'error');
+        }
+      });
+
+      generateHistBtn.addEventListener('click', () => {
+        try {
+          if (collectedData.length === 0) {
+            log('No data for histogram', 'warning');
+            return;
+          }
+
+          log('Generating histogram...', 'info');
+
+          // Generate histogram using Freedman-Diaconis rule
+          const hist = Histogram.freedmanDiaconis(collectedData);
+
+          // Draw histogram
+          const container = document.getElementById('histogram');
+          container.innerHTML = '';
+
+          const maxCount = Math.max(...hist.counts);
+          const containerWidth = container.clientWidth - 20;
+          const barWidth = containerWidth / hist.bins.length - 2;
+
+          hist.bins.forEach((bin, i) => {
+            const bar = document.createElement('div');
+            bar.className = 'histogram-bar';
+            const height = (hist.counts[i] / maxCount) * 270;
+            bar.style.height = `${height}px`;
+            bar.style.width = `${barWidth}px`;
+            bar.style.left = `${10 + i * (barWidth + 2)}px`;
+            bar.title = `Bin ${i}: ${bin.toFixed(1)} - Count: ${hist.counts[i]}`;
+            container.appendChild(bar);
+          });
+
+          log(`Histogram created with ${hist.bins.length} bins`, 'success');
+        } catch (error) {
+          log(`Histogram error: ${error.message}`, 'error');
+        }
+      });
+
+      // Initialize
+      log('Statistical Analysis Tools ready', 'info');
+      log('Connect to CD48 and collect data to begin', 'info');
+    </script>
+  </body>
+</html>
