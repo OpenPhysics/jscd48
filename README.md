@@ -8,45 +8,29 @@
 [![Edge](https://img.shields.io/badge/Edge-89+-blue.svg)](https://www.microsoft.com/edge)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://openphysics.github.io/jscd48/)
 
-A browser-based JavaScript library and web interface for controlling the [Red Dog Physics CD48 Coincidence Counter](https://www.reddogphysics.com/cd48.html) using the Web Serial API.
+A comprehensive browser-based JavaScript library and web interface for controlling the [Red Dog Physics CD48 Coincidence Counter](https://www.reddogphysics.com/cd48.html) using the Web Serial API.
 
 **No installation required** - just open the web page in Chrome or Edge and connect to your CD48.
 
-## Live Demo
+## 🌟 Highlights
+
+- **Zero installation** - Works directly in modern browsers
+- **11 interactive examples** - From simple monitoring to advanced analysis
+- **Live code playground** - Test and experiment with the API in real-time
+- **Advanced analytics** - Statistical analysis, histograms, time-series tools
+- **Calibration wizard** - Step-by-step calibration with profile management
+- **Module bundles** - ESM, UMD, and minified builds for any project
+- **100+ tests** - Comprehensive unit, integration, E2E, and visual regression tests
+- **TypeScript support** - Full type definitions included
+- **Hot reload dev server** - Instant feedback during development
+
+## 🚀 Live Demo
 
 **[https://openphysics.github.io/jscd48/](https://openphysics.github.io/jscd48/)**
 
 Open the link above in Chrome or Edge, connect your CD48 via USB, and click "Connect".
 
-## Features
-
-### Core Features
-
-- **Zero installation** - Works directly in Chrome/Edge browser
-- **Real-time monitoring** - Live count display with rate calculation
-- **Full device control** - Trigger levels, impedance, DAC output
-- **High-level measurements** - Rate and coincidence measurement with accidental correction
-- **Clean JavaScript API** - Easy integration into custom applications
-- **TypeScript support** - Full TypeScript definitions included
-- **Comprehensive testing** - 98.95% code coverage with 67 unit tests
-
-### Example Applications
-
-- **Main Interface** - Full-featured web control panel
-- **Demo Mode** - Try the interface without hardware (simulated data)
-- **Multi-Channel Display** - Real-time visualization of all 8 channels
-- **Graphing Interface** - Live count rate graphs with Chart.js
-- **Coincidence Experiments** - Pre-configured measurement examples
-
-### Developer Features
-
-- **Git Hooks** - Automatic linting and formatting on commit
-- **Conventional Commits** - Enforced commit message standards
-- **CI/CD Pipeline** - Automated testing, deployment, and releases
-- **API Documentation** - Auto-generated JSDoc documentation
-- **Security Scanning** - CodeQL and dependency review workflows
-
-## Installation
+## 📦 Installation
 
 ### Option 1: NPM Package
 
@@ -56,301 +40,454 @@ Install from npm for use in your projects:
 npm install jscd48
 ```
 
-Then import in your JavaScript:
+**ES Modules:**
 
 ```javascript
-import { CD48 } from 'jscd48';
+import CD48 from 'jscd48';
+import { Statistics, Histogram, TimeSeries } from 'jscd48/analysis';
+import { CalibrationWizard } from 'jscd48/calibration';
 
 const cd48 = new CD48();
 await cd48.connect();
 ```
 
-### Option 2: Direct Download
+**CommonJS:**
 
-Download `cd48.js` and include it in your HTML:
-
-```html
-<script src="cd48.js"></script>
+```javascript
+const CD48 = require('jscd48');
 ```
 
-### Option 3: CDN
+### Option 2: CDN - UMD Bundle
 
-Use via unpkg CDN:
+Use via unpkg CDN for quick prototyping:
 
 ```html
-<script src="https://unpkg.com/jscd48@latest/cd48.js"></script>
+<!-- Minified UMD bundle -->
+<script src="https://unpkg.com/jscd48@latest/dist/cd48.umd.min.js"></script>
+<script>
+  const cd48 = new CD48();
+</script>
 ```
 
-## Quick Start
+### Option 3: CDN - ES Module
+
+```html
+<script type="module">
+  import CD48 from 'https://unpkg.com/jscd48@latest/dist/cd48.esm.min.js';
+  const cd48 = new CD48();
+</script>
+```
+
+### Option 4: Direct Download
+
+Download `cd48.js` from the repository and include it in your HTML.
+
+## ✨ Features
+
+### Core Features
+
+- **Zero installation** - Works directly in Chrome/Edge browser
+- **Real-time monitoring** - Live count display with rate calculation
+- **Full device control** - Trigger levels, impedance, DAC output
+- **High-level measurements** - Rate and coincidence measurement with accidental correction
+- **Clean JavaScript API** - Easy integration into custom applications
+- **TypeScript support** - Full TypeScript definitions included
+- **Comprehensive testing** - 100+ tests with E2E and visual regression
+
+### Advanced Analysis Tools 📊
+
+- **Statistics Module** - Mean, median, std dev, variance, Poisson analysis
+- **Histogram Generation** - Automatic binning with Sturges and Freedman-Diaconis rules
+- **Time-Series Analysis** - Moving averages, outlier detection, autocorrelation
+- **Coincidence Analysis** - Accidental rate calculation, true coincidence extraction
+
+### Calibration Support 🎯
+
+- **CalibrationProfile** - Manage voltage, threshold, gain, and offset calibrations
+- **CalibrationStorage** - Persistent profile storage with localStorage
+- **VoltageCalibration** - Two-point and multi-point calibration utilities
+- **CalibrationWizard** - Step-by-step guided calibration workflow
+
+### Development Tools 🛠️
+
+- **DevLogger** - Enhanced console logging with colors and timestamps
+- **ErrorOverlay** - Visual error display with stack traces and context
+- **PerformanceMonitor** - Track and analyze performance metrics
+- **Hot Reload** - Vite dev server with instant feedback
+- **Mock Device** - Test without hardware using MockCD48
+
+### Example Applications (11 Total)
+
+Browse all examples at **[/examples/](/examples/)**
+
+#### Basic Examples
+
+- **Simple Monitor** - Basic real-time monitoring of all 8 channels
+- **Error Handling** - Comprehensive error handling patterns
+- **Demo Mode** - Try the interface without hardware (simulated data)
+- **Data Export** - Export measurements to CSV, JSON formats
+
+#### Advanced Examples
+
+- **Multi-Channel Display** - Professional real-time visualization
+- **Continuous Monitoring** - Long-term data collection with persistence
+- **Coincidence Measurement** - Specialized coincidence experiments
+- **Graphing Interface** - Live count rate graphs with Chart.js
+- **Statistical Analysis** - Advanced statistical tools and histograms
+- **Calibration Wizard** - Interactive calibration workflow
+- **Code Playground** - Live code editor with syntax highlighting
+
+## 🎮 Quick Start
 
 ### Web Interface
 
 1. Download or clone this repository
-2. Start a local server (choose one):
+2. Start the development server:
 
    ```bash
-   # Using npx (no install needed)
-   npx serve .
+   # Using npm
+   npm install
+   npm run dev       # Opens http://localhost:3000/examples/
 
-   # Or using npm
-   npm start
+   # Or using npx (no install needed)
+   npx serve .
    ```
 
-3. Open the URL shown (usually http://localhost:3000) in Chrome or Edge
+3. Open the URL in Chrome or Edge
 4. Click **Connect** and select your CD48
 
 ### JavaScript API
 
 Basic usage example:
 
-```html
-<script src="cd48.js"></script>
-<script>
-  async function main() {
-    const cd48 = new CD48();
-    await cd48.connect();
-
-    const version = await cd48.getVersion();
-    console.log('Firmware:', version);
-
-    const counts = await cd48.getCounts();
-    console.log('Counts:', counts);
-
-    await cd48.disconnect();
-  }
-  main();
-</script>
-```
-
-## Requirements
-
-- **Browser**: Chrome 89+, Edge 89+, or Opera 76+
-- **CD48 Device**: Connected via USB
-
-> **Note**: Firefox and Safari do not support the Web Serial API.
-
-## Example Applications
-
-### Main Interface (`index.html`)
-
-Full-featured web control panel with:
-
-- **Channel Counts** - Real-time display for all 8 channels with auto-refresh
-- **Rate Display** - Calculated count rates in Hz
-- **Trigger Level** - Adjustable threshold (0-4.08V)
-- **Impedance** - Toggle between 50Ω and High-Z
-- **DAC Output** - Adjustable output voltage (0-4.08V)
-- **LED Test** - Verify device communication
-- **Activity Log** - Debug messages and status updates
-
-### Demo Mode (`examples/demo-mode.html`)
-
-Test the interface **without hardware**:
-
-- Simulates realistic CD48 count data using Poisson distribution
-- All measurement functions work with mock data
-- Perfect for development, testing, and demonstrations
-- No CD48 device required
-
-### Multi-Channel Display (`examples/multi-channel-display.html`)
-
-Professional monitoring interface:
-
-- Real-time visualization of all 8 channels simultaneously
-- Visual activity indicators and progress bars
-- Global statistics (total counts, average rate, max rate)
-- Clean, modern UI with dark theme
-
-### Graphing Interface (`examples/graphing.html`)
-
-Live data visualization with Chart.js:
-
-- Real-time count rate graphs
-- Cumulative count plots
-- Configurable time windows (30s to 10min)
-- Channel selection and statistics
-- Export-ready visualizations
-
-### Coincidence Experiments (`examples/`)
-
-Additional examples for:
-
-- Rate measurements
-- Coincidence rate calculations
-- Error handling patterns
-- Custom UI implementations
-
-## JavaScript API Reference
-
-### Creating an Instance
-
 ```javascript
-const cd48 = new CD48({
-  baudRate: 115200, // Default: 115200
-  commandDelay: 50, // Delay after commands in ms
-});
-```
+const cd48 = new CD48();
+await cd48.connect();
 
-### Connection
-
-```javascript
-// Check browser support
-if (CD48.isSupported()) {
-  // Connect (opens port picker dialog)
-  await cd48.connect();
-
-  // Check connection status
-  if (cd48.isConnected()) {
-    // ... use device
-  }
-
-  // Disconnect
-  await cd48.disconnect();
-}
-```
-
-### Reading Counts
-
-```javascript
-// Get parsed counts object
-const data = await cd48.getCounts();
-// Returns: { counts: [n0, n1, n2, n3, n4, n5, n6, n7], overflow: 0 }
-
-// Get human-readable string
-const text = await cd48.getCounts(true);
-
-// Clear all counters
-await cd48.clearCounts();
-
-// Check overflow status
-const overflow = await cd48.getOverflow();
-```
-
-### Configuration
-
-```javascript
-// Set trigger level (0-4.08V)
-await cd48.setTriggerLevel(0.5);
-
-// Set impedance
-await cd48.setImpedance50Ohm();
-await cd48.setImpedanceHighZ();
-
-// Set DAC output voltage (0-4.08V)
-await cd48.setDacVoltage(2.0);
-
-// Configure a channel
-// Channel 4 counts A+B coincidences
-await cd48.setChannel(4, { A: 1, B: 1, C: 0, D: 0 });
-
-// Set auto-report interval (100-65535 ms)
-await cd48.setRepeat(1000);
-
-// Toggle auto-reporting
-await cd48.toggleRepeat();
-```
-
-### Device Information
-
-```javascript
-// Firmware version
 const version = await cd48.getVersion();
+console.log('Firmware:', version);
 
-// Current settings
-const settings = await cd48.getSettings();
+const counts = await cd48.getCounts();
+console.log('Counts:', counts.counts);
 
-// Built-in help
-const help = await cd48.getHelp();
-
-// Test LEDs
-await cd48.testLeds();
+await cd48.disconnect();
 ```
 
-### High-Level Measurements
+### Statistical Analysis Example
 
 ```javascript
-// Measure count rate on a channel
-const rate = await cd48.measureRate(0, 10); // Channel 0, 10 seconds
-// Returns: { counts, duration, rate, channel }
-console.log(`Rate: ${rate.rate.toFixed(2)} Hz`);
+import { Statistics, Histogram } from 'jscd48/analysis';
 
-// Measure coincidences with accidental correction
+// Collect data
+const samples = [];
+for (let i = 0; i < 100; i++) {
+  const data = await cd48.getCounts();
+  samples.push(data.counts[0]);
+  await cd48.sleep(100);
+}
+
+// Analyze
+const stats = Statistics.summary(samples);
+console.log(`Mean: ${stats.mean}, StdDev: ${stats.std}`);
+
+// Create histogram
+const hist = Histogram.autobin(samples);
+console.log('Histogram:', hist);
+```
+
+### Calibration Example
+
+```javascript
+import { CalibrationWizard } from 'jscd48/calibration';
+
+const wizard = new CalibrationWizard(cd48);
+
+// Measure background
+const backgrounds = await wizard.measureBackground([0, 1, 2, 3], 10.0);
+
+// Calibrate channel 0
+await wizard.calibrateVoltage(0, 5.0); // Known 5V reference
+await wizard.calibrateGain(0, 1000, 10.0); // Known 1000 cps reference
+
+// Save profile
+wizard.save('Lab Setup 2025-01-17');
+```
+
+## 📚 API Reference
+
+### Core CD48 API
+
+#### Connection
+
+```javascript
+CD48.isSupported(); // Check browser support
+await cd48.connect(); // Connect to device
+cd48.isConnected(); // Check connection status
+await cd48.disconnect(); // Disconnect
+```
+
+#### Reading Counts
+
+```javascript
+await cd48.getCounts(); // Get all channel counts
+await cd48.clearCounts(); // Clear all counters
+await cd48.getOverflow(); // Check overflow status
+```
+
+#### Configuration
+
+```javascript
+await cd48.setTriggerLevel(0.5); // Set trigger (0-4.08V)
+await cd48.setImpedance50Ohm(); // Set 50Ω impedance
+await cd48.setImpedanceHighZ(); // Set high-Z impedance
+await cd48.setDacVoltage(2.0); // Set DAC (0-4.08V)
+await cd48.setChannel(4, { A: 1, B: 1 }); // Configure channel
+```
+
+#### Measurements
+
+```javascript
+// Measure rate on a channel
+const rate = await cd48.measureRate(0, 10);
+// Returns: { counts, duration, rate, channel, uncertainty }
+
+// Measure coincidence rate with accidental correction
 const result = await cd48.measureCoincidenceRate({
   duration: 60,
   singlesAChannel: 0,
   singlesBChannel: 1,
   coincidenceChannel: 4,
-  coincidenceWindow: 25e-9, // 25 ns
+  coincidenceWindow: 25e-9,
 });
-// Returns: {
-//   singlesA, singlesB, coincidences, duration,
-//   rateA, rateB, coincidenceRate,
-//   accidentalRate, trueCoincidenceRate
-// }
-console.log(
-  `True coincidence rate: ${result.trueCoincidenceRate.toFixed(2)} Hz`
-);
+// Returns: { singlesA, singlesB, coincidences, rateA, rateB,
+//            coincidenceRate, accidentalRate, trueCoincidenceRate }
 ```
 
-## Channel Configuration
+### Analysis API
 
-The CD48 has 8 counter channels (0-7) that can be configured to count singles or coincidences:
-
-| Channel | Default Config | Description            |
-| ------- | -------------- | ---------------------- |
-| 0       | A only         | Input A singles        |
-| 1       | B only         | Input B singles        |
-| 2       | C only         | Input C singles        |
-| 3       | D only         | Input D singles        |
-| 4       | A + B          | Two-fold coincidence   |
-| 5       | A + C          | Two-fold coincidence   |
-| 6       | A + D          | Two-fold coincidence   |
-| 7       | B + C + D      | Three-fold coincidence |
-
-Configure channels using:
+#### Statistics
 
 ```javascript
-// Count A+B+C triple coincidences on channel 7
-await cd48.setChannel(7, { A: 1, B: 1, C: 1, D: 0 });
+import { Statistics } from 'jscd48/analysis';
+
+Statistics.mean(data);
+Statistics.median(data);
+Statistics.standardDeviation(data);
+Statistics.variance(data);
+Statistics.poissonUncertainty(count);
+Statistics.linearRegression(x, y);
+Statistics.summary(data); // All stats at once
 ```
 
-## Technical Specifications
+#### Histogram
 
-- **Counters 0-6**: 24-bit (max: 16,777,215)
-- **Counter 7**: 16-bit (max: 65,535)
-- **Coincidence window**: ~25 ns
-- **Trigger range**: 0-4.08V (8-bit resolution)
-- **DAC output**: 0-4.08V (8-bit resolution)
-- **Input impedance**: 50Ω or High-Z (selectable)
-- **Baud rate**: 115200
+```javascript
+import { Histogram } from 'jscd48/analysis';
 
-## Troubleshooting
+Histogram.create(data, { bins: 10 });
+Histogram.autobin(data); // Sturges' rule
+Histogram.freedmanDiaconis(data); // F-D rule
+Histogram.cumulative(data); // Cumulative histogram
+```
 
-### "Web Serial API not supported"
+#### Time-Series
 
-Use Chrome 89+, Edge 89+, or Opera 76+. Firefox and Safari don't support Web Serial.
+```javascript
+import { TimeSeries } from 'jscd48/analysis';
 
-### "No CD48 device selected"
+TimeSeries.movingAverage(data, window);
+TimeSeries.exponentialMovingAverage(data, alpha);
+TimeSeries.detectOutliers(data, threshold);
+TimeSeries.rateOfChange(data, times);
+TimeSeries.autocorrelation(data, lag);
+TimeSeries.deadTimeCorrection(rate, deadTime);
+```
 
-- Ensure the CD48 is connected via USB
-- Close any other applications using the serial port (PuTTY, Python, etc.)
-- Try unplugging and reconnecting the device
+### Calibration API
 
-### Connection works but no response
+```javascript
+import {
+  CalibrationProfile,
+  CalibrationStorage,
+  VoltageCalibration,
+  CalibrationWizard,
+} from 'jscd48/calibration';
 
-- The CD48 uses Cypress VID `0x04B4` - make sure you select the correct device
-- Try refreshing the page and reconnecting
-- Check the Activity Log for error messages
+// Create profile
+const profile = new CalibrationProfile({ name: 'My Profile' });
+profile.setVoltage(0, 5.0);
+profile.setGain(0, 1.2);
 
-### Port picker shows no devices
+// Storage
+const storage = new CalibrationStorage();
+storage.save(profile);
+const loaded = storage.load('My Profile');
 
-- On Linux, add your user to the `dialout` group:
-  ```bash
-  sudo usermod -a -G dialout $USER
-  ```
-  Then log out and back in.
+// Voltage calibration
+const cal = VoltageCalibration.twoPoint(
+  { raw: 100, actual: 5.0 },
+  { raw: 200, actual: 10.0 }
+);
 
-## Browser Compatibility
+// Wizard
+const wizard = new CalibrationWizard(cd48);
+await wizard.measureBackground([0, 1, 2, 3], 10.0);
+```
+
+## 🏗️ Module Bundles
+
+The package provides multiple bundle formats:
+
+```
+dist/
+├── cd48.esm.js          # ES Module (14.75 kB, 3.60 kB gzipped)
+├── cd48.esm.min.js      # ES Module minified (5.32 kB, 2.02 kB gzipped)
+├── cd48.umd.js          # UMD bundle (13.70 kB, 3.48 kB gzipped)
+└── cd48.umd.min.js      # UMD minified (5.27 kB, 1.98 kB gzipped)
+```
+
+**Package exports:**
+
+```json
+{
+  ".": "./cd48.js", // Main entry
+  "./analysis": "./analysis.js", // Analysis tools
+  "./calibration": "./calibration.js", // Calibration tools
+  "./dist/*": "./dist/*" // Direct dist access
+}
+```
+
+## 🧪 Testing
+
+The project includes comprehensive testing with 100+ tests:
+
+```bash
+# Unit tests
+npm test                    # Run unit tests
+npm run test:coverage       # With coverage
+npm run test:ui             # Vitest UI
+
+# Integration tests
+npm run test:integration    # Test with mock hardware
+
+# E2E tests
+npm run test:e2e            # All E2E tests
+npm run test:e2e:examples   # Test all 11 examples
+npm run test:e2e:visual     # Visual regression tests
+npm run test:e2e:errors     # Error scenario tests
+npm run test:e2e:headed     # Run with browser visible
+
+# All tests
+npm run test:all            # Run everything
+```
+
+**Test Coverage:**
+
+- 100+ total tests across all suites
+- Unit tests for core functionality
+- Integration tests with MockCD48
+- E2E tests for all 11 example pages
+- Visual regression testing (15+ screenshots)
+- Error scenario testing
+- Cross-browser (Chromium, WebKit, Firefox)
+
+See [tests/README.md](tests/README.md) for detailed testing documentation.
+
+## 🛠️ Development
+
+### Setup
+
+```bash
+git clone https://github.com/OpenPhysics/jscd48.git
+cd jscd48
+npm install
+```
+
+### Development Server
+
+```bash
+npm run dev          # Start Vite dev server with hot reload
+npm run dev:legacy   # Legacy serve mode (no hot reload)
+npm run preview      # Preview production build
+```
+
+The dev server opens automatically to `http://localhost:3000/examples/` with hot module replacement enabled.
+
+### Building
+
+```bash
+npm run build        # Build all bundles (ESM, UMD, minified)
+npm run docs         # Generate JSDoc documentation
+```
+
+### Code Quality
+
+**Automated Git Hooks:**
+
+- **Pre-commit** - Lints and formats staged files
+- **Commit-msg** - Validates conventional commits format
+- **Pre-push** - Runs all tests
+
+**Manual Commands:**
+
+```bash
+npm run lint         # Check code quality
+npm run lint:fix     # Fix linting issues
+npm run format       # Format all files
+npm run commit       # Interactive commit (guided)
+```
+
+### Project Structure
+
+```
+jscd48/
+├── cd48.js                  # Main library
+├── cd48.d.ts                # TypeScript definitions
+├── analysis.js              # Statistical analysis tools
+├── calibration.js           # Calibration utilities
+├── dev-utils.js             # Development utilities
+├── errors.js                # Error classes
+├── validation.js            # Input validation
+│
+├── dist/                    # Built bundles
+│   ├── cd48.esm.js
+│   ├── cd48.esm.min.js
+│   ├── cd48.umd.js
+│   └── cd48.umd.min.js
+│
+├── examples/                # 11 example applications
+│   ├── index.html              # Examples browser
+│   ├── code-playground.html    # Live code editor
+│   ├── statistical-analysis.html
+│   ├── calibration-wizard.html
+│   └── ... (7 more)
+│
+├── tests/                   # Comprehensive test suite
+│   ├── e2e/                    # End-to-end tests
+│   ├── integration/            # Integration tests
+│   ├── mock-cd48.js            # Mock device for testing
+│   └── README.md
+│
+├── .github/workflows/       # CI/CD pipelines
+│   ├── ci.yml                  # Continuous integration
+│   ├── deploy.yml              # GitHub Pages deployment
+│   └── release.yml             # Automated releases
+│
+└── docs/                    # Generated documentation
+```
+
+## 📖 Documentation
+
+- **[README.md](README.md)** - This file
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[ERROR_HANDLING.md](ERROR_HANDLING.md)** - Error handling guide
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contributing guidelines
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history
+- **[ACCESSIBILITY.md](ACCESSIBILITY.md)** - Accessibility features
+- **[tests/README.md](tests/README.md)** - Testing documentation
+- **[API Docs](docs/api/)** - Auto-generated JSDoc (run `npm run docs`)
+
+## 🌐 Browser Compatibility
 
 | Browser | Version | Status        |
 | ------- | ------- | ------------- |
@@ -360,7 +497,45 @@ Use Chrome 89+, Edge 89+, or Opera 76+. Firefox and Safari don't support Web Ser
 | Firefox | -       | Not supported |
 | Safari  | -       | Not supported |
 
-## Security
+The Web Serial API requires Chrome, Edge, or Opera. Firefox and Safari do not support this API.
+
+## 📋 Requirements
+
+- **Browser**: Chrome 89+, Edge 89+, or Opera 76+
+- **CD48 Device**: Connected via USB
+- **HTTPS or localhost**: Required for Web Serial API
+
+## 💡 Troubleshooting
+
+### Common Issues
+
+**"Web Serial API not supported"**
+
+- Use Chrome 89+, Edge 89+, or Opera 76+
+- Firefox and Safari don't support Web Serial
+
+**"No CD48 device selected"**
+
+- Ensure the CD48 is connected via USB
+- Close any other applications using the serial port
+- Try unplugging and reconnecting the device
+
+**Connection works but no response**
+
+- The CD48 uses Cypress VID `0x04B4`
+- Make sure you select the correct device
+- Try refreshing the page and reconnecting
+
+**Port picker shows no devices (Linux)**
+
+```bash
+sudo usermod -a -G dialout $USER
+# Log out and back in
+```
+
+See **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for comprehensive troubleshooting guide.
+
+## 🔒 Security
 
 The Web Serial API requires:
 
@@ -370,197 +545,43 @@ The Web Serial API requires:
 
 This prevents websites from silently accessing serial devices.
 
-## Examples
+## 🤝 Contributing
 
-### Simple Count Monitor
-
-```javascript
-const cd48 = new CD48();
-await cd48.connect();
-
-setInterval(async () => {
-  const data = await cd48.getCounts();
-  console.log('Ch0:', data.counts[0], 'Ch1:', data.counts[1]);
-}, 1000);
-```
-
-### Coincidence Experiment
-
-```javascript
-const cd48 = new CD48();
-await cd48.connect();
-
-// Configure for A-B coincidences
-await cd48.setChannel(0, { A: 1, B: 0, C: 0, D: 0 }); // A singles
-await cd48.setChannel(1, { A: 0, B: 1, C: 0, D: 0 }); // B singles
-await cd48.setChannel(4, { A: 1, B: 1, C: 0, D: 0 }); // A+B coincidence
-
-// Set trigger level
-await cd48.setTriggerLevel(0.3);
-
-// Measure for 60 seconds
-const result = await cd48.measureCoincidenceRate({ duration: 60 });
-
-console.log(`Singles A: ${result.rateA.toFixed(1)} Hz`);
-console.log(`Singles B: ${result.rateB.toFixed(1)} Hz`);
-console.log(`Coincidences: ${result.coincidenceRate.toFixed(1)} Hz`);
-console.log(`Accidentals: ${result.accidentalRate.toFixed(3)} Hz`);
-console.log(`True coincidences: ${result.trueCoincidenceRate.toFixed(1)} Hz`);
-
-await cd48.disconnect();
-```
-
-## Related Projects
-
-- [pycd48](https://github.com/OpenPhysics/pycd48) - Python interface for CD48
-- [Red Dog Physics CD48](https://www.reddogphysics.com/cd48.html) - Official hardware
-
-## Development
-
-### Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/OpenPhysics/jscd48.git
-cd jscd48
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-### Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests with UI
-npm run test:ui
-```
-
-Current test coverage: **98.95%** with 67 comprehensive unit tests.
-
-### Code Quality
-
-The project uses automated Git hooks to maintain code quality:
-
-**Pre-commit Hook:**
-
-- Automatically lints JavaScript files with ESLint
-- Formats all files with Prettier
-- Only processes staged files (fast!)
-
-**Commit Message Hook:**
-
-- Validates commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
-- Enforces format: `type: subject` (e.g., `feat: add new feature`)
-
-**Pre-push Hook:**
-
-- Runs all tests before pushing
-- Prevents broken code from reaching the repository
-
-**Manual Commands:**
-
-```bash
-# Lint code
-npm run lint
-npm run lint:fix
-
-# Format code
-npm run format
-npm run format:check
-
-# Interactive commit (guided)
-npm run commit
-
-# Generate documentation
-npm run docs
-```
-
-### CI/CD Pipeline
-
-The project includes comprehensive GitHub Actions workflows:
-
-- **CI Workflow** - Runs on every push and PR
-  - Tests on Node.js 18, 20, and 22
-  - Linting and formatting checks
-  - Security audit
-  - Code coverage reporting
-
-- **Deploy Workflow** - Deploys to GitHub Pages
-  - Builds documentation
-  - Creates organized deployment
-
-- **Release Workflow** - Automated releases
-  - Version validation
-  - Creates release archives
-  - Publishes to npm
-  - Generates changelog
-
-- **Security Workflows**
-  - CodeQL analysis for vulnerabilities
-  - Dependency review on PRs
-  - License compliance checks
-
-### Project Structure
-
-```
-jscd48/
-├── cd48.js              # Main library
-├── cd48.d.ts            # TypeScript definitions
-├── index.html           # Main web interface
-├── examples/            # Example applications
-│   ├── demo-mode.html
-│   ├── multi-channel-display.html
-│   └── graphing.html
-├── tests/               # Test suite
-│   ├── unit/
-│   └── mocks/
-├── .github/workflows/   # CI/CD pipelines
-└── docs/                # Generated documentation
-```
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file.
-
-## Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on:
-
-- Setting up the development environment
-- Git hooks and commit message format
-- Code style guidelines
-- Testing requirements
-- Submitting pull requests
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 Quick start:
 
 ```bash
-# Fork the repo and clone
+# Fork and clone
 git clone https://github.com/YOUR-USERNAME/jscd48.git
 cd jscd48
 
-# Install dependencies (sets up Git hooks)
+# Install (sets up Git hooks)
 npm install
 
-# Create a feature branch
+# Create feature branch
 git checkout -b feat/my-feature
 
-# Make changes and commit (hooks will run automatically)
+# Make changes and commit (hooks run automatically)
 git commit -m "feat: add my feature"
 
 # Push and create PR
 git push origin feat/my-feature
 ```
 
-## Acknowledgments
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+## 🙏 Acknowledgments
 
 This library interfaces with the CD48 Coincidence Counter designed and manufactured by [Red Dog Physics](https://www.reddogphysics.com/).
+
+## 🔗 Related Projects
+
+- [pycd48](https://github.com/OpenPhysics/pycd48) - Python interface for CD48
+- [Red Dog Physics CD48](https://www.reddogphysics.com/cd48.html) - Official hardware
+
+---
+
+**Made with ❤️ by the OpenPhysics community**
