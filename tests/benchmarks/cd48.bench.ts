@@ -1,17 +1,18 @@
 import { bench, describe } from 'vitest';
-import { MockSerial } from '../mocks/web-serial.js';
+import { createMockNavigatorSerial } from '../mocks/web-serial.js';
 
 // Setup mock for benchmarks
-global.navigator = {
-  serial: new MockSerial(),
+const mockSerial = createMockNavigatorSerial();
+(global as { navigator: { serial: typeof mockSerial } }).navigator = {
+  serial: mockSerial,
 };
 
 // Import after setting up global
-const CD48Module = await import('../../cd48.js');
+const CD48Module = await import('../../src/cd48.js');
 const CD48 = CD48Module.default;
 
 // Helper to prevent dead code elimination - uses the value
-const use = (value) => {
+const use = <T>(value: T): void => {
   if (value === undefined) throw new Error('unexpected');
 };
 

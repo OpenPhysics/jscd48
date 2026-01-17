@@ -3,32 +3,90 @@
  * Simulates the behavior of a real CD48 without hardware
  */
 
+interface MockCD48Options {
+  initialCounts?: number[];
+  initialCoincidenceCounts?: number;
+  version?: string;
+  autoIncrement?: boolean;
+  incrementRate?: number;
+  commandDelay?: number;
+  failConnection?: boolean;
+  failCommands?: boolean;
+  disconnectAfter?: number | null;
+}
+
+interface CountData {
+  counts: number[];
+  coincidenceCounts: number;
+  timestamp: number;
+}
+
+interface SettingsData {
+  baud: number;
+  timeout: number;
+  commandDelay: number;
+  firmware: string;
+}
+
+interface RateMeasurement {
+  channel: number;
+  duration: number;
+  counts: number;
+  rate: number;
+  uncertainty: number;
+}
+
+interface CoincidenceRateMeasurement {
+  duration: number;
+  counts: number;
+  rate: number;
+  uncertainty: number;
+}
+
+interface CoincidenceMeasurementOptions {
+  duration?: number;
+}
+
 export class MockCD48 {
-  constructor(options = {}) {
+  public connected: boolean;
+  public counts: number[];
+  public coincidenceCounts: number;
+  public version: string;
+  public autoIncrement: boolean;
+  public incrementRate: number;
+  public commandDelay: number;
+  public failConnection: boolean;
+  public failCommands: boolean;
+  public disconnectAfter: number | null;
+  public commandCount: number;
+  private _autoIncrementInterval: ReturnType<typeof setInterval> | null;
+
+  constructor(options: MockCD48Options = {}) {
     this.connected = false;
-    this.counts = options.initialCounts || [0, 0, 0, 0, 0, 0, 0, 0];
-    this.coincidenceCounts = options.initialCoincidenceCounts || 0;
-    this.version = options.version || 'Mock v1.0.0';
+    this.counts = options.initialCounts ?? [0, 0, 0, 0, 0, 0, 0, 0];
+    this.coincidenceCounts = options.initialCoincidenceCounts ?? 0;
+    this.version = options.version ?? 'Mock v1.0.0';
     this.autoIncrement = options.autoIncrement !== false;
-    this.incrementRate = options.incrementRate || 10; // counts per second
-    this.commandDelay = options.commandDelay || 10; // ms
-    this.failConnection = options.failConnection || false;
-    this.failCommands = options.failCommands || false;
-    this.disconnectAfter = options.disconnectAfter || null; // commands before disconnect
+    this.incrementRate = options.incrementRate ?? 10; // counts per second
+    this.commandDelay = options.commandDelay ?? 10; // ms
+    this.failConnection = options.failConnection ?? false;
+    this.failCommands = options.failCommands ?? false;
+    this.disconnectAfter = options.disconnectAfter ?? null; // commands before disconnect
     this.commandCount = 0;
+    this._autoIncrementInterval = null;
   }
 
   /**
    * Check if Web Serial API is supported
    */
-  static isSupported() {
+  static isSupported(): boolean {
     return true; // Mock always reports as supported
   }
 
   /**
    * Simulate connection to device
    */
-  async connect() {
+  async connect(): Promise<boolean> {
     await this._delay(this.commandDelay);
 
     if (this.failConnection) {
@@ -49,7 +107,7 @@ export class MockCD48 {
   /**
    * Simulate disconnection
    */
-  async disconnect() {
+  async disconnect(): Promise<boolean> {
     await this._delay(this.commandDelay);
     this.connected = false;
     this._stopAutoIncrement();
@@ -59,14 +117,14 @@ export class MockCD48 {
   /**
    * Check if device is connected
    */
-  isConnected() {
+  isConnected(): boolean {
     return this.connected;
   }
 
   /**
    * Get firmware version
    */
-  async getVersion() {
+  async getVersion(): Promise<string> {
     await this._executeCommand();
     return this.version;
   }
@@ -74,7 +132,7 @@ export class MockCD48 {
   /**
    * Get current counts for all channels
    */
-  async getCounts() {
+  async getCounts(): Promise<CountData> {
     await this._executeCommand();
     return {
       counts: [...this.counts], // Return copy
@@ -86,7 +144,7 @@ export class MockCD48 {
   /**
    * Get device settings
    */
-  async getSettings() {
+  async getSettings(): Promise<SettingsData> {
     await this._executeCommand();
     return {
       baud: 9600,
@@ -99,7 +157,7 @@ export class MockCD48 {
   /**
    * Clear all counters
    */
-  async clearCounts() {
+  async clearCounts(): Promise<boolean> {
     await this._executeCommand();
     this.counts = [0, 0, 0, 0, 0, 0, 0, 0];
     this.coincidenceCounts = 0;
@@ -109,16 +167,16 @@ export class MockCD48 {
   /**
    * Measure count rate for a channel
    */
-  async measureRate(channel, duration) {
+  async measureRate(channel: number, duration: number): Promise<RateMeasurement> {
     await this._executeCommand();
 
     if (channel < 0 || channel > 7) {
       throw new Error(`Invalid channel: ${channel}`);
     }
 
-    const startCounts = this.counts[channel];
+    const startCounts = this.counts[channel] ?? 0;
     await this._delay(duration * 1000);
-    const endCounts = this.counts[channel];
+    const endCounts = this.counts[channel] ?? 0;
 
     const totalCounts = endCounts - startCounts;
     const rate = totalCounts / duration;
@@ -128,17 +186,17 @@ export class MockCD48 {
       duration,
       counts: totalCounts,
       rate,
-      uncertainty: Math.sqrt(totalCounts) / duration,
+      uncertainty: Math.sqrt(Math.max(0, totalCounts)) / duration,
     };
   }
 
   /**
    * Measure coincidence rate
    */
-  async measureCoincidenceRate(options = {}) {
+  async measureCoincidenceRate(options: CoincidenceMeasurementOptions = {}): Promise<CoincidenceRateMeasurement> {
     await this._executeCommand();
 
-    const duration = options.duration || 1.0;
+    const duration = options.duration ?? 1.0;
     const startCounts = this.coincidenceCounts;
 
     await this._delay(duration * 1000);
@@ -151,14 +209,14 @@ export class MockCD48 {
       duration,
       counts: totalCounts,
       rate,
-      uncertainty: Math.sqrt(totalCounts) / duration,
+      uncertainty: Math.sqrt(Math.max(0, totalCounts)) / duration,
     };
   }
 
   /**
    * Set repeat mode (auto-update)
    */
-  async setRepeat(intervalMs) {
+  async setRepeat(_intervalMs: number): Promise<boolean> {
     await this._executeCommand();
     // Mock implementation - not actually used
     return true;
@@ -167,7 +225,7 @@ export class MockCD48 {
   /**
    * Toggle repeat mode
    */
-  async toggleRepeat() {
+  async toggleRepeat(): Promise<boolean> {
     await this._executeCommand();
     // Mock implementation
     return true;
@@ -176,14 +234,14 @@ export class MockCD48 {
   /**
    * Sleep utility
    */
-  async sleep(ms) {
+  async sleep(ms: number): Promise<void> {
     await this._delay(ms);
   }
 
   /**
    * Set count values (for testing)
    */
-  setCounts(counts) {
+  setCounts(counts: number[]): void {
     if (counts.length !== 8) {
       throw new Error('Must provide 8 count values');
     }
@@ -193,14 +251,14 @@ export class MockCD48 {
   /**
    * Set coincidence counts (for testing)
    */
-  setCoincidenceCounts(count) {
+  setCoincidenceCounts(count: number): void {
     this.coincidenceCounts = count;
   }
 
   /**
    * Simulate error on next command (for testing)
    */
-  failNextCommand() {
+  failNextCommand(): void {
     this.failCommands = true;
     setTimeout(() => {
       this.failCommands = false;
@@ -210,14 +268,14 @@ export class MockCD48 {
   /**
    * Simulate disconnect after N commands (for testing)
    */
-  setDisconnectAfter(n) {
+  setDisconnectAfter(n: number): void {
     this.disconnectAfter = n;
     this.commandCount = 0;
   }
 
   // Private methods
 
-  async _executeCommand() {
+  private async _executeCommand(): Promise<void> {
     if (!this.connected) {
       throw new Error('Device not connected');
     }
@@ -239,11 +297,11 @@ export class MockCD48 {
     }
   }
 
-  async _delay(ms) {
+  private async _delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  _startAutoIncrement() {
+  _startAutoIncrement(): void {
     this._stopAutoIncrement();
     this._autoIncrementInterval = setInterval(() => {
       if (!this.connected) {
@@ -256,7 +314,7 @@ export class MockCD48 {
         const increment = Math.floor(
           Math.random() * this.incrementRate * 2 * (100 / 1000)
         );
-        this.counts[i] += increment;
+        this.counts[i] = (this.counts[i] ?? 0) + increment;
       }
 
       // Increment coincidence counts (less frequent)
@@ -266,7 +324,7 @@ export class MockCD48 {
     }, 100);
   }
 
-  _stopAutoIncrement() {
+  private _stopAutoIncrement(): void {
     if (this._autoIncrementInterval) {
       clearInterval(this._autoIncrementInterval);
       this._autoIncrementInterval = null;

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockCD48 } from '../mock-cd48.js';
 
 describe('CD48 Integration Tests - Mock Hardware', () => {
-  let cd48;
+  let cd48: MockCD48;
 
   beforeEach(() => {
     cd48 = new MockCD48();
@@ -78,7 +78,7 @@ describe('CD48 Integration Tests - Mock Hardware', () => {
 
       // At least some channels should have increased
       const increased = before.counts.some(
-        (count, i) => after.counts[i] > count
+        (count, i) => (after.counts[i] ?? 0) > count
       );
       expect(increased).toBe(true);
     });
@@ -145,7 +145,7 @@ describe('CD48 Integration Tests - Mock Hardware', () => {
 
       const results = await Promise.all(promises);
       expect(results).toHaveLength(4);
-      expect(results[0].counts).toHaveLength(8);
+      expect((results[0] as Awaited<ReturnType<typeof cd48.getCounts>>).counts).toHaveLength(8);
       expect(typeof results[1]).toBe('string');
     });
 
