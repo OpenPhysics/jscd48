@@ -5,31 +5,65 @@
   "type": "module",
   "main": "cd48.js",
   "types": "cd48.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./cd48.d.ts",
+      "import": "./cd48.js",
+      "require": "./dist/cd48.umd.js"
+    },
+    "./analysis": {
+      "import": "./analysis.js"
+    },
+    "./calibration": {
+      "import": "./calibration.js"
+    },
+    "./dist/*": "./dist/*"
+  },
   "files": [
     "cd48.js",
     "cd48.d.ts",
+    "errors.js",
+    "validation.js",
+    "analysis.js",
+    "calibration.js",
+    "dev-utils.js",
+    "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "TROUBLESHOOTING.md"
   ],
   "scripts": {
     "start": "npx serve .",
-    "dev": "npx serve . --cors",
+    "dev": "vite",
+    "dev:legacy": "npx serve . --cors",
+    "preview": "vite preview",
+    "build": "npm run build:unminified && npm run build:minified",
+    "build:unminified": "vite build --config vite.config.build.js",
+    "build:minified": "vite build --config vite.config.min.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:integration": "vitest --run tests/integration",
     "test:bench": "vitest bench --run",
     "test:bench:watch": "vitest bench",
     "test:e2e": "playwright test",
+    "test:e2e:examples": "playwright test tests/e2e/examples.spec.js",
+    "test:e2e:visual": "playwright test tests/e2e/visual-regression.spec.js",
+    "test:e2e:errors": "playwright test tests/e2e/error-scenarios.spec.js",
+    "test:e2e:update-snapshots": "playwright test --update-snapshots",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report tests/e2e-report",
+    "test:all": "npm run test && npm run test:integration && npm run test:e2e",
     "lint": "eslint *.js examples/*.html",
     "lint:fix": "eslint --fix *.js examples/*.html",
     "format": "prettier --write \"**/*.{js,json,md,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,html}\"",
     "docs": "jsdoc -c jsdoc.json",
-    "prepublishOnly": "npm run lint && npm run test && npm run format:check",
+    "docs:serve": "npm run docs && npx serve docs",
+    "prepublishOnly": "npm run build && npm run lint && npm run test && npm run format:check",
     "prepare": "husky",
     "pre-commit": "lint-staged",
     "commit": "cz"
@@ -46,7 +80,17 @@
     "web-serial",
     "serial",
     "instrumentation",
-    "red-dog-physics"
+    "red-dog-physics",
+    "radiation",
+    "detector",
+    "geiger",
+    "scintillator",
+    "calibration",
+    "statistical-analysis",
+    "histogram",
+    "time-series",
+    "data-acquisition",
+    "lab-equipment"
   ],
   "author": "OpenPhysics Contributors",
   "license": "MIT",
@@ -62,6 +106,7 @@
     "@commitlint/config-conventional": "^20.3.1",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "commitizen": "^4.3.0",
@@ -76,6 +121,8 @@
     "playwright": "^1.57.0",
     "prettier": "^3.8.0",
     "serve": "^14.2.4",
+    "terser": "^5.46.0",
+    "vite": "^7.3.1",
     "vitest": "^4.0.17"
   },
   "overrides": {

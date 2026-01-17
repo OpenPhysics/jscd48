@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build bundles
+        run: npm run build
+
       - name: Generate API documentation
         run: npm run docs
 
@@ -43,8 +46,17 @@ jobs:
           cp index.html _site/
           cp cd48.js _site/
           cp cd48.d.ts _site/
+          cp errors.js _site/
+          cp validation.js _site/
           cp README.md _site/
           cp LICENSE _site/
+          cp TROUBLESHOOTING.md _site/
+
+          # Copy bundled distributions
+          if [ -d "dist" ]; then
+            mkdir -p _site/dist
+            cp -r dist/* _site/dist/
+          fi
 
           # Copy examples
           mkdir -p _site/examples
@@ -94,6 +106,7 @@ jobs:
               <h2>Resources</h2>
               <ul>
                 <li><a href="api/">API Documentation</a></li>
+                <li><a href="../TROUBLESHOOTING.md">Troubleshooting Guide</a></li>
                 <li><a href="../">Main Application</a></li>
                 <li><a href="../examples/">Examples</a></li>
                 <li><a href="https://github.com/OpenPhysics/jscd48">GitHub Repository</a></li>

@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CD48 - Live Code Playground</title>
+    <!-- CodeMirror CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: #0f0f1e;
+        color: #eee;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        background: #1a1f3a;
+        padding: 15px 20px;
+        border-bottom: 1px solid #2a2f4a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .header h1 {
+        color: #e94560;
+        font-size: 1.5em;
+      }
+
+      .header-controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        background: #e94560;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      button:hover:not(:disabled) {
+        background: #d63851;
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+
+      button.secondary {
+        background: #3b82f6;
+      }
+
+      button.secondary:hover:not(:disabled) {
+        background: #2563eb;
+      }
+
+      button.success {
+        background: #10b981;
+      }
+
+      button.success:hover:not(:disabled) {
+        background: #059669;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+
+      .left-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid #2a2f4a;
+      }
+
+      .editor-toolbar {
+        background: #1a1f3a;
+        padding: 10px;
+        border-bottom: 1px solid #2a2f4a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .editor-toolbar select {
+        background: #0f0f1e;
+        color: #eee;
+        border: 1px solid #2a2f4a;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+
+      .editor-container {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .CodeMirror {
+        height: 100%;
+        font-size: 14px;
+      }
+
+      .right-panel {
+        width: 400px;
+        display: flex;
+        flex-direction: column;
+        background: #1a1f3a;
+      }
+
+      .tabs {
+        display: flex;
+        background: #0f0f1e;
+        border-bottom: 1px solid #2a2f4a;
+      }
+
+      .tab {
+        padding: 12px 20px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        font-size: 14px;
+      }
+
+      .tab:hover {
+        background: #1a1f3a;
+      }
+
+      .tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+      }
+
+      .tab-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .console-output {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+      }
+
+      .console-entry {
+        padding: 6px 0;
+        border-bottom: 1px solid #2a2f4a;
+      }
+
+      .console-entry .timestamp {
+        color: #666;
+        font-size: 11px;
+      }
+
+      .console-entry.log {
+        color: #aaa;
+      }
+      .console-entry.info {
+        color: #3b82f6;
+      }
+      .console-entry.warn {
+        color: #f59e0b;
+      }
+      .console-entry.error {
+        color: #ef4444;
+      }
+      .console-entry.success {
+        color: #10b981;
+      }
+
+      .examples-list {
+        list-style: none;
+      }
+
+      .example-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #2a2f4a;
+        transition: background 0.2s;
+      }
+
+      .example-item:hover {
+        background: #0f0f1e;
+      }
+
+      .example-item-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .example-item-desc {
+        font-size: 12px;
+        color: #aaa;
+      }
+
+      .device-status {
+        padding: 10px;
+        background: #0f0f1e;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .status-indicator.connected {
+        background: #10b981;
+      }
+
+      .status-indicator.disconnected {
+        background: #ef4444;
+      }
+
+      pre {
+        background: #0f0f1e;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🎮 Live Code Playground</h1>
+      <div class="header-controls">
+        <button id="connectBtn" class="secondary">Connect Device</button>
+        <button id="runBtn" class="success">Run Code (Ctrl+Enter)</button>
+        <button id="clearBtn">Clear Console</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="editor-toolbar">
+          <div>
+            <label style="color: #aaa; font-size: 12px; margin-right: 10px"
+              >Template:</label
+            >
+            <select id="templateSelect">
+              <option value="blank">Blank</option>
+              <option value="basic">Basic Connection</option>
+              <option value="monitoring">Real-time Monitoring</option>
+              <option value="analysis">Statistical Analysis</option>
+              <option value="calibration">Calibration</option>
+            </select>
+          </div>
+          <div style="color: #666; font-size: 12px">
+            Press Ctrl+Enter to run
+          </div>
+        </div>
+        <div class="editor-container">
+          <textarea id="codeEditor"></textarea>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="tabs">
+          <div class="tab active" data-tab="console">Console</div>
+          <div class="tab" data-tab="device">Device</div>
+          <div class="tab" data-tab="examples">Examples</div>
+        </div>
+
+        <div class="tab-content active" data-tab="console">
+          <div id="consoleOutput" class="console-output"></div>
+        </div>
+
+        <div class="tab-content" data-tab="device">
+          <div class="device-status">
+            <div>
+              <span
+                id="statusIndicator"
+                class="status-indicator disconnected"
+              ></span>
+              <strong id="statusText">Disconnected</strong>
+            </div>
+          </div>
+          <div id="deviceInfo"></div>
+        </div>
+
+        <div class="tab-content" data-tab="examples">
+          <ul class="examples-list" id="examplesList"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
+
+    <script type="module">
+      import CD48 from '../cd48.js';
+      import { setupDevMode } from '../dev-utils.js';
+
+      // Setup dev mode
+      const { logger } = setupDevMode({
+        logger: { enabled: true, level: 'debug' },
+        showOverlay: true,
+      });
+
+      const cd48 = new CD48();
+      let deviceConnected = false;
+
+      // Initialize CodeMirror
+      /* global CodeMirror */
+      const editor = CodeMirror.fromTextArea(
+        document.getElementById('codeEditor'),
+        {
+          mode: 'javascript',
+          theme: 'dracula',
+          lineNumbers: true,
+          autoCloseBrackets: true,
+          matchBrackets: true,
+          indentUnit: 2,
+          tabSize: 2,
+          lineWrapping: true,
+        }
+      );
+
+      // Code templates
+      const templates = {
+        blank: '',
+        basic: `// Connect to CD48 and get version
+const version = await cd48.getVersion();
+console.log('Firmware version:', version);
+
+// Get current counts
+const data = await cd48.getCounts();
+console.log('Channel counts:', data.counts);`,
+        monitoring: `// Real-time monitoring example
+console.log('Starting 10-second monitoring...');
+
+for (let i = 0; i < 10; i++) {
+  const data = await cd48.getCounts();
+  console.log(\`[t=\${i}s] Ch0: \${data.counts[0]}, Ch1: \${data.counts[1]}\`);
+  await cd48.sleep(1000);
+}
+
+console.log('Monitoring complete!');`,
+        analysis: `// Statistical analysis example
+import { Statistics } from '../analysis.js';
+
+console.log('Collecting data for 5 seconds...');
+const samples = [];
+
+for (let i = 0; i < 10; i++) {
+  const data = await cd48.getCounts();
+  samples.push(data.counts[0]);
+  await cd48.sleep(500);
+}
+
+const stats = Statistics.summary(samples);
+console.log('Statistics:', stats);
+console.log(\`Mean: \${stats.mean.toFixed(2)}, StdDev: \${stats.std.toFixed(2)}\`);`,
+        calibration: `// Calibration example
+import { CalibrationProfile } from '../calibration.js';
+
+const profile = new CalibrationProfile({
+  name: 'Test Profile',
+  description: 'Example calibration'
+});
+
+// Set calibration for channel 0
+profile.setVoltage(0, 5.0);
+profile.setGain(0, 1.2);
+
+console.log('Calibration profile created:', profile.name);
+console.log('Channel 0 voltage:', profile.getVoltage(0));
+console.log('Channel 0 gain:', profile.getGain(0));`,
+      };
+
+      // Console logging
+      const consoleOutput = document.getElementById('consoleOutput');
+
+      function logToConsole(message, type = 'log') {
+        const entry = document.createElement('div');
+        entry.className = 'console-entry ' + type;
+        const timestamp = new Date().toLocaleTimeString();
+        entry.innerHTML =
+          '<div class="timestamp">' +
+          timestamp +
+          '</div>' +
+          '<div>' +
+          escapeHtml(String(message)) +
+          '</div>';
+        consoleOutput.appendChild(entry);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Override console methods
+      const originalConsole = {
+        log: console.log,
+        info: console.info,
+        warn: console.warn,
+        error: console.error,
+      };
+
+      console.log = (...args) => {
+        originalConsole.log(...args);
+        logToConsole(args.join(' '), 'log');
+      };
+
+      console.info = (...args) => {
+        originalConsole.info(...args);
+        logToConsole(args.join(' '), 'info');
+      };
+
+      console.warn = (...args) => {
+        originalConsole.warn(...args);
+        logToConsole(args.join(' '), 'warn');
+      };
+
+      console.error = (...args) => {
+        originalConsole.error(...args);
+        logToConsole(args.join(' '), 'error');
+      };
+
+      // Tab switching
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+          document
+            .querySelectorAll('.tab')
+            .forEach((t) => t.classList.remove('active'));
+          document
+            .querySelectorAll('.tab-content')
+            .forEach((c) => c.classList.remove('active'));
+          tab.classList.add('active');
+          document
+            .querySelector('.tab-content[data-tab="' + tabName + '"]')
+            .classList.add('active');
+        });
+      });
+
+      // Template selection
+      document
+        .getElementById('templateSelect')
+        .addEventListener('change', (e) => {
+          editor.setValue(templates[e.target.value]);
+        });
+
+      // Connect button
+      document
+        .getElementById('connectBtn')
+        .addEventListener('click', async () => {
+          try {
+            if (deviceConnected) {
+              await cd48.disconnect();
+              deviceConnected = false;
+              document.getElementById('connectBtn').textContent =
+                'Connect Device';
+              document.getElementById('connectBtn').className = 'secondary';
+              document.getElementById('statusIndicator').className =
+                'status-indicator disconnected';
+              document.getElementById('statusText').textContent =
+                'Disconnected';
+              console.log('Device disconnected');
+            } else {
+              await cd48.connect();
+              deviceConnected = true;
+              document.getElementById('connectBtn').textContent = 'Disconnect';
+              document.getElementById('connectBtn').className = 'success';
+              document.getElementById('statusIndicator').className =
+                'status-indicator connected';
+              document.getElementById('statusText').textContent = 'Connected';
+              console.log('Device connected successfully!');
+
+              const version = await cd48.getVersion();
+              document.getElementById('deviceInfo').innerHTML =
+                '<pre>Firmware: ' + version + '</pre>';
+            }
+          } catch (error) {
+            console.error('Connection error:', error.message);
+          }
+        });
+
+      // Run code
+      async function runCode() {
+        const code = editor.getValue();
+        if (!code.trim()) {
+          console.warn('No code to run');
+          return;
+        }
+
+        console.log('--- Running code ---');
+        try {
+          // Create async function to allow await
+          const AsyncFunction = Object.getPrototypeOf(
+            async function () {}
+          ).constructor;
+          const fn = new AsyncFunction('cd48', code);
+          await fn(cd48);
+          console.log('--- Code executed successfully ---');
+        } catch (error) {
+          console.error('Execution error:', error.message);
+          console.error(error.stack);
+        }
+      }
+
+      document.getElementById('runBtn').addEventListener('click', runCode);
+
+      // Ctrl+Enter to run
+      editor.addKeyMap({
+        'Ctrl-Enter': runCode,
+      });
+
+      // Clear console
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        consoleOutput.innerHTML = '';
+        console.log('Console cleared');
+      });
+
+      // Populate examples list
+      const examplesList = document.getElementById('examplesList');
+      Object.entries(templates).forEach(([key, code]) => {
+        if (key === 'blank') return;
+        const item = document.createElement('li');
+        item.className = 'example-item';
+        item.innerHTML =
+          '<div class="example-item-title">' +
+          (key.charAt(0).toUpperCase() + key.slice(1)) +
+          '</div>' +
+          '<div class="example-item-desc">Click to load</div>';
+        item.addEventListener('click', () => {
+          editor.setValue(code);
+          document.getElementById('templateSelect').value = key;
+        });
+        examplesList.appendChild(item);
+      });
+
+      // Initial message
+      console.log('🎮 Live Code Playground ready!');
+      console.log('1. Connect your CD48 device');
+      console.log('2. Write or select a code template');
+      console.log('3. Press Ctrl+Enter or click "Run Code"');
+      console.log('');
+      console.log('Available globals: cd48, console');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CD48 Examples - Interactive Demos</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1f3a 100%);
+        color: #eee;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 50px;
+      }
+
+      h1 {
+        color: #e94560;
+        font-size: 3em;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #aaa;
+        font-size: 1.2em;
+      }
+
+      .search-box {
+        max-width: 600px;
+        margin: 30px auto;
+      }
+
+      .search-box input {
+        width: 100%;
+        padding: 15px 20px;
+        background: #1a1f3a;
+        border: 2px solid #2a2f4a;
+        border-radius: 8px;
+        color: #eee;
+        font-size: 16px;
+      }
+
+      .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+
+      .categories {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+      }
+
+      .category-tag {
+        padding: 8px 20px;
+        background: #1a1f3a;
+        border: 2px solid #2a2f4a;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+      }
+
+      .category-tag:hover {
+        border-color: #3b82f6;
+        background: #2a2f4a;
+      }
+
+      .category-tag.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 50px;
+      }
+
+      .example-card {
+        background: #1a1f3a;
+        border: 2px solid #2a2f4a;
+        border-radius: 12px;
+        padding: 25px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .example-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #e94560, #3b82f6);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+      }
+
+      .example-card:hover {
+        border-color: #3b82f6;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+      }
+
+      .example-card:hover::before {
+        transform: scaleX(1);
+      }
+
+      .example-icon {
+        font-size: 2.5em;
+        margin-bottom: 15px;
+      }
+
+      .example-title {
+        color: #eee;
+        font-size: 1.3em;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .example-description {
+        color: #aaa;
+        font-size: 0.9em;
+        line-height: 1.5;
+        margin-bottom: 15px;
+      }
+
+      .example-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+      }
+
+      .tag {
+        padding: 4px 12px;
+        background: #0f0f1e;
+        border-radius: 12px;
+        font-size: 11px;
+        color: #3b82f6;
+        font-weight: 600;
+      }
+
+      .difficulty {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+
+      .difficulty.beginner {
+        background: #10b981;
+        color: white;
+      }
+
+      .difficulty.intermediate {
+        background: #f59e0b;
+        color: white;
+      }
+
+      .difficulty.advanced {
+        background: #ef4444;
+        color: white;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      footer {
+        text-align: center;
+        padding: 40px 20px;
+        color: #666;
+        border-top: 1px solid #2a2f4a;
+        margin-top: 50px;
+      }
+
+      footer a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      .stats {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 2.5em;
+        color: #3b82f6;
+        font-weight: 700;
+      }
+
+      .stat-label {
+        color: #aaa;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🚀 CD48 Examples</h1>
+        <p class="subtitle">
+          Interactive demonstrations and code samples for the CD48 Coincidence
+          Counter
+        </p>
+      </header>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-number" id="exampleCount">11</div>
+          <div class="stat-label">Examples</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Open Source</div>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="🔍 Search examples..."
+        />
+      </div>
+
+      <div class="categories">
+        <div class="category-tag active" data-category="all">All Examples</div>
+        <div class="category-tag" data-category="basic">Basic</div>
+        <div class="category-tag" data-category="advanced">Advanced</div>
+        <div class="category-tag" data-category="analysis">Analysis</div>
+      </div>
+
+      <div class="examples-grid" id="examplesGrid"></div>
+
+      <footer>
+        <p>
+          <strong>CD48 Coincidence Counter</strong> - Web Serial API Interface
+        </p>
+        <p style="margin-top: 10px">
+          <a href="https://github.com/OpenPhysics/jscd48">GitHub</a> •
+          <a href="../">Main Demo</a> •
+          <a href="../docs/">Documentation</a>
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      const examples = [
+        {
+          title: 'Simple Monitor',
+          icon: '📊',
+          description:
+            'Basic real-time monitoring of all 8 channels. Perfect starting point for beginners.',
+          file: 'simple-monitor.html',
+          category: 'basic',
+          difficulty: 'beginner',
+          tags: ['monitoring', 'real-time', 'basics'],
+        },
+        {
+          title: 'Error Handling',
+          icon: '⚠️',
+          description:
+            'Comprehensive error handling and recovery patterns for production applications.',
+          file: 'error-handling.html',
+          category: 'basic',
+          difficulty: 'intermediate',
+          tags: ['error-handling', 'reliability', 'best-practices'],
+        },
+        {
+          title: 'Demo Mode',
+          icon: '🎮',
+          description:
+            'Simulated CD48 device for testing and development without hardware.',
+          file: 'demo-mode.html',
+          category: 'basic',
+          difficulty: 'beginner',
+          tags: ['testing', 'simulation', 'development'],
+        },
+        {
+          title: 'Multi-Channel Display',
+          icon: '📺',
+          description:
+            'Advanced multi-channel visualization with real-time graphs and statistics.',
+          file: 'multi-channel-display.html',
+          category: 'advanced',
+          difficulty: 'intermediate',
+          tags: ['visualization', 'multi-channel', 'graphs'],
+        },
+        {
+          title: 'Continuous Monitoring',
+          icon: '🔄',
+          description:
+            'Long-term data collection with automatic reconnection and data persistence.',
+          file: 'continuous-monitoring.html',
+          category: 'advanced',
+          difficulty: 'advanced',
+          tags: ['monitoring', 'persistence', 'long-term'],
+        },
+        {
+          title: 'Coincidence Measurement',
+          icon: '🎯',
+          description:
+            'Specialized coincidence counting and analysis for paired detector experiments.',
+          file: 'coincidence-measurement.html',
+          category: 'advanced',
+          difficulty: 'advanced',
+          tags: ['coincidence', 'physics', 'measurement'],
+        },
+        {
+          title: 'Graphing & Charts',
+          icon: '📈',
+          description:
+            'Interactive charts and graphs using Chart.js for data visualization.',
+          file: 'graphing.html',
+          category: 'advanced',
+          difficulty: 'intermediate',
+          tags: ['charts', 'visualization', 'chart.js'],
+        },
+        {
+          title: 'Data Export',
+          icon: '💾',
+          description:
+            'Export measurement data to CSV, JSON, and other formats for external analysis.',
+          file: 'data-export.html',
+          category: 'advanced',
+          difficulty: 'beginner',
+          tags: ['export', 'csv', 'data'],
+        },
+        {
+          title: 'Statistical Analysis',
+          icon: '📊',
+          description:
+            'Advanced statistical analysis tools including histograms and time-series analysis.',
+          file: 'statistical-analysis.html',
+          category: 'analysis',
+          difficulty: 'advanced',
+          tags: ['statistics', 'histogram', 'analysis'],
+        },
+        {
+          title: 'Calibration Wizard',
+          icon: '🎯',
+          description:
+            'Step-by-step calibration workflow with profile management and storage.',
+          file: 'calibration-wizard.html',
+          category: 'analysis',
+          difficulty: 'advanced',
+          tags: ['calibration', 'wizard', 'setup'],
+        },
+        {
+          title: 'Code Playground',
+          icon: '🎮',
+          description:
+            'Interactive live code editor with syntax highlighting and instant execution.',
+          file: 'code-playground.html',
+          category: 'advanced',
+          difficulty: 'intermediate',
+          tags: ['code-editor', 'playground', 'interactive', 'development'],
+        },
+      ];
+
+      const examplesGrid = document.getElementById('examplesGrid');
+      const searchInput = document.getElementById('searchInput');
+      const categoryTags = document.querySelectorAll('.category-tag');
+      let currentCategory = 'all';
+
+      function renderExamples(filter = '') {
+        examplesGrid.innerHTML = '';
+
+        const filtered = examples.filter((example) => {
+          const matchesSearch =
+            filter === '' ||
+            example.title.toLowerCase().includes(filter.toLowerCase()) ||
+            example.description.toLowerCase().includes(filter.toLowerCase()) ||
+            example.tags.some((tag) =>
+              tag.toLowerCase().includes(filter.toLowerCase())
+            );
+
+          const matchesCategory =
+            currentCategory === 'all' || example.category === currentCategory;
+
+          return matchesSearch && matchesCategory;
+        });
+
+        if (filtered.length === 0) {
+          examplesGrid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #666;">
+              <div style="font-size: 3em; margin-bottom: 20px;">🔍</div>
+              <div style="font-size: 1.2em;">No examples found</div>
+              <div style="margin-top: 10px;">Try a different search term or category</div>
+            </div>
+          `;
+          return;
+        }
+
+        filtered.forEach((example) => {
+          const card = document.createElement('div');
+          card.className = 'example-card';
+          card.onclick = () => {
+            window.location.href = example.file;
+          };
+
+          const tagsHTML = example.tags
+            .map((tag) => `<span class="tag">${tag}</span>`)
+            .join('');
+
+          card.innerHTML = `
+            <div class="example-icon">${example.icon}</div>
+            <div class="example-title">${example.title}</div>
+            <div class="example-description">${example.description}</div>
+            <div class="difficulty ${example.difficulty}">${example.difficulty}</div>
+            <div class="example-tags">${tagsHTML}</div>
+          `;
+
+          examplesGrid.appendChild(card);
+        });
+      }
+
+      searchInput.addEventListener('input', (e) => {
+        renderExamples(e.target.value);
+      });
+
+      categoryTags.forEach((tag) => {
+        tag.addEventListener('click', () => {
+          categoryTags.forEach((t) => t.classList.remove('active'));
+          tag.classList.add('active');
+          currentCategory = tag.dataset.category;
+          renderExamples(searchInput.value);
+        });
+      });
+
+      // Update stats
+      document.getElementById('exampleCount').textContent = examples.length;
+
+      // Initial render
+      renderExamples();
+    </script>
+  </body>
+</html>
