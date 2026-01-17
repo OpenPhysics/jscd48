@@ -1,0 +1,158 @@
+name: Changelog
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-changelog:
+    name: Update Changelog
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip changelog]')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No tags found, skipping changelog generation"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Get commits since last tag
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --oneline --no-merges)
+
+          if [ -z "$COMMITS" ]; then
+            echo "No new commits since last tag"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+          # Categorize commits by conventional commit type
+          echo "## Unreleased Changes" > unreleased.md
+          echo "" >> unreleased.md
+
+          # Features
+          FEATURES=$(git log ${LATEST_TAG}..HEAD --oneline --no-merges --grep="^feat" --format="- %s")
+          if [ -n "$FEATURES" ]; then
+            echo "### Features" >> unreleased.md
+            echo "$FEATURES" >> unreleased.md
+            echo "" >> unreleased.md
+          fi
+
+          # Bug Fixes
+          FIXES=$(git log ${LATEST_TAG}..HEAD --oneline --no-merges --grep="^fix" --format="- %s")
+          if [ -n "$FIXES" ]; then
+            echo "### Bug Fixes" >> unreleased.md
+            echo "$FIXES" >> unreleased.md
+            echo "" >> unreleased.md
+          fi
+
+          # Documentation
+          DOCS=$(git log ${LATEST_TAG}..HEAD --oneline --no-merges --grep="^docs" --format="- %s")
+          if [ -n "$DOCS" ]; then
+            echo "### Documentation" >> unreleased.md
+            echo "$DOCS" >> unreleased.md
+            echo "" >> unreleased.md
+          fi
+
+          # Other changes
+          OTHER=$(git log ${LATEST_TAG}..HEAD --oneline --no-merges --invert-grep --grep="^feat" --grep="^fix" --grep="^docs" --format="- %s")
+          if [ -n "$OTHER" ]; then
+            echo "### Other Changes" >> unreleased.md
+            echo "$OTHER" >> unreleased.md
+            echo "" >> unreleased.md
+          fi
+
+          cat unreleased.md
+
+      - name: Post changelog summary
+        if: steps.changelog.outputs.skip != 'true'
+        run: |
+          echo "## Changelog Preview" >> $GITHUB_STEP_SUMMARY
+          cat unreleased.md >> $GITHUB_STEP_SUMMARY
+
+  release-notes:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate full changelog
+        run: |
+          echo "# Changelog" > CHANGELOG_GENERATED.md
+          echo "" >> CHANGELOG_GENERATED.md
+          echo "All notable changes to this project will be documented in this file." >> CHANGELOG_GENERATED.md
+          echo "" >> CHANGELOG_GENERATED.md
+
+          # Get all tags sorted by date
+          for TAG in $(git tag --sort=-version:refname); do
+            PREV_TAG=$(git describe --tags --abbrev=0 ${TAG}^ 2>/dev/null || echo "")
+
+            echo "## [${TAG#v}] - $(git log -1 --format=%cs $TAG)" >> CHANGELOG_GENERATED.md
+            echo "" >> CHANGELOG_GENERATED.md
+
+            if [ -n "$PREV_TAG" ]; then
+              RANGE="${PREV_TAG}..${TAG}"
+            else
+              RANGE="${TAG}"
+            fi
+
+            # Features
+            FEATURES=$(git log ${RANGE} --oneline --no-merges --grep="^feat" --format="- %s" 2>/dev/null)
+            if [ -n "$FEATURES" ]; then
+              echo "### Features" >> CHANGELOG_GENERATED.md
+              echo "$FEATURES" >> CHANGELOG_GENERATED.md
+              echo "" >> CHANGELOG_GENERATED.md
+            fi
+
+            # Bug Fixes
+            FIXES=$(git log ${RANGE} --oneline --no-merges --grep="^fix" --format="- %s" 2>/dev/null)
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes" >> CHANGELOG_GENERATED.md
+              echo "$FIXES" >> CHANGELOG_GENERATED.md
+              echo "" >> CHANGELOG_GENERATED.md
+            fi
+
+            echo "" >> CHANGELOG_GENERATED.md
+          done
+
+          cat CHANGELOG_GENERATED.md
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v6
+        with:
+          name: changelog
+          path: CHANGELOG_GENERATED.md
+          retention-days: 30

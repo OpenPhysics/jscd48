@@ -1,0 +1,198 @@
+name: Pre-release
+
+on:
+  push:
+    tags:
+      - 'v*-alpha*'
+      - 'v*-beta*'
+      - 'v*-rc*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate:
+    name: Validate Pre-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Extract version info
+        id: version
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$TAG_VERSION" >> $GITHUB_OUTPUT
+
+          # Determine pre-release type
+          if [[ "$TAG_VERSION" == *"-alpha"* ]]; then
+            echo "TYPE=alpha" >> $GITHUB_OUTPUT
+            echo "NPM_TAG=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$TAG_VERSION" == *"-beta"* ]]; then
+            echo "TYPE=beta" >> $GITHUB_OUTPUT
+            echo "NPM_TAG=beta" >> $GITHUB_OUTPUT
+          elif [[ "$TAG_VERSION" == *"-rc"* ]]; then
+            echo "TYPE=rc" >> $GITHUB_OUTPUT
+            echo "NPM_TAG=next" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Pre-release type: $TYPE"
+          echo "npm tag: $NPM_TAG"
+
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      type: ${{ steps.version.outputs.TYPE }}
+      npm_tag: ${{ steps.version.outputs.NPM_TAG }}
+
+  build:
+    name: Build Pre-release
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build bundles
+        run: npm run build
+
+      - name: Generate documentation
+        run: npm run docs
+
+      - name: Create pre-release bundle
+        run: |
+          mkdir -p prerelease
+          cp cd48.js prerelease/
+          cp cd48.d.ts prerelease/
+          cp -r dist prerelease/
+          cp README.md prerelease/
+          cp LICENSE prerelease/
+          cp package.json prerelease/
+
+          cd prerelease
+          zip -r ../jscd48-${{ needs.validate.outputs.version }}.zip .
+          tar -czf ../jscd48-${{ needs.validate.outputs.version }}.tar.gz .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: prerelease-assets
+          path: |
+            *.zip
+            *.tar.gz
+          retention-days: 30
+
+  release:
+    name: Create Pre-release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: prerelease-assets
+
+      - name: Create GitHub Pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Pre-release v${{ needs.validate.outputs.version }}
+          body: |
+            ## Pre-release v${{ needs.validate.outputs.version }}
+
+            This is a **${{ needs.validate.outputs.type }}** pre-release for testing purposes.
+
+            ### Installation
+
+            ```bash
+            npm install jscd48@${{ needs.validate.outputs.npm_tag }}
+            ```
+
+            ### Warning
+
+            This is a pre-release version and may contain bugs or incomplete features.
+            Do not use in production environments.
+
+            ### Feedback
+
+            Please report any issues at https://github.com/OpenPhysics/jscd48/issues
+          draft: false
+          prerelease: true
+          files: |
+            jscd48-${{ needs.validate.outputs.version }}.zip
+            jscd48-${{ needs.validate.outputs.version }}.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-npm:
+    name: Publish to npm (Pre-release)
+    needs: [validate, release]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to npm with tag
+        run: npm publish --tag ${{ needs.validate.outputs.npm_tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish summary
+        run: |
+          echo "## Pre-release Published! 📦" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Published jscd48@${{ needs.validate.outputs.version }} to npm with tag \`${{ needs.validate.outputs.npm_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install with:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install jscd48@${{ needs.validate.outputs.npm_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

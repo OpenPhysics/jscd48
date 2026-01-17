@@ -12,11 +12,25 @@
       "import": "./cd48.js",
       "require": "./dist/cd48.umd.js"
     },
+    "./errors": {
+      "types": "./types/errors.d.ts",
+      "import": "./errors.js"
+    },
+    "./validation": {
+      "types": "./types/validation.d.ts",
+      "import": "./validation.js"
+    },
     "./analysis": {
+      "types": "./types/analysis.d.ts",
       "import": "./analysis.js"
     },
     "./calibration": {
+      "types": "./types/calibration.d.ts",
       "import": "./calibration.js"
+    },
+    "./dev-utils": {
+      "types": "./types/dev-utils.d.ts",
+      "import": "./dev-utils.js"
     },
     "./dist/*": "./dist/*"
   },
@@ -28,6 +42,7 @@
     "analysis.js",
     "calibration.js",
     "dev-utils.js",
+    "types",
     "dist",
     "README.md",
     "LICENSE",

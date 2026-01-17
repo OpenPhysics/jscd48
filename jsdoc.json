@@ -1,6 +1,14 @@
 {
   "source": {
-    "include": ["cd48.js", "README.md"],
+    "include": [
+      "cd48.js",
+      "errors.js",
+      "validation.js",
+      "analysis.js",
+      "calibration.js",
+      "dev-utils.js",
+      "README.md"
+    ],
     "includePattern": ".js$"
   },
   "opts": {

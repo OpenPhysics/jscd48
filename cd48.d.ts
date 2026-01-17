@@ -12,6 +12,26 @@ export interface CD48Options {
    * Delay after commands in milliseconds (default: 50)
    */
   commandDelay?: number;
+
+  /**
+   * Enable auto-reconnection on disconnect (default: false)
+   */
+  autoReconnect?: boolean;
+
+  /**
+   * Maximum reconnection attempts (default: 3)
+   */
+  reconnectAttempts?: number;
+
+  /**
+   * Delay between reconnect attempts in ms (default: 1000)
+   */
+  reconnectDelay?: number;
+
+  /**
+   * Minimum milliseconds between commands for rate limiting (default: 0)
+   */
+  rateLimitMs?: number;
 }
 
 export interface CountData {
@@ -24,6 +44,23 @@ export interface CountData {
    * Overflow status flag
    */
   overflow: number;
+}
+
+export interface RateUncertainty {
+  /**
+   * Poisson uncertainty in counts (sqrt(N))
+   */
+  counts: number;
+
+  /**
+   * Uncertainty in rate (counts uncertainty / duration)
+   */
+  rate: number;
+
+  /**
+   * Relative uncertainty as percentage
+   */
+  relative: number;
 }
 
 export interface RateResult {
@@ -46,6 +83,11 @@ export interface RateResult {
    * Channel number (0-7)
    */
   channel: number;
+
+  /**
+   * Measurement uncertainties (Poisson statistics)
+   */
+  uncertainty: RateUncertainty;
 }
 
 export interface ChannelInputs {
@@ -97,6 +139,48 @@ export interface CoincidenceMeasurementOptions {
   coincidenceWindow?: number;
 }
 
+export interface CoincidenceUncertainty {
+  /**
+   * Poisson uncertainty in singles A counts
+   */
+  singlesA: number;
+
+  /**
+   * Poisson uncertainty in singles B counts
+   */
+  singlesB: number;
+
+  /**
+   * Poisson uncertainty in coincidence counts
+   */
+  coincidences: number;
+
+  /**
+   * Uncertainty in singles A rate
+   */
+  rateA: number;
+
+  /**
+   * Uncertainty in singles B rate
+   */
+  rateB: number;
+
+  /**
+   * Uncertainty in coincidence rate
+   */
+  coincidenceRate: number;
+
+  /**
+   * Propagated uncertainty in accidental rate
+   */
+  accidentalRate: number;
+
+  /**
+   * Combined uncertainty in true coincidence rate
+   */
+  trueCoincidenceRate: number;
+}
+
 export interface CoincidenceResult {
   /**
    * Singles A count
@@ -142,6 +226,11 @@ export interface CoincidenceResult {
    * True coincidence rate (measured - accidental) in Hz
    */
   trueCoincidenceRate: number;
+
+  /**
+   * Measurement uncertainties with error propagation
+   */
+  uncertainty: CoincidenceUncertainty;
 }
 
 /**
@@ -176,6 +265,24 @@ export class CD48 {
    * Disconnect from the CD48 device
    */
   disconnect(): Promise<void>;
+
+  /**
+   * Attempt to reconnect to a previously connected device
+   * @returns True if reconnected successfully
+   */
+  reconnect(): Promise<boolean>;
+
+  /**
+   * Set callback for disconnect events
+   * @param callback - Function called on disconnect
+   */
+  onDisconnect(callback: () => void): void;
+
+  /**
+   * Set callback for reconnect events
+   * @param callback - Function called on successful reconnect
+   */
+  onReconnect(callback: () => void): void;
 
   /**
    * Check if connected to device

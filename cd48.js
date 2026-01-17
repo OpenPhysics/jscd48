@@ -34,15 +34,43 @@ class CD48 {
    * @param {Object} options - Configuration options
    * @param {number} options.baudRate - Baud rate (default: 115200)
    * @param {number} options.commandDelay - Delay after commands in ms (default: 50)
+   * @param {boolean} options.autoReconnect - Enable auto-reconnection (default: false)
+   * @param {number} options.reconnectAttempts - Max reconnection attempts (default: 3)
+   * @param {number} options.reconnectDelay - Delay between reconnect attempts in ms (default: 1000)
+   * @param {number} options.rateLimitMs - Minimum ms between commands (default: 0)
    */
   constructor(options = {}) {
     this.baudRate = options.baudRate || 115200;
     this.commandDelay = options.commandDelay || 50;
+    this.autoReconnect = options.autoReconnect || false;
+    this.reconnectAttempts = options.reconnectAttempts || 3;
+    this.reconnectDelay = options.reconnectDelay || 1000;
+    this.rateLimitMs = options.rateLimitMs || 0;
     this.port = null;
     this.reader = null;
     this.writer = null;
     this.readableStreamClosed = null;
     this.writableStreamClosed = null;
+    this._lastCommandTime = 0;
+    this._reconnecting = false;
+    this._onDisconnect = null;
+    this._onReconnect = null;
+  }
+
+  /**
+   * Set callback for disconnect events.
+   * @param {Function} callback - Function called on disconnect
+   */
+  onDisconnect(callback) {
+    this._onDisconnect = callback;
+  }
+
+  /**
+   * Set callback for reconnect events.
+   * @param {Function} callback - Function called on successful reconnect
+   */
+  onReconnect(callback) {
+    this._onReconnect = callback;
   }
 
   /**
@@ -69,24 +97,7 @@ class CD48 {
         filters: [{ usbVendorId: 0x04b4 }], // Cypress Semiconductor
       });
 
-      await this.port.open({ baudRate: this.baudRate });
-
-      // Set up reader and writer
-      const textDecoder = new TextDecoderStream();
-      this.readableStreamClosed = this.port.readable.pipeTo(
-        textDecoder.writable
-      );
-      this.reader = textDecoder.readable.getReader();
-
-      const textEncoder = new TextEncoderStream();
-      this.writableStreamClosed = textEncoder.readable.pipeTo(
-        this.port.writable
-      );
-      this.writer = textEncoder.writable.getWriter();
-
-      // Wait for device to initialize
-      await this.sleep(500);
-
+      await this._setupConnection();
       return true;
     } catch (error) {
       if (error.name === 'NotFoundError') {
@@ -97,22 +108,129 @@ class CD48 {
   }
 
   /**
-   * Disconnect from the CD48 device.
+   * Set up connection streams after port is opened.
+   * @private
    */
-  async disconnect() {
+  async _setupConnection() {
+    await this.port.open({ baudRate: this.baudRate });
+
+    // Set up reader and writer
+    const textDecoder = new TextDecoderStream();
+    this.readableStreamClosed = this.port.readable.pipeTo(textDecoder.writable);
+    this.reader = textDecoder.readable.getReader();
+
+    const textEncoder = new TextEncoderStream();
+    this.writableStreamClosed = textEncoder.readable.pipeTo(this.port.writable);
+    this.writer = textEncoder.writable.getWriter();
+
+    // Wait for device to initialize
+    await this.sleep(500);
+  }
+
+  /**
+   * Attempt to reconnect to the device.
+   * @returns {Promise<boolean>} True if reconnected successfully
+   */
+  async reconnect() {
+    if (this._reconnecting) {
+      return false;
+    }
+
+    this._reconnecting = true;
+
+    try {
+      // Clean up existing connection
+      await this._cleanupConnection();
+
+      // Get previously granted ports
+      const ports = await navigator.serial.getPorts();
+      const cd48Port = ports.find((p) => {
+        const info = p.getInfo();
+        return info.usbVendorId === 0x04b4;
+      });
+
+      if (!cd48Port) {
+        throw new ConnectionError('No previously connected CD48 device found');
+      }
+
+      this.port = cd48Port;
+      await this._setupConnection();
+
+      if (this._onReconnect) {
+        this._onReconnect();
+      }
+
+      return true;
+    } finally {
+      this._reconnecting = false;
+    }
+  }
+
+  /**
+   * Attempt auto-reconnection with retries.
+   * @returns {Promise<boolean>} True if reconnected successfully
+   * @private
+   */
+  async _attemptAutoReconnect() {
+    if (!this.autoReconnect || this._reconnecting) {
+      return false;
+    }
+
+    for (let attempt = 1; attempt <= this.reconnectAttempts; attempt++) {
+      try {
+        await this.sleep(this.reconnectDelay * attempt);
+        const success = await this.reconnect();
+        if (success) {
+          return true;
+        }
+      } catch {
+        // Continue to next attempt
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Clean up connection resources.
+   * @private
+   */
+  async _cleanupConnection() {
     if (this.reader) {
-      await this.reader.cancel();
-      await this.readableStreamClosed.catch(() => {});
+      try {
+        await this.reader.cancel();
+        await this.readableStreamClosed.catch(() => {});
+      } catch {
+        // Ignore cleanup errors
+      }
       this.reader = null;
     }
     if (this.writer) {
-      await this.writer.close();
-      await this.writableStreamClosed;
+      try {
+        await this.writer.close();
+        await this.writableStreamClosed;
+      } catch {
+        // Ignore cleanup errors
+      }
       this.writer = null;
     }
     if (this.port) {
-      await this.port.close();
+      try {
+        await this.port.close();
+      } catch {
+        // Ignore cleanup errors
+      }
       this.port = null;
+    }
+  }
+
+  /**
+   * Disconnect from the CD48 device.
+   */
+  async disconnect() {
+    await this._cleanupConnection();
+    if (this._onDisconnect) {
+      this._onDisconnect();
     }
   }
 
@@ -134,14 +252,39 @@ class CD48 {
   }
 
   /**
+   * Apply rate limiting between commands.
+   * @private
+   */
+  async _applyRateLimit() {
+    if (this.rateLimitMs > 0) {
+      const elapsed = Date.now() - this._lastCommandTime;
+      if (elapsed < this.rateLimitMs) {
+        await this.sleep(this.rateLimitMs - elapsed);
+      }
+    }
+    this._lastCommandTime = Date.now();
+  }
+
+  /**
    * Send a command and read the response.
    * @param {string} command - Command to send
    * @returns {Promise<string>} Response from device
    */
   async sendCommand(command) {
     if (!this.isConnected()) {
-      throw new NotConnectedError('sendCommand');
+      // Attempt auto-reconnect if enabled
+      if (this.autoReconnect) {
+        const reconnected = await this._attemptAutoReconnect();
+        if (!reconnected) {
+          throw new NotConnectedError('sendCommand');
+        }
+      } else {
+        throw new NotConnectedError('sendCommand');
+      }
     }
+
+    // Apply rate limiting
+    await this._applyRateLimit();
 
     try {
       // Clear any pending data
@@ -344,10 +487,10 @@ class CD48 {
   }
 
   /**
-   * Measure count rate on a channel.
+   * Measure count rate on a channel with Poisson uncertainty.
    * @param {number} channel - Channel number (0-7)
    * @param {number} duration - Measurement duration in seconds
-   * @returns {Promise<Object>} Rate measurement result
+   * @returns {Promise<Object>} Rate measurement result with uncertainties
    */
   async measureRate(channel = 0, duration = 1.0) {
     validateChannel(channel);
@@ -356,24 +499,38 @@ class CD48 {
     await this.sleep(duration * 1000);
     const data = await this.getCounts(false);
     const counts = data.counts[channel];
+    const rate = counts / duration;
+
+    // Poisson uncertainty: sigma_N = sqrt(N)
+    const countUncertainty = Math.sqrt(Math.max(0, counts));
+    // Rate uncertainty: sigma_R = sigma_N / T
+    const rateUncertainty = countUncertainty / duration;
+    // Relative uncertainty as percentage
+    const relativeUncertainty =
+      counts > 0 ? (countUncertainty / counts) * 100 : 0;
 
     return {
-      counts: counts,
-      duration: duration,
-      rate: counts / duration,
-      channel: channel,
+      counts,
+      duration,
+      rate,
+      channel,
+      uncertainty: {
+        counts: countUncertainty,
+        rate: rateUncertainty,
+        relative: relativeUncertainty,
+      },
     };
   }
 
   /**
-   * Measure coincidence rate with accidental correction.
+   * Measure coincidence rate with accidental correction and uncertainties.
    * @param {Object} options - Measurement options
    * @param {number} options.duration - Measurement duration in seconds
    * @param {number} options.singlesAChannel - Channel for singles A (default: 0)
    * @param {number} options.singlesBChannel - Channel for singles B (default: 1)
    * @param {number} options.coincidenceChannel - Channel for coincidences (default: 4)
    * @param {number} options.coincidenceWindow - Window in seconds (default: 25e-9)
-   * @returns {Promise<Object>} Coincidence measurement result
+   * @returns {Promise<Object>} Coincidence measurement result with uncertainties
    */
   async measureCoincidenceRate({
     duration = 1.0,
@@ -396,6 +553,28 @@ class CD48 {
     const accidentalRate = 2 * coincidenceWindow * rateA * rateB;
     const trueCoincidenceRate = Math.max(0, coincidenceRate - accidentalRate);
 
+    // Poisson uncertainties for counts
+    const sigmaA = Math.sqrt(Math.max(0, singlesA));
+    const sigmaB = Math.sqrt(Math.max(0, singlesB));
+    const sigmaC = Math.sqrt(Math.max(0, coincidences));
+
+    // Rate uncertainties
+    const rateAUncertainty = sigmaA / duration;
+    const rateBUncertainty = sigmaB / duration;
+    const coincidenceRateUncertainty = sigmaC / duration;
+
+    // Accidental rate uncertainty (error propagation)
+    // sigma_acc = 2 * tau * sqrt((R_B * sigma_A)^2 + (R_A * sigma_B)^2) / T
+    const accidentalRateUncertainty =
+      ((2 * coincidenceWindow) / duration) *
+      Math.sqrt(Math.pow(rateB * sigmaA, 2) + Math.pow(rateA * sigmaB, 2));
+
+    // True coincidence rate uncertainty (quadrature sum)
+    const trueCoincidenceRateUncertainty = Math.sqrt(
+      Math.pow(coincidenceRateUncertainty, 2) +
+        Math.pow(accidentalRateUncertainty, 2)
+    );
+
     return {
       singlesA,
       singlesB,
@@ -406,6 +585,16 @@ class CD48 {
       coincidenceRate,
       accidentalRate,
       trueCoincidenceRate,
+      uncertainty: {
+        singlesA: sigmaA,
+        singlesB: sigmaB,
+        coincidences: sigmaC,
+        rateA: rateAUncertainty,
+        rateB: rateBUncertainty,
+        coincidenceRate: coincidenceRateUncertainty,
+        accidentalRate: accidentalRateUncertainty,
+        trueCoincidenceRate: trueCoincidenceRateUncertainty,
+      },
     };
   }
 }
