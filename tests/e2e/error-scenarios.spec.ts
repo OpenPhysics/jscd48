@@ -231,12 +231,10 @@ test.describe('Error Scenarios - Data Validation', () => {
 
     // Try to set invalid template
     await page.evaluate(() => {
-      /* eslint-disable no-undef */
       document.getElementById('templateSelect').value = 'nonexistent';
       document
         .getElementById('templateSelect')
         .dispatchEvent(new Event('change'));
-      /* eslint-enable no-undef */
     });
 
     await page.waitForTimeout(200);

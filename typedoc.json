@@ -1,0 +1,46 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "readme": "README.md",
+  "includeVersion": true,
+  "sort": ["source-order", "required-first", "kind"],
+  "kindSortOrder": [
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Function",
+    "Variable",
+    "Enum"
+  ],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "searchInComments": true,
+  "plugin": [],
+  "exclude": ["node_modules/**", "dist/**", "tests/**", "examples/**"],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": false,
+  "name": "CD48 API Documentation",
+  "titleLink": "https://github.com/OpenPhysics/jscd48",
+  "navigationLinks": {
+    "GitHub": "https://github.com/OpenPhysics/jscd48",
+    "NPM": "https://www.npmjs.com/package/jscd48"
+  },
+  "sidebarLinks": {
+    "Troubleshooting": "https://github.com/OpenPhysics/jscd48/blob/main/TROUBLESHOOTING.md"
+  },
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "basePath": ".",
+  "emit": "docs",
+  "cleanOutputDir": true,
+  "hideGenerator": false,
+  "categorizeByGroup": true
+}
