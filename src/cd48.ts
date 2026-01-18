@@ -26,7 +26,36 @@ import {
   CommunicationError,
 } from './errors.js';
 
-import { validateChannel, voltageToByte } from './validation.js';
+import {
+  validateChannel,
+  voltageToByte,
+  VOLTAGE_MAX,
+  BYTE_MAX,
+  REPEAT_INTERVAL_MIN,
+  REPEAT_INTERVAL_MAX,
+} from './validation.js';
+
+import {
+  BAUD_RATE,
+  COMMAND_DELAY_MS,
+  RECONNECT_ATTEMPTS,
+  RECONNECT_DELAY_MS,
+  USB_VENDOR_ID,
+  CONNECTION_INIT_DELAY_MS,
+  COMMAND_TIMEOUT_MS,
+  READ_TIMEOUT_INTERVAL_MS,
+  EXPECTED_CHANNEL_COUNT,
+  EXPECTED_COUNT_RESPONSE_LENGTH,
+  DECIMAL_RADIX,
+  COINCIDENCE_WINDOW_SECONDS,
+  ACCIDENTAL_RATE_MULTIPLIER,
+  DEFAULT_SINGLES_A_CHANNEL,
+  DEFAULT_SINGLES_B_CHANNEL,
+  DEFAULT_COINCIDENCE_CHANNEL,
+  DEFAULT_MEASUREMENT_DURATION,
+  MILLISECONDS_PER_SECOND,
+  PERCENT_CONVERSION,
+} from './constants.js';
 
 /**
  * CD48 configuration options
@@ -174,11 +203,11 @@ class CD48 {
    * @param options - Configuration options
    */
   constructor(options: CD48Options = {}) {
-    this.baudRate = options.baudRate ?? 115200;
-    this.commandDelay = options.commandDelay ?? 50;
+    this.baudRate = options.baudRate ?? BAUD_RATE;
+    this.commandDelay = options.commandDelay ?? COMMAND_DELAY_MS;
     this.autoReconnect = options.autoReconnect ?? false;
-    this.reconnectAttempts = options.reconnectAttempts ?? 3;
-    this.reconnectDelay = options.reconnectDelay ?? 1000;
+    this.reconnectAttempts = options.reconnectAttempts ?? RECONNECT_ATTEMPTS;
+    this.reconnectDelay = options.reconnectDelay ?? RECONNECT_DELAY_MS;
     this.rateLimitMs = options.rateLimitMs ?? 0;
     this.port = null;
     this.reader = null;
@@ -228,7 +257,7 @@ class CD48 {
     try {
       // Request port with Cypress VID filter
       this.port = await navigator.serial.requestPort({
-        filters: [{ usbVendorId: 0x04b4 }], // Cypress Semiconductor
+        filters: [{ usbVendorId: USB_VENDOR_ID }], // Cypress Semiconductor
       });
 
       await this._setupConnection();
@@ -281,7 +310,7 @@ class CD48 {
     this.writer = textEncoder.writable.getWriter();
 
     // Wait for device to initialize
-    await this.sleep(500);
+    await this.sleep(CONNECTION_INIT_DELAY_MS);
   }
 
   /**
@@ -303,7 +332,7 @@ class CD48 {
       const ports = await navigator.serial.getPorts();
       const cd48Port = ports.find((p) => {
         const info = p.getInfo();
-        return info.usbVendorId === 0x04b4;
+        return info.usbVendorId === USB_VENDOR_ID;
       });
 
       if (cd48Port === undefined) {
@@ -455,19 +484,19 @@ class CD48 {
       // Read response with timeout
       let response = '';
       const startTime = Date.now();
-      const timeout = 1000;
+      const timeout = COMMAND_TIMEOUT_MS;
 
       while (Date.now() - startTime < timeout) {
         const readPromise: Promise<ReadResult> = this.reader
           .read()
           .then((result) => ({ value: result.value ?? '', done: result.done }));
-        const timeoutPromise: Promise<ReadResult> = this.sleep(100).then(
-          () => ({
-            value: '',
-            done: false,
-            timeout: true,
-          })
-        );
+        const timeoutPromise: Promise<ReadResult> = this.sleep(
+          READ_TIMEOUT_INTERVAL_MS
+        ).then(() => ({
+          value: '',
+          done: false,
+          timeout: true,
+        }));
 
         const result = await Promise.race([readPromise, timeoutPromise]);
 
@@ -531,14 +560,17 @@ class CD48 {
     const response = await this.sendCommand('c');
     const parts = response.split(/\s+/).filter((p) => p.length > 0);
 
-    if (parts.length >= 9) {
+    if (parts.length >= EXPECTED_COUNT_RESPONSE_LENGTH) {
       return {
-        counts: parts.slice(0, 8).map(Number),
-        overflow: parseInt(parts[8] ?? '0', 10),
+        counts: parts.slice(0, EXPECTED_CHANNEL_COUNT).map(Number),
+        overflow: parseInt(parts[EXPECTED_CHANNEL_COUNT] ?? '0', DECIMAL_RADIX),
       };
     }
 
-    throw new InvalidResponseError(response, '8 counts + overflow flag');
+    throw new InvalidResponseError(
+      response,
+      `${EXPECTED_CHANNEL_COUNT} counts + overflow flag`
+    );
   }
 
   /**
@@ -589,7 +621,7 @@ class CD48 {
    * @returns Voltage (0.0 to 4.08V)
    */
   static byteToVoltage(byteValue: number): number {
-    return (byteValue / 255) * 4.08;
+    return (byteValue / BYTE_MAX) * VOLTAGE_MAX;
   }
 
   /**
@@ -614,7 +646,10 @@ class CD48 {
    * @returns Response from device
    */
   async setRepeat(intervalMs: number): Promise<string> {
-    const clamped = Math.max(100, Math.min(65535, intervalMs));
+    const clamped = Math.max(
+      REPEAT_INTERVAL_MIN,
+      Math.min(REPEAT_INTERVAL_MAX, intervalMs)
+    );
     return await this.sendCommand(`r${clamped}`);
   }
 
@@ -634,7 +669,7 @@ class CD48 {
   async setDacVoltage(voltage: number): Promise<string> {
     const byteVal = Math.max(
       0,
-      Math.min(255, Math.round((voltage / 4.08) * 255))
+      Math.min(BYTE_MAX, Math.round((voltage / VOLTAGE_MAX) * BYTE_MAX))
     );
     return await this.sendCommand(`V${byteVal}`);
   }
@@ -645,7 +680,7 @@ class CD48 {
    */
   async getOverflow(): Promise<number> {
     const response = await this.sendCommand('E');
-    return parseInt(response, 10);
+    return parseInt(response, DECIMAL_RADIX);
   }
 
   /**
@@ -662,11 +697,14 @@ class CD48 {
    * @param duration - Measurement duration in seconds
    * @returns Rate measurement result with uncertainties
    */
-  async measureRate(channel = 0, duration = 1.0): Promise<RateMeasurement> {
+  async measureRate(
+    channel = 0,
+    duration = DEFAULT_MEASUREMENT_DURATION
+  ): Promise<RateMeasurement> {
     validateChannel(channel);
 
     await this.clearCounts();
-    await this.sleep(duration * 1000);
+    await this.sleep(duration * MILLISECONDS_PER_SECOND);
     const data = await this.getCounts(false);
     const counts = data.counts[channel] ?? 0;
     const rate = counts / duration;
@@ -677,7 +715,7 @@ class CD48 {
     const rateUncertainty = countUncertainty / duration;
     // Relative uncertainty as percentage
     const relativeUncertainty =
-      counts > 0 ? (countUncertainty / counts) * 100 : 0;
+      counts > 0 ? (countUncertainty / counts) * PERCENT_CONVERSION : 0;
 
     return {
       counts,
@@ -701,15 +739,15 @@ class CD48 {
     options: CoincidenceMeasurementOptions = {}
   ): Promise<CoincidenceMeasurement> {
     const {
-      duration = 1.0,
-      singlesAChannel = 0,
-      singlesBChannel = 1,
-      coincidenceChannel = 4,
-      coincidenceWindow = 25e-9,
+      duration = DEFAULT_MEASUREMENT_DURATION,
+      singlesAChannel = DEFAULT_SINGLES_A_CHANNEL,
+      singlesBChannel = DEFAULT_SINGLES_B_CHANNEL,
+      coincidenceChannel = DEFAULT_COINCIDENCE_CHANNEL,
+      coincidenceWindow = COINCIDENCE_WINDOW_SECONDS,
     } = options;
 
     await this.clearCounts();
-    await this.sleep(duration * 1000);
+    await this.sleep(duration * MILLISECONDS_PER_SECOND);
     const data = await this.getCounts(false);
 
     const singlesA = data.counts[singlesAChannel] ?? 0;
@@ -719,7 +757,8 @@ class CD48 {
     const rateA = singlesA / duration;
     const rateB = singlesB / duration;
     const coincidenceRate = coincidences / duration;
-    const accidentalRate = 2 * coincidenceWindow * rateA * rateB;
+    const accidentalRate =
+      ACCIDENTAL_RATE_MULTIPLIER * coincidenceWindow * rateA * rateB;
     const trueCoincidenceRate = Math.max(0, coincidenceRate - accidentalRate);
 
     // Poisson uncertainties for counts
@@ -735,7 +774,7 @@ class CD48 {
     // Accidental rate uncertainty (error propagation)
     // sigma_acc = 2 * tau * sqrt((R_B * sigma_A)^2 + (R_A * sigma_B)^2) / T
     const accidentalRateUncertainty =
-      ((2 * coincidenceWindow) / duration) *
+      ((ACCIDENTAL_RATE_MULTIPLIER * coincidenceWindow) / duration) *
       Math.sqrt(Math.pow(rateB * sigmaA, 2) + Math.pow(rateA * sigmaB, 2));
 
     // True coincidence rate uncertainty (quadrature sum)

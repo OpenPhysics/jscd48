@@ -3,6 +3,16 @@
  * @module analysis
  */
 
+import {
+  DEFAULT_HISTOGRAM_BINS,
+  OUTLIER_Z_SCORE_THRESHOLD,
+  EXPONENTIAL_MA_DEFAULT_ALPHA,
+  DEFAULT_TARGET_SNR,
+  QUARTILE_Q1,
+  QUARTILE_Q3,
+  FREEDMAN_DIACONIS_DIVISOR,
+} from './constants.js';
+
 /**
  * Linear regression result
  */
@@ -211,7 +221,7 @@ export const Histogram = {
       return { bins: [], counts: [], edges: [], binWidth: 0 };
     }
 
-    const numBins = options.bins ?? 10;
+    const numBins = options.bins ?? DEFAULT_HISTOGRAM_BINS;
     const min = options.min ?? Math.min(...data);
     const max = options.max ?? Math.max(...data);
     const binWidth = (max - min) / numBins;
@@ -277,13 +287,14 @@ export const Histogram = {
     }
 
     const sorted = [...data].sort((a, b) => a - b);
-    const q1Index = Math.floor(sorted.length * 0.25);
-    const q3Index = Math.floor(sorted.length * 0.75);
+    const q1Index = Math.floor(sorted.length * QUARTILE_Q1);
+    const q3Index = Math.floor(sorted.length * QUARTILE_Q3);
     const q1 = sorted[q1Index] ?? 0;
     const q3 = sorted[q3Index] ?? 0;
     const iqr = q3 - q1;
 
-    const binWidth = (2 * iqr) / Math.pow(data.length, 1 / 3);
+    const binWidth =
+      (2 * iqr) / Math.pow(data.length, FREEDMAN_DIACONIS_DIVISOR);
     const min = Math.min(...data);
     const max = Math.max(...data);
     const calculatedBins = Math.ceil((max - min) / binWidth);
@@ -354,7 +365,10 @@ export const TimeSeries = {
    * @param alpha - Smoothing factor (0-1)
    * @returns Smoothed data
    */
-  exponentialMovingAverage(data: number[], alpha = 0.3): number[] {
+  exponentialMovingAverage(
+    data: number[],
+    alpha = EXPONENTIAL_MA_DEFAULT_ALPHA
+  ): number[] {
     if (data.length === 0) return [];
     if (alpha < 0 || alpha > 1) {
       throw new Error('Alpha must be between 0 and 1');
@@ -380,7 +394,10 @@ export const TimeSeries = {
    * @param threshold - Z-score threshold
    * @returns Indices of outliers
    */
-  detectOutliers(data: number[], threshold = 3): number[] {
+  detectOutliers(
+    data: number[],
+    threshold = OUTLIER_Z_SCORE_THRESHOLD
+  ): number[] {
     if (data.length === 0) return [];
 
     const mean = Statistics.mean(data);
@@ -559,7 +576,11 @@ export const Coincidence = {
    * @param targetSNR - Target signal-to-noise ratio
    * @returns Optimal window in seconds
    */
-  optimalWindow(rate1: number, rate2: number, targetSNR = 10): number {
+  optimalWindow(
+    rate1: number,
+    rate2: number,
+    targetSNR = DEFAULT_TARGET_SNR
+  ): number {
     // Simplified estimation - actual optimal depends on specific application
     const product = Math.sqrt(rate1 * rate2);
     if (product === 0) return Infinity;

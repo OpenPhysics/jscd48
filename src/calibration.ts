@@ -5,6 +5,20 @@
 
 import type CD48 from './cd48.js';
 
+import { CHANNEL_MIN, CHANNEL_MAX } from './validation.js';
+
+import {
+  JSON_INDENT_SPACES,
+  MIN_CALIBRATION_POINTS,
+  PLATEAU_REGION_THRESHOLD_LOWER,
+  PLATEAU_REGION_THRESHOLD_UPPER,
+  GAIN_MIN,
+  GAIN_MAX,
+  EXPECTED_CHANNEL_COUNT,
+  DEFAULT_BACKGROUND_DURATION,
+  DEFAULT_CALIBRATION_DURATION,
+} from './constants.js';
+
 /**
  * Channel calibration data stored by channel index
  */
@@ -182,7 +196,7 @@ export class CalibrationProfile {
    * @param voltage - Calibrated voltage value
    */
   setVoltage(channel: number, voltage: number): void {
-    if (channel < 0 || channel > 7) {
+    if (channel < CHANNEL_MIN || channel > CHANNEL_MAX) {
       throw new Error('Channel must be between 0 and 7');
     }
     this.voltages[channel] = voltage;
@@ -203,7 +217,7 @@ export class CalibrationProfile {
    * @param threshold - Threshold value
    */
   setThreshold(channel: number, threshold: number): void {
-    if (channel < 0 || channel > 7) {
+    if (channel < CHANNEL_MIN || channel > CHANNEL_MAX) {
       throw new Error('Channel must be between 0 and 7');
     }
     this.thresholds[channel] = threshold;
@@ -224,7 +238,7 @@ export class CalibrationProfile {
    * @param gain - Gain value
    */
   setGain(channel: number, gain: number): void {
-    if (channel < 0 || channel > 7) {
+    if (channel < CHANNEL_MIN || channel > CHANNEL_MAX) {
       throw new Error('Channel must be between 0 and 7');
     }
     this.gains[channel] = gain;
@@ -245,7 +259,7 @@ export class CalibrationProfile {
    * @param offset - Offset value
    */
   setOffset(channel: number, offset: number): void {
-    if (channel < 0 || channel > 7) {
+    if (channel < CHANNEL_MIN || channel > CHANNEL_MAX) {
       throw new Error('Channel must be between 0 and 7');
     }
     this.offsets[channel] = offset;
@@ -388,7 +402,7 @@ export class CalibrationStorage {
    * @returns JSON string of all profiles
    */
   export(): string {
-    return JSON.stringify(this.loadAll(), null, 2);
+    return JSON.stringify(this.loadAll(), null, JSON_INDENT_SPACES);
   }
 
   /**
@@ -449,8 +463,10 @@ export class VoltageCalibration {
    * @returns Calibration coefficients
    */
   static multiPoint(points: CalibrationPoint[]): CalibrationCoefficients {
-    if (points.length < 2) {
-      throw new Error('At least 2 calibration points required');
+    if (points.length < MIN_CALIBRATION_POINTS) {
+      throw new Error(
+        `At least ${MIN_CALIBRATION_POINTS} calibration points required`
+      );
     }
 
     const n = points.length;
@@ -532,7 +548,10 @@ export class CalibrationWizard {
    * @param duration - Measurement duration in seconds
    * @returns Average count rate
    */
-  async measureChannelRate(channel: number, duration = 5.0): Promise<number> {
+  async measureChannelRate(
+    channel: number,
+    duration = DEFAULT_CALIBRATION_DURATION
+  ): Promise<number> {
     if (!this.cd48.isConnected()) {
       throw new Error('CD48 device not connected');
     }
@@ -549,7 +568,7 @@ export class CalibrationWizard {
    */
   async measureBackground(
     channels: number[],
-    duration = 10.0
+    duration = DEFAULT_BACKGROUND_DURATION
   ): Promise<Record<number, number>> {
     const backgrounds: Record<number, number> = {};
 
@@ -582,7 +601,7 @@ export class CalibrationWizard {
   async calibrateGain(
     channel: number,
     referenceRate: number,
-    duration = 10.0
+    duration = DEFAULT_BACKGROUND_DURATION
   ): Promise<number> {
     const measuredRate = await this.measureChannelRate(channel, duration);
     const gain = measuredRate === 0 ? 1 : referenceRate / measuredRate;
@@ -600,7 +619,7 @@ export class CalibrationWizard {
   async findOptimalThreshold(
     channel: number,
     testThresholds: number[],
-    duration = 5.0
+    duration = DEFAULT_CALIBRATION_DURATION
   ): Promise<OptimalThresholdResult> {
     const results: Array<{ threshold: number; rate: number }> = [];
 
@@ -614,7 +633,10 @@ export class CalibrationWizard {
     let maxRate = 0;
 
     results.forEach((result) => {
-      if (result.rate > maxRate * 0.95 && result.rate < maxRate * 1.05) {
+      if (
+        result.rate > maxRate * PLATEAU_REGION_THRESHOLD_LOWER &&
+        result.rate < maxRate * PLATEAU_REGION_THRESHOLD_UPPER
+      ) {
         // In plateau
         optimalThreshold = result.threshold;
       }
@@ -674,7 +696,7 @@ export class CalibrationWizard {
     const warnings: string[] = [];
 
     // Check for missing calibrations
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < EXPECTED_CHANNEL_COUNT; i++) {
       if (this.profile.getVoltage(i) === null) {
         warnings.push(`Channel ${i} voltage not calibrated`);
       }
@@ -684,10 +706,12 @@ export class CalibrationWizard {
     }
 
     // Check for unreasonable values
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < EXPECTED_CHANNEL_COUNT; i++) {
       const gain = this.profile.getGain(i);
-      if (gain !== null && (gain < 0.1 || gain > 10)) {
-        issues.push(`Channel ${i} gain ${gain} is unusual (expected 0.1-10)`);
+      if (gain !== null && (gain < GAIN_MIN || gain > GAIN_MAX)) {
+        issues.push(
+          `Channel ${i} gain ${gain} is unusual (expected ${GAIN_MIN}-${GAIN_MAX})`
+        );
       }
     }
 

@@ -148,8 +148,30 @@ export default [
           leadingUnderscore: 'allow',
         },
       ],
+      '@typescript-eslint/no-magic-numbers': [
+        'warn',
+        {
+          ignore: [-1, 0, 1, 2],
+          ignoreArrayIndexes: true,
+          ignoreDefaultValues: false,
+          ignoreClassFieldInitialValues: false,
+          enforceConst: true,
+          detectObjects: false,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+        },
+      ],
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],
+    },
+  },
+  // Apply to constants file (disable magic numbers rule since that's where constants are defined)
+  {
+    files: ['src/constants.ts'],
+    rules: {
+      '@typescript-eslint/no-magic-numbers': 'off',
     },
   },
   // Apply to test files (without type-aware rules)
