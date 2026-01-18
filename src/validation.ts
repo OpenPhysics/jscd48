@@ -122,7 +122,8 @@ export function createVoltage(value: number): Voltage {
  */
 export function createClampedVoltage(value: number): Voltage {
   const clamped = Math.max(VOLTAGE_MIN, Math.min(VOLTAGE_MAX, value));
-  return clamped as Voltage;
+  // Use createVoltage for runtime validation instead of type assertion
+  return createVoltage(clamped);
 }
 
 /**

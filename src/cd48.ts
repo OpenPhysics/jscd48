@@ -260,7 +260,11 @@ class CD48 {
     if (!readable) {
       throw new ConnectionError('Port readable stream not available');
     }
-    // Use type assertion for Web Serial API compatibility
+    /**
+     * Type assertions needed here because Web Serial API uses BufferSource
+     * but TextDecoderStream expects Uint8Array. They're compatible at runtime
+     * since BufferSource = ArrayBuffer | ArrayBufferView (which includes Uint8Array)
+     */
     this.readableStreamClosed = (readable as ReadableStream<Uint8Array>).pipeTo(
       textDecoder.writable as WritableStream<Uint8Array>
     );
