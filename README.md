@@ -1,27 +1,28 @@
-# jscd48 - JavaScript Interface for CD48 Coincidence Counter
+# jscd48 - TypeScript Interface for CD48 Coincidence Counter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/OpenPhysics/jscd48/workflows/CI/badge.svg)](https://github.com/OpenPhysics/jscd48/actions)
 [![codecov](https://codecov.io/gh/OpenPhysics/jscd48/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenPhysics/jscd48)
 [![npm version](https://img.shields.io/npm/v/jscd48.svg)](https://www.npmjs.com/package/jscd48)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg)](https://www.typescriptlang.org/)
 [![Chrome](https://img.shields.io/badge/Chrome-89+-green.svg)](https://www.google.com/chrome/)
 [![Edge](https://img.shields.io/badge/Edge-89+-blue.svg)](https://www.microsoft.com/edge)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://openphysics.github.io/jscd48/)
 
-A comprehensive browser-based JavaScript library and web interface for controlling the [Red Dog Physics CD48 Coincidence Counter](https://www.reddogphysics.com/cd48.html) using the Web Serial API.
+A comprehensive browser-based TypeScript library and web interface for controlling the [Red Dog Physics CD48 Coincidence Counter](https://www.reddogphysics.com/cd48.html) using the Web Serial API.
 
 **No installation required** - just open the web page in Chrome or Edge and connect to your CD48.
 
 ## 🌟 Highlights
 
 - **Zero installation** - Works directly in modern browsers
+- **Native TypeScript** - Written in TypeScript with strict type checking, zero `any` types
 - **11 interactive examples** - From simple monitoring to advanced analysis
 - **Live code playground** - Test and experiment with the API in real-time
 - **Advanced analytics** - Statistical analysis, histograms, time-series tools
 - **Calibration wizard** - Step-by-step calibration with profile management
 - **Module bundles** - ESM, UMD, and minified builds for any project
-- **100+ tests** - Comprehensive unit, integration, E2E, and visual regression tests
-- **TypeScript support** - Full type definitions included
+- **150+ tests** - Comprehensive unit, integration, E2E, and visual regression tests
 - **Hot reload dev server** - Instant feedback during development
 
 ## 🚀 Live Demo
@@ -40,21 +41,32 @@ Install from npm for use in your projects:
 npm install jscd48
 ```
 
-**ES Modules:**
+**TypeScript / ES Modules:**
 
-```javascript
-import CD48 from 'jscd48';
+```typescript
+import CD48, { type CD48Options, type CountData } from 'jscd48';
 import { Statistics, Histogram, TimeSeries } from 'jscd48/analysis';
-import { CalibrationWizard } from 'jscd48/calibration';
+import { CalibrationWizard, type CalibrationProfile } from 'jscd48/calibration';
 
-const cd48 = new CD48();
+const options: CD48Options = {
+  baudRate: 115200,
+  autoReconnect: true,
+};
+
+const cd48 = new CD48(options);
 await cd48.connect();
+
+// Full type inference on all methods
+const counts: CountData = await cd48.getCounts();
+console.log(counts.counts); // number[]
 ```
 
-**CommonJS:**
+**JavaScript / CommonJS:**
 
 ```javascript
 const CD48 = require('jscd48');
+const cd48 = new CD48();
+await cd48.connect();
 ```
 
 ### Option 2: CDN - UMD Bundle
@@ -90,9 +102,9 @@ Download `cd48.js` from the repository and include it in your HTML.
 - **Real-time monitoring** - Live count display with rate calculation
 - **Full device control** - Trigger levels, impedance, DAC output
 - **High-level measurements** - Rate and coincidence measurement with accidental correction
-- **Clean JavaScript API** - Easy integration into custom applications
-- **TypeScript support** - Full TypeScript definitions included
-- **Comprehensive testing** - 100+ tests with E2E and visual regression
+- **Native TypeScript** - Written in TypeScript with strict mode, zero `any` types
+- **Full type inference** - Comprehensive types for all APIs
+- **Comprehensive testing** - 150+ tests with E2E and visual regression
 
 ### Advanced Analysis Tools 📊
 
@@ -350,25 +362,46 @@ dist/
 
 ```json
 {
-  ".": "./cd48.js", // Main entry
-  "./analysis": "./analysis.js", // Analysis tools
-  "./calibration": "./calibration.js", // Calibration tools
-  "./dist/*": "./dist/*" // Direct dist access
+  ".": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/cd48.esm.js",
+    "require": "./dist/cd48.umd.js"
+  },
+  "./analysis": {
+    "types": "./dist/analysis.d.ts",
+    "import": "./dist/analysis.js"
+  },
+  "./calibration": {
+    "types": "./dist/calibration.d.ts",
+    "import": "./dist/calibration.js"
+  },
+  "./errors": {
+    "types": "./dist/errors.d.ts",
+    "import": "./dist/errors.js"
+  },
+  "./validation": {
+    "types": "./dist/validation.d.ts",
+    "import": "./dist/validation.js"
+  }
 }
 ```
 
 ## 🧪 Testing
 
-The project includes comprehensive testing with 100+ tests:
+The project includes comprehensive testing with 150+ tests, all written in TypeScript:
 
 ```bash
 # Unit tests
 npm test                    # Run unit tests
 npm run test:coverage       # With coverage
 npm run test:ui             # Vitest UI
+npm run typecheck           # TypeScript type checking
 
 # Integration tests
 npm run test:integration    # Test with mock hardware
+
+# Benchmarks
+npm run test:bench          # Performance benchmarks
 
 # E2E tests
 npm run test:e2e            # All E2E tests
@@ -383,13 +416,15 @@ npm run test:all            # Run everything
 
 **Test Coverage:**
 
-- 100+ total tests across all suites
-- Unit tests for core functionality
-- Integration tests with MockCD48
+- 150+ total tests across all suites
+- Unit tests for core functionality (TypeScript)
+- Integration tests with MockCD48 (TypeScript)
+- Performance benchmarks (TypeScript)
 - E2E tests for all 11 example pages
 - Visual regression testing (15+ screenshots)
 - Error scenario testing
 - Cross-browser (Chromium, WebKit, Firefox)
+- Strict TypeScript checking with zero `any` types
 
 See [tests/README.md](tests/README.md) for detailed testing documentation.
 
@@ -441,19 +476,21 @@ npm run commit       # Interactive commit (guided)
 
 ```
 jscd48/
-├── cd48.js                  # Main library
-├── cd48.d.ts                # TypeScript definitions
-├── analysis.js              # Statistical analysis tools
-├── calibration.js           # Calibration utilities
-├── dev-utils.js             # Development utilities
-├── errors.js                # Error classes
-├── validation.js            # Input validation
+├── src/                     # TypeScript source files
+│   ├── cd48.ts                 # Main library
+│   ├── analysis.ts             # Statistical analysis tools
+│   ├── calibration.ts          # Calibration utilities
+│   ├── dev-utils.ts            # Development utilities
+│   ├── errors.ts               # Error classes
+│   ├── validation.ts           # Input validation
+│   └── index.ts                # Main entry point
 │
-├── dist/                    # Built bundles
+├── dist/                    # Built bundles (generated)
 │   ├── cd48.esm.js
 │   ├── cd48.esm.min.js
 │   ├── cd48.umd.js
-│   └── cd48.umd.min.js
+│   ├── cd48.umd.min.js
+│   └── *.d.ts                  # Auto-generated type definitions
 │
 ├── examples/                # 11 example applications
 │   ├── index.html              # Examples browser
@@ -462,11 +499,16 @@ jscd48/
 │   ├── calibration-wizard.html
 │   └── ... (7 more)
 │
-├── tests/                   # Comprehensive test suite
-│   ├── e2e/                    # End-to-end tests
+├── tests/                   # Comprehensive test suite (TypeScript)
+│   ├── unit/                   # Unit tests
 │   ├── integration/            # Integration tests
-│   ├── mock-cd48.js            # Mock device for testing
-│   └── README.md
+│   ├── e2e/                    # End-to-end tests (Playwright)
+│   ├── benchmarks/             # Performance benchmarks
+│   └── mocks/                  # Mock implementations
+│
+├── tsconfig.json            # TypeScript configuration
+├── vite.config.build.ts     # Build configuration
+├── vitest.config.ts         # Test configuration
 │
 ├── .github/workflows/       # CI/CD pipelines
 │   ├── ci.yml                  # Continuous integration
