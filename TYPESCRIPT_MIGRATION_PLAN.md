@@ -8,15 +8,16 @@ This document outlines the comprehensive plan to convert the jscd48 repository f
 
 ### Migration Results
 
-| Category | Before | After |
-|----------|--------|-------|
-| **Source Code** | 6 JS modules (~2,186 lines) | 7 TS modules in `src/` |
-| **Test Code** | 12 JS files (~3,088 lines) | All tests in TypeScript |
-| **Type Definitions** | 11 separate `.d.ts` files | Auto-generated from source |
-| **`any` Types** | N/A | **Zero** - strict mode enabled |
-| **Test Count** | 100+ | **150+** tests passing |
+| Category             | Before                      | After                          |
+| -------------------- | --------------------------- | ------------------------------ |
+| **Source Code**      | 6 JS modules (~2,186 lines) | 7 TS modules in `src/`         |
+| **Test Code**        | 12 JS files (~3,088 lines)  | All tests in TypeScript        |
+| **Type Definitions** | 11 separate `.d.ts` files   | Auto-generated from source     |
+| **`any` Types**      | N/A                         | **Zero** - strict mode enabled |
+| **Test Count**       | 100+                        | **150+** tests passing         |
 
 ### Key Achievements
+
 - ✅ All source code converted to TypeScript
 - ✅ All unit, integration, and benchmark tests in TypeScript
 - ✅ Strict TypeScript configuration with zero `any` types
@@ -95,15 +96,15 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/cd48.ts'),
       name: 'CD48',
       formats: ['es', 'umd'],
-      fileName: (format) => `cd48.${format}.js`
+      fileName: (format) => `cd48.${format}.js`,
     },
     sourcemap: true,
     rollupOptions: {
       output: {
-        exports: 'named'
-      }
-    }
-  }
+        exports: 'named',
+      },
+    },
+  },
 });
 ```
 
@@ -227,6 +228,7 @@ export class CalibrationError extends CD48Error {
 **Estimated effort**: Low
 
 Key types needed:
+
 ```typescript
 // src/validation.ts
 export interface ValidationResult {
@@ -243,10 +245,20 @@ export const CHANNEL_RANGE: ChannelRange = { min: 0, max: 3 };
 export const WINDOW_RANGE: ChannelRange = { min: 0, max: 255 };
 export const DELAY_RANGE: ChannelRange = { min: 0, max: 65535 };
 
-export function validateChannel(channel: number): boolean { /* ... */ }
-export function validateWindow(window: number): boolean { /* ... */ }
-export function validateDelay(delay: number): boolean { /* ... */ }
-export function validateOptions(options: Record<string, unknown>): ValidationResult { /* ... */ }
+export function validateChannel(channel: number): boolean {
+  /* ... */
+}
+export function validateWindow(window: number): boolean {
+  /* ... */
+}
+export function validateDelay(delay: number): boolean {
+  /* ... */
+}
+export function validateOptions(
+  options: Record<string, unknown>
+): ValidationResult {
+  /* ... */
+}
 ```
 
 ### 2.3 Convert `analysis.js` to `analysis.ts`
@@ -300,7 +312,11 @@ export namespace Histogram {
 export namespace TimeSeries {
   export function create(capacity?: number): TimeSeriesStore;
   export function add(series: TimeSeriesStore, point: TimeSeriesPoint): void;
-  export function getRange(series: TimeSeriesStore, start: number, end: number): TimeSeriesPoint[];
+  export function getRange(
+    series: TimeSeriesStore,
+    start: number,
+    end: number
+  ): TimeSeriesPoint[];
 }
 
 export namespace Coincidence {
@@ -428,6 +444,7 @@ export class PerformanceMonitor {
 **Estimated effort**: High
 
 This is the most complex module with:
+
 - Web Serial API integration
 - Async communication patterns
 - Auto-reconnection logic
@@ -442,7 +459,7 @@ import type {
   RateUncertainty,
   ChannelInputs,
   ConnectionState,
-  CommandResponse
+  CommandResponse,
 } from './types';
 
 export interface CD48Events {
@@ -484,7 +501,9 @@ export default class CD48 {
 
   // Data methods
   async getCounts(): Promise<CountData>;
-  async getCountsWithUncertainty(): Promise<CountData & { uncertainties: RateUncertainty }>;
+  async getCountsWithUncertainty(): Promise<
+    CountData & { uncertainties: RateUncertainty }
+  >;
   async startContinuousReading(intervalMs?: number): Promise<void>;
   stopContinuousReading(): void;
 
@@ -502,7 +521,10 @@ export default class CD48 {
   private sendCommand(command: string): Promise<CommandResponse>;
   private parseResponse(data: Uint8Array): CommandResponse;
   private handleReconnect(): Promise<void>;
-  private emit<E extends CD48EventName>(event: E, ...args: Parameters<CD48Events[E]>): void;
+  private emit<E extends CD48EventName>(
+    event: E,
+    ...args: Parameters<CD48Events[E]>
+  ): void;
 }
 ```
 
@@ -527,16 +549,17 @@ export default defineConfig({
         lines: 95,
         functions: 95,
         branches: 90,
-        statements: 95
-      }
-    }
-  }
+        statements: 95,
+      },
+    },
+  },
 });
 ```
 
 ### 3.2 Convert Test Files
 
 **Order of conversion**:
+
 1. `tests/mocks/web-serial.ts` - Mock Web Serial API with proper types
 2. `tests/mocks/mock-cd48.ts` - Mock CD48 instance
 3. `tests/unit/errors.test.ts`
@@ -658,7 +681,10 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'warn',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/strict-boolean-expressions': 'error',
     },
   }
@@ -686,7 +712,7 @@ coverage/
 
 Add TypeScript usage examples:
 
-```markdown
+````markdown
 ## TypeScript Usage
 
 ```typescript
@@ -707,7 +733,9 @@ device.on('data', (data: CountData) => {
 
 await device.connect();
 ```
-```
+````
+
+````
 
 ### 5.2 Update HTML Examples
 
@@ -720,7 +748,7 @@ Add TypeScript compilation notes and update inline scripts to reference compiled
   import CD48 from '../dist/cd48.esm.js';
   // ...
 </script>
-```
+````
 
 ### 5.3 Generate API Documentation
 
@@ -746,6 +774,7 @@ Update JSDoc configuration for TypeScript:
 ## Migration Checklist
 
 ### Phase 1: Infrastructure
+
 - [ ] Create `tsconfig.json`
 - [ ] Create `tsconfig.test.json`
 - [ ] Install TypeScript dependencies
@@ -755,6 +784,7 @@ Update JSDoc configuration for TypeScript:
 - [ ] Update `.gitignore`
 
 ### Phase 2: Source Conversion
+
 - [ ] Convert `errors.js` to `errors.ts`
 - [ ] Convert `validation.js` to `validation.ts`
 - [ ] Convert `analysis.js` to `analysis.ts`
@@ -765,6 +795,7 @@ Update JSDoc configuration for TypeScript:
 - [ ] Verify all imports/exports work
 
 ### Phase 3: Test Conversion
+
 - [ ] Update `vitest.config.js` to TypeScript
 - [ ] Convert mock files to TypeScript
 - [ ] Convert unit tests
@@ -774,6 +805,7 @@ Update JSDoc configuration for TypeScript:
 - [ ] Verify all tests pass
 
 ### Phase 4: Build & Package
+
 - [ ] Update `package.json` exports
 - [ ] Update build scripts
 - [ ] Update ESLint configuration
@@ -782,6 +814,7 @@ Update JSDoc configuration for TypeScript:
 - [ ] Verify type definitions are included in dist
 
 ### Phase 5: Documentation
+
 - [ ] Update README.md with TypeScript examples
 - [ ] Update API documentation generation
 - [ ] Update HTML examples
@@ -845,6 +878,7 @@ Or define locally in `src/types/web-serial.d.ts` if the package types are incomp
 ### Strict Mode Considerations
 
 Enabling `strict: true` in TypeScript will catch:
+
 - Implicit `any` types
 - Null/undefined issues
 - Incorrect function signatures

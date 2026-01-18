@@ -237,7 +237,8 @@ class CD48 {
       if (error instanceof Error && error.name === 'NotFoundError') {
         throw new DeviceSelectionCancelledError();
       }
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorCause = error instanceof Error ? error : undefined;
       throw new ConnectionError(errorMessage, errorCause);
     }
@@ -453,14 +454,16 @@ class CD48 {
       const timeout = 1000;
 
       while (Date.now() - startTime < timeout) {
-        const readPromise: Promise<ReadResult> = this.reader.read().then(
-          (result) => ({ value: result.value ?? '', done: result.done })
+        const readPromise: Promise<ReadResult> = this.reader
+          .read()
+          .then((result) => ({ value: result.value ?? '', done: result.done }));
+        const timeoutPromise: Promise<ReadResult> = this.sleep(100).then(
+          () => ({
+            value: '',
+            done: false,
+            timeout: true,
+          })
         );
-        const timeoutPromise: Promise<ReadResult> = this.sleep(100).then(() => ({
-          value: '',
-          done: false,
-          timeout: true,
-        }));
 
         const result = await Promise.race([readPromise, timeoutPromise]);
 
@@ -486,7 +489,8 @@ class CD48 {
       ) {
         throw error;
       }
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const errorCause = error instanceof Error ? error : undefined;
       throw new CommunicationError(errorMessage, errorCause);
     }
@@ -555,7 +559,10 @@ class CD48 {
    * @param inputs - Input configuration
    * @returns Response from device
    */
-  async setChannel(channel: number, inputs: ChannelInputs = {}): Promise<string> {
+  async setChannel(
+    channel: number,
+    inputs: ChannelInputs = {}
+  ): Promise<string> {
     validateChannel(channel);
     const { A = 0, B = 0, C = 0, D = 0 } = inputs;
     return await this.sendCommand(`S${channel}${A}${B}${C}${D}`);

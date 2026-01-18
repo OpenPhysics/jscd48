@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import html from 'eslint-plugin-html';
+import tseslint from 'typescript-eslint';
 
 export default [
   // Apply to JavaScript files
@@ -39,6 +40,54 @@ export default [
       ...js.configs.recommended.rules,
       'no-console': 'off',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      semi: ['error', 'always'],
+      quotes: ['error', 'single', { avoidEscape: true }],
+    },
+  },
+  // Apply to TypeScript files
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: ['**/*.ts'],
+    ignores: ['node_modules/', 'dist/', 'docs/', 'coverage/'],
+  })),
+  {
+    files: ['**/*.ts'],
+    ignores: ['node_modules/', 'dist/', 'docs/', 'coverage/'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        // Browser globals
+        navigator: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        Promise: 'readonly',
+        TextDecoder: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoderStream: 'readonly',
+        TextEncoderStream: 'readonly',
+        ReadableStream: 'readonly',
+        WritableStream: 'readonly',
+        // Node.js globals
+        module: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_' },
+      ],
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],
     },

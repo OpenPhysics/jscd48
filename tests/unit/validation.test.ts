@@ -63,9 +63,15 @@ describe('validateChannel', () => {
   });
 
   it('should throw ValidationError for non-number values', () => {
-    expect(() => validateChannel('0' as unknown as number)).toThrow(ValidationError);
-    expect(() => validateChannel(null as unknown as number)).toThrow(ValidationError);
-    expect(() => validateChannel(undefined as unknown as number)).toThrow(ValidationError);
+    expect(() => validateChannel('0' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateChannel(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateChannel(undefined as unknown as number)).toThrow(
+      ValidationError
+    );
     expect(() => validateChannel(NaN)).toThrow(ValidationError);
   });
 });
@@ -84,9 +90,15 @@ describe('validateVoltage', () => {
   });
 
   it('should throw ValidationError for non-number values', () => {
-    expect(() => validateVoltage('2.0' as unknown as number)).toThrow(ValidationError);
-    expect(() => validateVoltage(null as unknown as number)).toThrow(ValidationError);
-    expect(() => validateVoltage(undefined as unknown as number)).toThrow(ValidationError);
+    expect(() => validateVoltage('2.0' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateVoltage(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateVoltage(undefined as unknown as number)).toThrow(
+      ValidationError
+    );
     expect(() => validateVoltage(NaN)).toThrow(ValidationError);
   });
 });
@@ -105,9 +117,15 @@ describe('validateByte', () => {
   });
 
   it('should throw ValidationError for non-number values', () => {
-    expect(() => validateByte('128' as unknown as number)).toThrow(ValidationError);
-    expect(() => validateByte(null as unknown as number)).toThrow(ValidationError);
-    expect(() => validateByte(undefined as unknown as number)).toThrow(ValidationError);
+    expect(() => validateByte('128' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateByte(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateByte(undefined as unknown as number)).toThrow(
+      ValidationError
+    );
     expect(() => validateByte(NaN)).toThrow(ValidationError);
   });
 });
@@ -126,9 +144,15 @@ describe('validateRepeatInterval', () => {
   });
 
   it('should throw ValidationError for non-number values', () => {
-    expect(() => validateRepeatInterval('1000' as unknown as number)).toThrow(ValidationError);
-    expect(() => validateRepeatInterval(null as unknown as number)).toThrow(ValidationError);
-    expect(() => validateRepeatInterval(undefined as unknown as number)).toThrow(ValidationError);
+    expect(() => validateRepeatInterval('1000' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateRepeatInterval(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() =>
+      validateRepeatInterval(undefined as unknown as number)
+    ).toThrow(ValidationError);
     expect(() => validateRepeatInterval(NaN)).toThrow(ValidationError);
   });
 });
@@ -147,9 +171,15 @@ describe('validateDuration', () => {
   });
 
   it('should throw ValidationError for non-number values', () => {
-    expect(() => validateDuration('1' as unknown as number)).toThrow(ValidationError);
-    expect(() => validateDuration(null as unknown as number)).toThrow(ValidationError);
-    expect(() => validateDuration(undefined as unknown as number)).toThrow(ValidationError);
+    expect(() => validateDuration('1' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateDuration(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => validateDuration(undefined as unknown as number)).toThrow(
+      ValidationError
+    );
     expect(() => validateDuration(NaN)).toThrow(ValidationError);
   });
 });
@@ -169,9 +199,15 @@ describe('validateImpedanceMode', () => {
   });
 
   it('should throw ValidationError for non-string values', () => {
-    expect(() => validateImpedanceMode(50 as unknown as string)).toThrow(ValidationError);
-    expect(() => validateImpedanceMode(null as unknown as string)).toThrow(ValidationError);
-    expect(() => validateImpedanceMode(undefined as unknown as string)).toThrow(ValidationError);
+    expect(() => validateImpedanceMode(50 as unknown as string)).toThrow(
+      ValidationError
+    );
+    expect(() => validateImpedanceMode(null as unknown as string)).toThrow(
+      ValidationError
+    );
+    expect(() => validateImpedanceMode(undefined as unknown as string)).toThrow(
+      ValidationError
+    );
   });
 });
 
@@ -251,6 +287,8 @@ describe('byteToVoltage', () => {
   it('should throw for invalid byte values', () => {
     expect(() => byteToVoltage(-1)).toThrow(ValidationError);
     expect(() => byteToVoltage(256)).toThrow(ValidationError);
-    expect(() => byteToVoltage('128' as unknown as number)).toThrow(ValidationError);
+    expect(() => byteToVoltage('128' as unknown as number)).toThrow(
+      ValidationError
+    );
   });
 });

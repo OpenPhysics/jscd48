@@ -137,7 +137,9 @@ export function validateDuration(duration: number): void {
  * @param mode - Impedance mode ('highz' or '50ohm')
  * @throws ValidationError If mode is invalid
  */
-export function validateImpedanceMode(mode: string): asserts mode is ImpedanceMode {
+export function validateImpedanceMode(
+  mode: string
+): asserts mode is ImpedanceMode {
   const validModes: ImpedanceMode[] = ['highz', '50ohm'];
 
   if (typeof mode !== 'string') {
@@ -155,7 +157,10 @@ export function validateImpedanceMode(mode: string): asserts mode is ImpedanceMo
  * @param value - Value to validate
  * @throws ValidationError If value is not boolean
  */
-export function validateBoolean(paramName: string, value: unknown): asserts value is boolean {
+export function validateBoolean(
+  paramName: string,
+  value: unknown
+): asserts value is boolean {
   if (typeof value !== 'boolean') {
     throw new ValidationError(paramName, value, 'must be true or false');
   }

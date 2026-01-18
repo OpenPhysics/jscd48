@@ -217,7 +217,12 @@ export const Histogram = {
     const binWidth = (max - min) / numBins;
 
     if (binWidth === 0) {
-      return { bins: [min], counts: [data.length], edges: [min, min], binWidth: 0 };
+      return {
+        bins: [min],
+        counts: [data.length],
+        edges: [min, min],
+        binWidth: 0,
+      };
     }
 
     const counts: number[] = new Array(numBins).fill(0) as number[];
@@ -292,7 +297,10 @@ export const Histogram = {
    * @param options - Histogram options
    * @returns Cumulative histogram data
    */
-  cumulative(data: number[], options: HistogramOptions = {}): CumulativeHistogramResult {
+  cumulative(
+    data: number[],
+    options: HistogramOptions = {}
+  ): CumulativeHistogramResult {
     const hist = this.create(data, options);
     const cumulativeCounts: number[] = [];
     let sum = 0;
@@ -502,7 +510,11 @@ export const Coincidence = {
    * @param coincidenceWindow - Coincidence window in seconds
    * @returns Expected accidental rate (counts/sec)
    */
-  accidentalRate(rate1: number, rate2: number, coincidenceWindow: number): number {
+  accidentalRate(
+    rate1: number,
+    rate2: number,
+    coincidenceWindow: number
+  ): number {
     return 2 * rate1 * rate2 * coincidenceWindow;
   },
 

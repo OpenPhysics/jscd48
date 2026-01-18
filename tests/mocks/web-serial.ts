@@ -52,7 +52,9 @@ interface MockSerialPort {
 }
 
 interface MockNavigatorSerial {
-  requestPort: Mock<(filters?: SerialPortRequestOptions) => Promise<MockSerialPort>>;
+  requestPort: Mock<
+    (filters?: SerialPortRequestOptions) => Promise<MockSerialPort>
+  >;
   getPorts: Mock<() => Promise<MockSerialPort[]>>;
   addEventListener: Mock<() => void>;
   removeEventListener: Mock<() => void>;
@@ -69,7 +71,9 @@ interface SetupMockResult {
 /**
  * Create a mock serial port with configurable behavior
  */
-export function createMockSerialPort(options: MockSerialPortOptions = {}): MockSerialPort {
+export function createMockSerialPort(
+  options: MockSerialPortOptions = {}
+): MockSerialPort {
   const {
     responses = {
       'v\r': 'CD48 v1.0.0\r\n',
@@ -88,7 +92,7 @@ export function createMockSerialPort(options: MockSerialPortOptions = {}): MockS
 
   let isOpen = false;
   let commandQueue: string[] = [];
-  let responseQueue: string[] = [];
+  const responseQueue: string[] = [];
 
   // Mock reader
   const mockReader: MockReader = {
@@ -125,7 +129,10 @@ export function createMockSerialPort(options: MockSerialPortOptions = {}): MockS
 
       // Add response to queue based on command
       const responseValue = responses[data];
-      const response = typeof responseValue === 'function' ? responseValue() : (responseValue ?? 'OK\r\n');
+      const response =
+        typeof responseValue === 'function'
+          ? responseValue()
+          : (responseValue ?? 'OK\r\n');
       responseQueue.push(response);
     }),
     close: vi.fn(async () => {
@@ -192,7 +199,9 @@ export function createMockSerialPort(options: MockSerialPortOptions = {}): MockS
 /**
  * Create a mock navigator.serial object
  */
-export function createMockNavigatorSerial(options: MockSerialPortOptions = {}): MockNavigatorSerial {
+export function createMockNavigatorSerial(
+  options: MockSerialPortOptions = {}
+): MockNavigatorSerial {
   const mockPort = createMockSerialPort(options);
 
   return {
@@ -218,11 +227,10 @@ export function createMockNavigatorSerial(options: MockSerialPortOptions = {}): 
 
 // Extend global types for the mock
 declare global {
-  // eslint-disable-next-line no-var
   var navigator: Navigator & { serial?: MockNavigatorSerial };
-  // eslint-disable-next-line no-var
+
   var TextDecoderStream: typeof MockTextDecoderStream;
-  // eslint-disable-next-line no-var
+
   var TextEncoderStream: typeof MockTextEncoderStream;
 }
 
@@ -256,7 +264,9 @@ class MockTextEncoderStream {
  * Setup global Web Serial API mocks
  * Call this in your test setup (beforeEach)
  */
-export function setupWebSerialMock(options: MockSerialPortOptions = {}): SetupMockResult {
+export function setupWebSerialMock(
+  options: MockSerialPortOptions = {}
+): SetupMockResult {
   const mockSerial = createMockNavigatorSerial(options);
   const mockPort = mockSerial._mockPort;
 
@@ -293,9 +303,12 @@ export function setupWebSerialMock(options: MockSerialPortOptions = {}): SetupMo
  * Call this in your test teardown (afterEach)
  */
 export function cleanupWebSerialMock(): void {
-  delete (global.navigator as Navigator & { serial?: MockNavigatorSerial }).serial;
-  delete (global as { TextDecoderStream?: typeof MockTextDecoderStream }).TextDecoderStream;
-  delete (global as { TextEncoderStream?: typeof MockTextEncoderStream }).TextEncoderStream;
+  delete (global.navigator as Navigator & { serial?: MockNavigatorSerial })
+    .serial;
+  delete (global as { TextDecoderStream?: typeof MockTextDecoderStream })
+    .TextDecoderStream;
+  delete (global as { TextEncoderStream?: typeof MockTextEncoderStream })
+    .TextEncoderStream;
 }
 
 /**

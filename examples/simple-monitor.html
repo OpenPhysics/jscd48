@@ -49,13 +49,13 @@
       let monitoring = false;
       let monitorInterval = null;
 
-      window.toggleConnection = async function() {
+      window.toggleConnection = async function () {
         if (cd48 && cd48.isConnected()) {
           await disconnect();
         } else {
           await connect();
         }
-      }
+      };
 
       async function connect() {
         try {
@@ -92,7 +92,7 @@
         log('Disconnected');
       }
 
-      window.readOnce = async function() {
+      window.readOnce = async function () {
         if (!cd48) return;
 
         try {
@@ -107,9 +107,9 @@
         } catch (error) {
           log(`Error: ${error.message}`);
         }
-      }
+      };
 
-      window.toggleMonitor = async function() {
+      window.toggleMonitor = async function () {
         if (monitoring) {
           clearInterval(monitorInterval);
           monitorInterval = null;
@@ -137,7 +137,7 @@
             }
           }, 1000);
         }
-      }
+      };
 
       function log(message) {
         document.getElementById('output').textContent = message;

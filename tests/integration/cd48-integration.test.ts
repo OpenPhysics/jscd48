@@ -145,7 +145,9 @@ describe('CD48 Integration Tests - Mock Hardware', () => {
 
       const results = await Promise.all(promises);
       expect(results).toHaveLength(4);
-      expect((results[0] as Awaited<ReturnType<typeof cd48.getCounts>>).counts).toHaveLength(8);
+      expect(
+        (results[0] as Awaited<ReturnType<typeof cd48.getCounts>>).counts
+      ).toHaveLength(8);
       expect(typeof results[1]).toBe('string');
     });
 

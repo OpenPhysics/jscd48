@@ -167,7 +167,10 @@ export class MockCD48 {
   /**
    * Measure count rate for a channel
    */
-  async measureRate(channel: number, duration: number): Promise<RateMeasurement> {
+  async measureRate(
+    channel: number,
+    duration: number
+  ): Promise<RateMeasurement> {
     await this._executeCommand();
 
     if (channel < 0 || channel > 7) {
@@ -193,7 +196,9 @@ export class MockCD48 {
   /**
    * Measure coincidence rate
    */
-  async measureCoincidenceRate(options: CoincidenceMeasurementOptions = {}): Promise<CoincidenceRateMeasurement> {
+  async measureCoincidenceRate(
+    options: CoincidenceMeasurementOptions = {}
+  ): Promise<CoincidenceRateMeasurement> {
     await this._executeCommand();
 
     const duration = options.duration ?? 1.0;

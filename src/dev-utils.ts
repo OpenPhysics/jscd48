@@ -511,7 +511,9 @@ export class PerformanceMonitor {
  * Setup global error handlers for development
  * @param options - Configuration options
  */
-export function setupDevMode(options: SetupDevModeOptions = {}): DevModeUtilities {
+export function setupDevMode(
+  options: SetupDevModeOptions = {}
+): DevModeUtilities {
   const logger = new DevLogger(options.logger);
   const errorOverlay = new ErrorOverlay();
   const perfMonitor = new PerformanceMonitor();
@@ -520,7 +522,10 @@ export function setupDevMode(options: SetupDevModeOptions = {}): DevModeUtilitie
   window.addEventListener('error', (event: ErrorEvent) => {
     logger.error('Unhandled error:', event.error);
     if (options.showOverlay !== false) {
-      const error = event.error instanceof Error ? event.error : new Error(String(event.error));
+      const error =
+        event.error instanceof Error
+          ? event.error
+          : new Error(String(event.error));
       errorOverlay.show(error, {
         filename: event.filename,
         lineno: event.lineno,
@@ -530,18 +535,21 @@ export function setupDevMode(options: SetupDevModeOptions = {}): DevModeUtilitie
   });
 
   // Handle unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-    logger.error('Unhandled promise rejection:', event.reason);
-    if (options.showOverlay !== false) {
-      const error =
-        event.reason instanceof Error
-          ? event.reason
-          : new Error(String(event.reason));
-      errorOverlay.show(error, {
-        type: 'Promise Rejection',
-      });
+  window.addEventListener(
+    'unhandledrejection',
+    (event: PromiseRejectionEvent) => {
+      logger.error('Unhandled promise rejection:', event.reason);
+      if (options.showOverlay !== false) {
+        const error =
+          event.reason instanceof Error
+            ? event.reason
+            : new Error(String(event.reason));
+        errorOverlay.show(error, {
+          type: 'Promise Rejection',
+        });
+      }
     }
-  });
+  );
 
   // Expose utilities globally for console access
   if (options.exposeGlobally !== false) {

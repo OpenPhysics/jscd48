@@ -25,14 +25,18 @@ describe('CD48', () => {
     it('should create instance with default options', () => {
       const cd48 = new CD48();
       expect((cd48 as unknown as { baudRate: number }).baudRate).toBe(115200);
-      expect((cd48 as unknown as { commandDelay: number }).commandDelay).toBe(50);
+      expect((cd48 as unknown as { commandDelay: number }).commandDelay).toBe(
+        50
+      );
       expect((cd48 as unknown as { port: unknown }).port).toBeNull();
     });
 
     it('should create instance with custom options', () => {
       const cd48 = new CD48({ baudRate: 9600, commandDelay: 100 });
       expect((cd48 as unknown as { baudRate: number }).baudRate).toBe(9600);
-      expect((cd48 as unknown as { commandDelay: number }).commandDelay).toBe(100);
+      expect((cd48 as unknown as { commandDelay: number }).commandDelay).toBe(
+        100
+      );
     });
   });
 
@@ -203,7 +207,8 @@ describe('CD48', () => {
 
   describe('Repeat interval validation', () => {
     it('should clamp repeat interval to valid range', () => {
-      const clampVal = (ms: number): number => Math.max(100, Math.min(65535, ms));
+      const clampVal = (ms: number): number =>
+        Math.max(100, Math.min(65535, ms));
 
       expect(clampVal(50)).toBe(100);
       expect(clampVal(100)).toBe(100);

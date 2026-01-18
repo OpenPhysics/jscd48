@@ -291,7 +291,9 @@ export class CalibrationStorage {
    */
   loadAll(): Record<string, CalibrationProfileJSON> {
     const data = localStorage.getItem(this.storageKey);
-    return data ? (JSON.parse(data) as Record<string, CalibrationProfileJSON>) : {};
+    return data
+      ? (JSON.parse(data) as Record<string, CalibrationProfileJSON>)
+      : {};
   }
 
   /**
@@ -333,7 +335,10 @@ export class CalibrationStorage {
    * @param merge - Merge with existing profiles
    */
   import(jsonString: string, merge = false): void {
-    const imported = JSON.parse(jsonString) as Record<string, CalibrationProfileJSON>;
+    const imported = JSON.parse(jsonString) as Record<
+      string,
+      CalibrationProfileJSON
+    >;
     if (merge) {
       const existing = this.loadAll();
       const merged = { ...existing, ...imported };
@@ -354,7 +359,10 @@ export class VoltageCalibration {
    * @param point2 - Second calibration point
    * @returns Calibration coefficients
    */
-  static twoPoint(point1: CalibrationPoint, point2: CalibrationPoint): CalibrationCoefficients {
+  static twoPoint(
+    point1: CalibrationPoint,
+    point2: CalibrationPoint
+  ): CalibrationCoefficients {
     const rawDiff = point2.raw - point1.raw;
     if (rawDiff === 0) {
       return { gain: 1, offset: 0 };

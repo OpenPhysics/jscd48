@@ -63,12 +63,7 @@ export {
 export type { ImpedanceMode } from './validation.js';
 
 // Analysis utilities
-export {
-  Statistics,
-  Histogram,
-  TimeSeries,
-  Coincidence,
-} from './analysis.js';
+export { Statistics, Histogram, TimeSeries, Coincidence } from './analysis.js';
 
 export type {
   LinearRegressionResult,

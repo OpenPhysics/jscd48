@@ -8,6 +8,7 @@
 The jscd48 repository is well-structured with excellent documentation, comprehensive testing, and modern development practices. This document outlines actionable improvements across 10 key areas, prioritized by impact and effort.
 
 **Overall Health**: 🟢 Excellent (85/100)
+
 - Code Quality: 90/100
 - Testing: 88/100
 - Documentation: 85/100
@@ -18,16 +19,16 @@ The jscd48 repository is well-structured with excellent documentation, comprehen
 
 ## Priority Matrix
 
-| Priority | Area | Impact | Effort |
-|----------|------|--------|--------|
-| 🔴 **Critical** | Auto-reconnection logic | High | Medium |
-| 🔴 **Critical** | TypeScript definitions for all modules | High | Low |
-| 🟠 **High** | E2E tests in CI pipeline | High | Low |
-| 🟠 **High** | Missing documentation (CODE_OF_CONDUCT, SECURITY) | Medium | Low |
-| 🟡 **Medium** | Package.json exports completeness | Medium | Low |
-| 🟡 **Medium** | Branch coverage improvement | Medium | Medium |
-| 🔵 **Low** | Bundle size monitoring | Low | Low |
-| 🔵 **Low** | Internationalization support | Low | High |
+| Priority        | Area                                              | Impact | Effort |
+| --------------- | ------------------------------------------------- | ------ | ------ |
+| 🔴 **Critical** | Auto-reconnection logic                           | High   | Medium |
+| 🔴 **Critical** | TypeScript definitions for all modules            | High   | Low    |
+| 🟠 **High**     | E2E tests in CI pipeline                          | High   | Low    |
+| 🟠 **High**     | Missing documentation (CODE_OF_CONDUCT, SECURITY) | Medium | Low    |
+| 🟡 **Medium**   | Package.json exports completeness                 | Medium | Low    |
+| 🟡 **Medium**   | Branch coverage improvement                       | Medium | Medium |
+| 🔵 **Low**      | Bundle size monitoring                            | Low    | Low    |
+| 🔵 **Low**      | Internationalization support                      | Low    | High   |
 
 ---
 
@@ -42,6 +43,7 @@ The jscd48 repository is well-structured with excellent documentation, comprehen
 **Issue**: No automatic reconnection when serial connection is lost. Users must manually reconnect if the USB cable is briefly disconnected or the device resets.
 
 **Recommendation**:
+
 ```javascript
 class CD48 {
   constructor(options = {}) {
@@ -58,7 +60,9 @@ class CD48 {
 
   async _attemptReconnect() {
     for (let attempt = 1; attempt <= this.maxReconnectAttempts; attempt++) {
-      await new Promise(resolve => setTimeout(resolve, this.reconnectDelay * attempt));
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.reconnectDelay * attempt)
+      );
       try {
         await this.connect();
         this._emitEvent('reconnected', { attempt });
@@ -74,6 +78,7 @@ class CD48 {
 ```
 
 **Benefits**:
+
 - Improved production reliability
 - Better user experience in long-running experiments
 - Automatic recovery from transient connection issues
@@ -91,6 +96,7 @@ class CD48 {
 **Recommendation**: Create comprehensive TypeScript definitions:
 
 **`analysis.d.ts`**:
+
 ```typescript
 export class Statistics {
   static mean(data: number[]): number;
@@ -98,7 +104,10 @@ export class Statistics {
   static standardDeviation(data: number[]): number;
   static variance(data: number[]): number;
   static poissonUncertainty(count: number): number;
-  static linearRegression(x: number[], y: number[]): {
+  static linearRegression(
+    x: number[],
+    y: number[]
+  ): {
     slope: number;
     intercept: number;
     r2: number;
@@ -139,14 +148,12 @@ export class TimeSeries {
 
 export class Coincidence {
   static accidentalRate(rateA: number, rateB: number, window: number): number;
-  static trueCoincidenceRate(
-    measured: number,
-    accidental: number
-  ): number;
+  static trueCoincidenceRate(measured: number, accidental: number): number;
 }
 ```
 
 **`calibration.d.ts`**:
+
 ```typescript
 export class CalibrationProfile {
   constructor(options?: { name?: string; description?: string });
@@ -178,9 +185,11 @@ export class VoltageCalibration {
     point2: { raw: number; actual: number }
   ): { slope: number; intercept: number };
 
-  static multiPoint(
-    points: Array<{ raw: number; actual: number }>
-  ): { slope: number; intercept: number; r2: number };
+  static multiPoint(points: Array<{ raw: number; actual: number }>): {
+    slope: number;
+    intercept: number;
+    r2: number;
+  };
 }
 
 export class CalibrationWizard {
@@ -191,10 +200,7 @@ export class CalibrationWizard {
     duration: number
   ): Promise<Map<number, number>>;
 
-  async calibrateVoltage(
-    channel: number,
-    knownVoltage: number
-  ): Promise<void>;
+  async calibrateVoltage(channel: number, knownVoltage: number): Promise<void>;
 
   async calibrateGain(
     channel: number,
@@ -208,6 +214,7 @@ export class CalibrationWizard {
 ```
 
 **`errors.d.ts`**:
+
 ```typescript
 export class CD48Error extends Error {
   constructor(message: string);
@@ -233,6 +240,7 @@ export class CommandError extends CD48Error {
 ```
 
 **`validation.d.ts`**:
+
 ```typescript
 export function validateVoltage(voltage: number): void;
 export function validateChannel(channel: number): void;
@@ -241,6 +249,7 @@ export function validateWindow(window: number): void;
 ```
 
 **`dev-utils.d.ts`**:
+
 ```typescript
 export class DevLogger {
   constructor(options?: { prefix?: string; colors?: boolean });
@@ -263,6 +272,7 @@ export class PerformanceMonitor {
 ```
 
 **Update `package.json`**:
+
 ```json
 {
   "exports": {
@@ -297,6 +307,7 @@ export class PerformanceMonitor {
 ```
 
 **Benefits**:
+
 - Full TypeScript IntelliSense support
 - Compile-time type checking
 - Better IDE autocomplete
@@ -365,6 +376,7 @@ jobs:
 ```
 
 **Benefits**:
+
 - Catch integration bugs before deployment
 - Validate all 11 examples work correctly
 - Visual regression detection
@@ -379,12 +391,14 @@ jobs:
 **Effort**: Low
 
 **Issue**:
+
 - `CODE_OF_CONDUCT.md` referenced in `CONTRIBUTING.md:7` but doesn't exist
 - No `SECURITY.md` for vulnerability reporting
 
 **Recommendation**:
 
 **`CODE_OF_CONDUCT.md`**:
+
 ```markdown
 # Contributor Covenant Code of Conduct
 
@@ -401,19 +415,19 @@ identity and orientation.
 
 Examples of behavior that contributes to a positive environment:
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
 
 Examples of unacceptable behavior:
 
-* The use of sexualized language or imagery and unwelcome sexual attention
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information without explicit permission
-* Other conduct which could reasonably be considered inappropriate
+- The use of sexualized language or imagery and unwelcome sexual attention
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information without explicit permission
+- Other conduct which could reasonably be considered inappropriate
 
 ## Enforcement
 
@@ -431,6 +445,7 @@ https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
 ```
 
 **`SECURITY.md`**:
+
 ```markdown
 # Security Policy
 
@@ -490,6 +505,7 @@ in our changelog (unless anonymity is requested).
 ```
 
 **Benefits**:
+
 - Clear community guidelines
 - Professional vulnerability disclosure process
 - Increased contributor confidence
@@ -569,6 +585,7 @@ async measureCoincidenceRate(options) {
 ```
 
 **Benefits**:
+
 - Scientific accuracy for research applications
 - Proper error propagation
 - Publication-ready measurements
@@ -622,6 +639,7 @@ async measureCoincidenceRate(options) {
 ```
 
 **Benefits**:
+
 - Users can import custom error classes for type checking
 - Access to validation utilities for custom workflows
 - DevLogger available for debugging
@@ -688,6 +706,7 @@ describe('Validation Edge Cases', () => {
 **Target**: Increase to 90%+ branch coverage
 
 **Benefits**:
+
 - Catch edge case bugs
 - Improve robustness
 - Better error handling
@@ -758,6 +777,7 @@ describe('Validation Edge Cases', () => {
 ```
 
 **Benefits**:
+
 - Complete API documentation
 - Better developer onboarding
 - Professional documentation site
@@ -790,7 +810,7 @@ class CD48 {
     const timeSinceLastCommand = now - this.lastCommandTime;
 
     if (timeSinceLastCommand < minDelay) {
-      await new Promise(resolve =>
+      await new Promise((resolve) =>
         setTimeout(resolve, minDelay - timeSinceLastCommand)
       );
     }
@@ -806,6 +826,7 @@ class CD48 {
 ```
 
 **Benefits**:
+
 - Protect device from overwhelming
 - Predictable performance
 - Prevents timeout cascades
@@ -867,6 +888,7 @@ jobs:
 ```
 
 **Benefits**:
+
 - Track bundle size growth
 - Prevent accidental bloat
 - Performance awareness
@@ -895,6 +917,7 @@ export default defineConfig({
 ```
 
 **Benefits**:
+
 - Easier production debugging
 - Better error stack traces
 - Developer-friendly debugging
@@ -918,6 +941,7 @@ strategy:
 ```
 
 **Benefits**:
+
 - Test on currently supported Node versions
 - Prepare for future Node releases
 - Avoid EOL version testing
@@ -935,11 +959,13 @@ strategy:
 **Recommendation**:
 
 Install conventional-changelog:
+
 ```bash
 npm install --save-dev conventional-changelog-cli
 ```
 
 Add script to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -949,6 +975,7 @@ Add script to `package.json`:
 ```
 
 Update release workflow:
+
 ```yaml
 - name: Generate Changelog
   run: npm run changelog
@@ -962,6 +989,7 @@ Update release workflow:
 ```
 
 **Benefits**:
+
 - Automatic changelog generation
 - Consistent format
 - Less manual work
@@ -977,6 +1005,7 @@ Update release workflow:
 **Effort**: Low
 
 Add benchmark job:
+
 ```yaml
 jobs:
   benchmark:
@@ -1008,6 +1037,7 @@ jobs:
 **File**: `.github/workflows/release.yml`
 
 Add beta release capability:
+
 ```yaml
 on:
   push:
@@ -1043,7 +1073,8 @@ jobs:
 **File**: `MIGRATION.md` (new)
 
 Create upgrade documentation:
-```markdown
+
+````markdown
 # Migration Guide
 
 ## Upgrading to v2.0.0 (Future)
@@ -1051,6 +1082,7 @@ Create upgrade documentation:
 ### Breaking Changes
 
 1. **Auto-reconnect enabled by default**
+
    ```javascript
    // Old behavior (manual reconnect)
    const cd48 = new CD48();
@@ -1061,14 +1093,20 @@ Create upgrade documentation:
    // To disable auto-reconnect
    const cd48 = new CD48({ autoReconnect: false });
    ```
+````
 
 2. **measureRate() now includes uncertainty**
+
    ```javascript
    // Old return value
-   { counts, duration, rate, channel }
+   {
+     (counts, duration, rate, channel);
+   }
 
    // New return value
-   { counts, duration, rate, channel, uncertainty, relativeUncertainty }
+   {
+     (counts, duration, rate, channel, uncertainty, relativeUncertainty);
+   }
    ```
 
 ### Deprecated Features
@@ -1078,6 +1116,7 @@ None currently.
 ## Upgrading from v0.x to v1.0.0
 
 No breaking changes. v1.0.0 is a feature-stable release.
+
 ```
 
 ---
@@ -1149,3 +1188,4 @@ The jscd48 repository is in excellent shape with strong fundamentals. These impr
 ---
 
 **Questions or feedback?** Open an issue on GitHub or contact the maintainers.
+```
