@@ -1,15 +1,55 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const SELECTORS = {
+  STATUS_TEXT: '#statusText',
+  STATUS_DOT: '#statusDot',
+  CONNECT_BTN: '#connectBtn',
+  CLEAR_BTN: '#clearBtn',
+  LED_BTN: '#ledBtn',
+  SETTINGS_BTN: '#settingsBtn',
+  MONITOR_TAB: '#monitor-tab',
+  TRACKING_TAB: '#tracking-tab',
+  MONITOR_PANEL: '#monitorTab',
+  TRACKING_PANEL: '#trackingTab',
+  TRIGGER_SLIDER: '#triggerSlider',
+  TRIGGER_VALUE: '#triggerValue',
+  IMPEDANCE_SELECT: '#impedanceSelect',
+  DAC_SLIDER: '#dacSlider',
+  DAC_VALUE: '#dacValue',
+  FIRMWARE: '#firmware',
+  DEVICE_STATUS: '#deviceStatus',
+  OVERFLOW: '#overflow',
+  LOG: '#log',
+  CHANNEL_SELECTOR: '#channelSelector',
+  RATE_CHART: '#rateChart',
+  TOTAL_POINTS: '#totalPoints',
+  DURATION: '#duration',
+  AVG_RATE: '#avgRate',
+  PEAK_RATE: '#peakRate',
+} as const;
+
+const TIMEOUTS = {
+  SHORT: 100,
+} as const;
 
 test.describe('CD48 Main Interface', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     await page.goto('/');
   });
 
-  test('should load the page with correct title', async ({ page }) => {
+  test('should load the page with correct title', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await expect(page).toHaveTitle(/CD48 Coincidence Counter/);
   });
 
-  test('should display header and subtitle', async ({ page }) => {
+  test('should display header and subtitle', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     const header = page.locator('h1');
     await expect(header).toHaveText('CD48 Coincidence Counter');
 
@@ -17,25 +57,29 @@ test.describe('CD48 Main Interface', () => {
     await expect(subtitle).toContainText('Web Serial Interface');
   });
 
-  test('should display status bar with disconnect status', async ({ page }) => {
-    const statusText = page.locator('#statusText');
+  test('should display status bar with disconnect status', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const statusText = page.locator(SELECTORS.STATUS_TEXT);
     await expect(statusText).toHaveText('Disconnected');
 
-    const statusDot = page.locator('#statusDot');
+    const statusDot = page.locator(SELECTORS.STATUS_DOT);
     await expect(statusDot).toBeVisible();
     await expect(statusDot).not.toHaveClass(/connected/);
   });
 
-  test('should display connect button', async ({ page }) => {
-    const connectBtn = page.locator('#connectBtn');
+  test('should display connect button', async ({ page }: { page: Page }) => {
+    const connectBtn = page.locator(SELECTORS.CONNECT_BTN);
     await expect(connectBtn).toBeVisible();
     await expect(connectBtn).toHaveText('Connect');
     await expect(connectBtn).toBeEnabled();
   });
 
-  test('should have navigation tabs', async ({ page }) => {
-    const monitorTab = page.locator('#monitor-tab');
-    const trackingTab = page.locator('#tracking-tab');
+  test('should have navigation tabs', async ({ page }: { page: Page }) => {
+    const monitorTab = page.locator(SELECTORS.MONITOR_TAB);
+    const trackingTab = page.locator(SELECTORS.TRACKING_TAB);
 
     await expect(monitorTab).toBeVisible();
     await expect(trackingTab).toBeVisible();
@@ -43,11 +87,11 @@ test.describe('CD48 Main Interface', () => {
     await expect(trackingTab).toHaveAttribute('aria-selected', 'false');
   });
 
-  test('should switch between tabs', async ({ page }) => {
-    const monitorTab = page.locator('#monitor-tab');
-    const trackingTab = page.locator('#tracking-tab');
-    const monitorPanel = page.locator('#monitorTab');
-    const trackingPanel = page.locator('#trackingTab');
+  test('should switch between tabs', async ({ page }: { page: Page }) => {
+    const monitorTab = page.locator(SELECTORS.MONITOR_TAB);
+    const trackingTab = page.locator(SELECTORS.TRACKING_TAB);
+    const monitorPanel = page.locator(SELECTORS.MONITOR_PANEL);
+    const trackingPanel = page.locator(SELECTORS.TRACKING_PANEL);
 
     // Initially on monitor tab
     await expect(monitorPanel).toHaveClass(/active/);
@@ -68,7 +112,11 @@ test.describe('CD48 Main Interface', () => {
     await expect(trackingPanel).not.toHaveClass(/active/);
   });
 
-  test('should display all 8 channel counts', async ({ page }) => {
+  test('should display all 8 channel counts', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     for (let i = 0; i < 8; i++) {
       const countValue = page.locator(`#count${i}`);
       await expect(countValue).toBeVisible();
@@ -78,27 +126,31 @@ test.describe('CD48 Main Interface', () => {
 
   test('should have controls section with sliders and selects', async ({
     page,
+  }: {
+    page: Page;
   }) => {
     // Trigger Level slider
-    const triggerSlider = page.locator('#triggerSlider');
+    const triggerSlider = page.locator(SELECTORS.TRIGGER_SLIDER);
     await expect(triggerSlider).toBeVisible();
     await expect(triggerSlider).toHaveAttribute('type', 'range');
 
     // Impedance select
-    const impedanceSelect = page.locator('#impedanceSelect');
+    const impedanceSelect = page.locator(SELECTORS.IMPEDANCE_SELECT);
     await expect(impedanceSelect).toBeVisible();
 
     // DAC slider
-    const dacSlider = page.locator('#dacSlider');
+    const dacSlider = page.locator(SELECTORS.DAC_SLIDER);
     await expect(dacSlider).toBeVisible();
     await expect(dacSlider).toHaveAttribute('type', 'range');
   });
 
   test('should update trigger voltage display when slider changes', async ({
     page,
+  }: {
+    page: Page;
   }) => {
-    const triggerSlider = page.locator('#triggerSlider');
-    const triggerValue = page.locator('#triggerValue');
+    const triggerSlider = page.locator(SELECTORS.TRIGGER_SLIDER);
+    const triggerValue = page.locator(SELECTORS.TRIGGER_VALUE);
 
     // Get initial value
     const initialValue = await triggerValue.textContent();
@@ -107,7 +159,7 @@ test.describe('CD48 Main Interface', () => {
     await triggerSlider.fill('100');
 
     // Wait for value to update
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(TIMEOUTS.SHORT);
 
     const newValue = await triggerValue.textContent();
     expect(newValue).not.toBe(initialValue);
@@ -116,9 +168,11 @@ test.describe('CD48 Main Interface', () => {
 
   test('should update DAC voltage display when slider changes', async ({
     page,
+  }: {
+    page: Page;
   }) => {
-    const dacSlider = page.locator('#dacSlider');
-    const dacValue = page.locator('#dacValue');
+    const dacSlider = page.locator(SELECTORS.DAC_SLIDER);
+    const dacValue = page.locator(SELECTORS.DAC_VALUE);
 
     // Get initial value
     const initialValue = await dacValue.textContent();
@@ -127,27 +181,35 @@ test.describe('CD48 Main Interface', () => {
     await dacSlider.fill('128');
 
     // Wait for value to update
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(TIMEOUTS.SHORT);
 
     const newValue = await dacValue.textContent();
     expect(newValue).not.toBe(initialValue);
     expect(newValue).toContain('V');
   });
 
-  test('should have disabled buttons when not connected', async ({ page }) => {
-    const clearBtn = page.locator('#clearBtn');
-    const ledBtn = page.locator('#ledBtn');
-    const settingsBtn = page.locator('#settingsBtn');
+  test('should have disabled buttons when not connected', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const clearBtn = page.locator(SELECTORS.CLEAR_BTN);
+    const ledBtn = page.locator(SELECTORS.LED_BTN);
+    const settingsBtn = page.locator(SELECTORS.SETTINGS_BTN);
 
     await expect(clearBtn).toBeDisabled();
     await expect(ledBtn).toBeDisabled();
     await expect(settingsBtn).toBeDisabled();
   });
 
-  test('should display device information section', async ({ page }) => {
-    const firmware = page.locator('#firmware');
-    const deviceStatus = page.locator('#deviceStatus');
-    const overflow = page.locator('#overflow');
+  test('should display device information section', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const firmware = page.locator(SELECTORS.FIRMWARE);
+    const deviceStatus = page.locator(SELECTORS.DEVICE_STATUS);
+    const overflow = page.locator(SELECTORS.OVERFLOW);
 
     await expect(firmware).toBeVisible();
     await expect(firmware).toHaveText('-');
@@ -155,13 +217,13 @@ test.describe('CD48 Main Interface', () => {
     await expect(overflow).toHaveText('-');
   });
 
-  test('should display activity log', async ({ page }) => {
-    const log = page.locator('#log');
+  test('should display activity log', async ({ page }: { page: Page }) => {
+    const log = page.locator(SELECTORS.LOG);
     await expect(log).toBeVisible();
     await expect(log).toHaveAttribute('role', 'log');
   });
 
-  test('should have footer with links', async ({ page }) => {
+  test('should have footer with links', async ({ page }: { page: Page }) => {
     const footer = page.locator('footer');
     await expect(footer).toBeVisible();
 
@@ -170,11 +232,15 @@ test.describe('CD48 Main Interface', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test('should display channel selector in tracking tab', async ({ page }) => {
-    const trackingTab = page.locator('#tracking-tab');
+  test('should display channel selector in tracking tab', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const trackingTab = page.locator(SELECTORS.TRACKING_TAB);
     await trackingTab.click();
 
-    const channelSelector = page.locator('#channelSelector');
+    const channelSelector = page.locator(SELECTORS.CHANNEL_SELECTOR);
     await expect(channelSelector).toBeVisible();
 
     // Check for 8 channel chips
@@ -183,8 +249,12 @@ test.describe('CD48 Main Interface', () => {
     expect(count).toBe(8);
   });
 
-  test('should toggle channel visibility in chart', async ({ page }) => {
-    const trackingTab = page.locator('#tracking-tab');
+  test('should toggle channel visibility in chart', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const trackingTab = page.locator(SELECTORS.TRACKING_TAB);
     await trackingTab.click();
 
     const channel0Chip = page.locator('[data-channel="0"]');
@@ -202,22 +272,30 @@ test.describe('CD48 Main Interface', () => {
     await expect(channel0Chip).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('should display chart in tracking tab', async ({ page }) => {
-    const trackingTab = page.locator('#tracking-tab');
+  test('should display chart in tracking tab', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const trackingTab = page.locator(SELECTORS.TRACKING_TAB);
     await trackingTab.click();
 
-    const chart = page.locator('#rateChart');
+    const chart = page.locator(SELECTORS.RATE_CHART);
     await expect(chart).toBeVisible();
   });
 
-  test('should have statistics in tracking tab', async ({ page }) => {
-    const trackingTab = page.locator('#tracking-tab');
+  test('should have statistics in tracking tab', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
+    const trackingTab = page.locator(SELECTORS.TRACKING_TAB);
     await trackingTab.click();
 
-    const totalPoints = page.locator('#totalPoints');
-    const duration = page.locator('#duration');
-    const avgRate = page.locator('#avgRate');
-    const peakRate = page.locator('#peakRate');
+    const totalPoints = page.locator(SELECTORS.TOTAL_POINTS);
+    const duration = page.locator(SELECTORS.DURATION);
+    const avgRate = page.locator(SELECTORS.AVG_RATE);
+    const peakRate = page.locator(SELECTORS.PEAK_RATE);
 
     await expect(totalPoints).toBeVisible();
     await expect(duration).toBeVisible();

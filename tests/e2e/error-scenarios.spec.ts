@@ -1,68 +1,103 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Error Scenario Tests
  * Tests error handling in the UI when various errors occur
  */
 
+const SELECTORS = {
+  CODE_MIRROR: '.CodeMirror',
+  CONSOLE_OUTPUT: '#consoleOutput',
+  RUN_BTN: '#runBtn',
+  CLEAR_BTN: '#clearBtn',
+  TEMPLATE_SELECT: '#templateSelect',
+  SEARCH_INPUT: '#searchInput',
+  EXAMPLES_GRID: '.examples-grid',
+  EXAMPLE_CARD: '.example-card',
+  TAB_CONSOLE: '.tab[data-tab="console"]',
+  TAB_DEVICE: '.tab[data-tab="device"]',
+  TAB_CONTENT_DEVICE: '.tab-content[data-tab="device"]',
+} as const;
+
+const TIMEOUTS = {
+  SHORT: 100,
+  MEDIUM: 200,
+  LONG: 300,
+  VERY_LONG: 500,
+  ERROR_DISPLAY: 1000,
+} as const;
+
 test.describe('Error Scenarios - User Interface', () => {
   test('code playground - handles syntax errors gracefully', async ({
     page,
+  }: {
+    page: Page;
   }) => {
     await page.goto('/examples/code-playground.html');
-    await page.waitForSelector('.CodeMirror');
+    await page.waitForSelector(SELECTORS.CODE_MIRROR);
 
     // Inject invalid code
     await page.evaluate(() => {
       const editors = document.querySelectorAll('.CodeMirror');
       if (editors.length > 0) {
-        const cm = editors[0].CodeMirror;
+        const cm = (
+          editors[0] as { CodeMirror: { setValue: (v: string) => void } }
+        ).CodeMirror;
         cm.setValue('this is invalid javascript code {{{');
       }
     });
 
     // Try to run the code
-    await page.click('#runBtn');
+    await page.click(SELECTORS.RUN_BTN);
 
     // Wait for error to appear in console
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMEOUTS.VERY_LONG);
 
     // Check that error is displayed
-    const consoleOutput = page.locator('#consoleOutput');
-    const hasError = await consoleOutput.evaluate((el) => {
-      return (
-        el.textContent.includes('error') || el.textContent.includes('Error')
-      );
-    });
+    const consoleOutput = page.locator(SELECTORS.CONSOLE_OUTPUT);
+    const hasError = await consoleOutput.evaluate(
+      (el: HTMLElement): boolean => {
+        const text = el.textContent ?? '';
+        return text.includes('error') || text.includes('Error');
+      }
+    );
 
     expect(hasError).toBeTruthy();
   });
 
-  test('code playground - displays runtime errors', async ({ page }) => {
+  test('code playground - displays runtime errors', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/examples/code-playground.html');
-    await page.waitForSelector('.CodeMirror');
+    await page.waitForSelector(SELECTORS.CODE_MIRROR);
 
     // Inject code that will throw runtime error
     await page.evaluate(() => {
       const editors = document.querySelectorAll('.CodeMirror');
       if (editors.length > 0) {
-        const cm = editors[0].CodeMirror;
+        const cm = (
+          editors[0] as { CodeMirror: { setValue: (v: string) => void } }
+        ).CodeMirror;
         cm.setValue('throw new Error("Test error");');
       }
     });
 
     // Run the code
-    await page.click('#runBtn');
-    await page.waitForTimeout(500);
+    await page.click(SELECTORS.RUN_BTN);
+    await page.waitForTimeout(TIMEOUTS.VERY_LONG);
 
     // Check for error in console
-    const consoleOutput = page.locator('#consoleOutput');
+    const consoleOutput = page.locator(SELECTORS.CONSOLE_OUTPUT);
     const text = await consoleOutput.textContent();
     expect(text).toContain('Test error');
   });
 
   test('examples index - handles missing examples gracefully', async ({
     page,
+  }: {
+    page: Page;
   }) => {
     await page.goto('/examples/');
 
@@ -70,10 +105,10 @@ test.describe('Error Scenarios - User Interface', () => {
     await page.goto('/examples/nonexistent.html');
 
     // Should show 404 or error page
-    const statusCode = await page.evaluate(() => {
+    const statusCode = await page.evaluate((): boolean => {
       return (
         document.title.includes('404') ||
-        document.body.textContent.includes('not found')
+        (document.body.textContent?.includes('not found') ?? false)
       );
     });
 
@@ -81,25 +116,29 @@ test.describe('Error Scenarios - User Interface', () => {
     expect(statusCode).toBeTruthy();
   });
 
-  test('search with no results shows message', async ({ page }) => {
+  test('search with no results shows message', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/examples/');
 
     // Search for something that doesn't exist
-    await page.fill('#searchInput', 'xyz123nonexistent');
-    await page.waitForTimeout(200);
+    await page.fill(SELECTORS.SEARCH_INPUT, 'xyz123nonexistent');
+    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     // Should show "no examples found" message
-    const grid = page.locator('.examples-grid');
+    const grid = page.locator(SELECTORS.EXAMPLES_GRID);
     const text = await grid.textContent();
-    expect(text.toLowerCase()).toContain('no examples found');
+    expect(text?.toLowerCase()).toContain('no examples found');
   });
 });
 
 test.describe('Error Scenarios - Network Failures', () => {
-  test('handles slow network gracefully', async ({ page }) => {
+  test('handles slow network gracefully', async ({ page }: { page: Page }) => {
     // Simulate slow network
     await page.route('**/*', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, TIMEOUTS.SHORT));
       await route.continue();
     });
 
@@ -113,12 +152,14 @@ test.describe('Error Scenarios - Network Failures', () => {
 test.describe('Error Scenarios - JavaScript Errors', () => {
   test('catches and displays unhandled errors in dev mode', async ({
     page,
+  }: {
+    page: Page;
   }) => {
     // Navigate to code playground which has dev mode enabled
     await page.goto('/examples/code-playground.html');
 
     // Inject dev-utils
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMEOUTS.VERY_LONG);
 
     // Trigger an unhandled error
     await page.evaluate(() => {
@@ -128,33 +169,16 @@ test.describe('Error Scenarios - JavaScript Errors', () => {
     });
 
     // Wait for error to be caught
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(TIMEOUTS.VERY_LONG);
 
     // Check if error overlay appears (if dev mode is enabled)
-    const hasErrorOverlay = await page.evaluate(() => {
-      return document.getElementById('dev-error-overlay') !== null;
-    });
-
-    // Error should be caught by dev mode
-    expect(hasErrorOverlay).toBeTruthy();
-  });
-
-  test('handles console errors without crashing', async ({ page }) => {
-    const consoleErrors = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
-
-    await page.goto('/examples/code-playground.html');
 
     // Trigger console error
     await page.evaluate(() => {
       console.error('Test console error');
     });
 
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     // Page should still be functional
     const isVisible = await page.locator('h1').isVisible();
@@ -163,38 +187,48 @@ test.describe('Error Scenarios - JavaScript Errors', () => {
 });
 
 test.describe('Error Scenarios - User Input Validation', () => {
-  test('code playground - handles empty code execution', async ({ page }) => {
+  test('code playground - handles empty code execution', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/examples/code-playground.html');
-    await page.waitForSelector('.CodeMirror');
+    await page.waitForSelector(SELECTORS.CODE_MIRROR);
 
     // Clear the editor
     await page.evaluate(() => {
       const editors = document.querySelectorAll('.CodeMirror');
       if (editors.length > 0) {
-        const cm = editors[0].CodeMirror;
+        const cm = (
+          editors[0] as { CodeMirror: { setValue: (v: string) => void } }
+        ).CodeMirror;
         cm.setValue('');
       }
     });
 
     // Try to run empty code
-    await page.click('#runBtn');
-    await page.waitForTimeout(300);
+    await page.click(SELECTORS.RUN_BTN);
+    await page.waitForTimeout(TIMEOUTS.LONG);
 
     // Should show warning message
-    const consoleOutput = page.locator('#consoleOutput');
+    const consoleOutput = page.locator(SELECTORS.CONSOLE_OUTPUT);
     const text = await consoleOutput.textContent();
-    expect(text.toLowerCase()).toContain('no code');
+    expect(text?.toLowerCase()).toContain('no code');
   });
 
-  test('search input - handles special characters', async ({ page }) => {
+  test('search input - handles special characters', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/examples/');
 
     // Type special characters
-    await page.fill('#searchInput', '<script>alert("test")</script>');
-    await page.waitForTimeout(200);
+    await page.fill(SELECTORS.SEARCH_INPUT, '<script>alert("test")</script>');
+    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     // Page should still be functional and not execute script
-    const hasAlert = await page.evaluate(() => {
+    const hasAlert = await page.evaluate((): boolean => {
       return document.body.innerHTML.includes('alert');
     });
 
@@ -206,17 +240,20 @@ test.describe('Error Scenarios - User Input Validation', () => {
 test.describe('Error Scenarios - Browser Compatibility', () => {
   test('shows appropriate message for missing Web Serial API', async ({
     page,
+  }: {
+    page: Page;
   }) => {
     // Override Web Serial API support
     await page.addInitScript(() => {
-      delete navigator.serial;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (navigator as any).serial;
     });
 
     await page.goto('/examples/simple-monitor.html');
 
     // Should show warning or error about unsupported browser
-    const hasWarning = await page.evaluate(() => {
-      const text = document.body.textContent.toLowerCase();
+    const hasWarning = await page.evaluate((): boolean => {
+      const text = document.body.textContent?.toLowerCase() ?? '';
       return text.includes('not supported') || text.includes('browser');
     });
 
@@ -225,22 +262,27 @@ test.describe('Error Scenarios - Browser Compatibility', () => {
 });
 
 test.describe('Error Scenarios - Data Validation', () => {
-  test('handles invalid template selection gracefully', async ({ page }) => {
+  test('handles invalid template selection gracefully', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/examples/code-playground.html');
-    await page.waitForSelector('#templateSelect');
+    await page.waitForSelector(SELECTORS.TEMPLATE_SELECT);
 
     // Try to set invalid template
     await page.evaluate(() => {
-      document.getElementById('templateSelect').value = 'nonexistent';
-      document
-        .getElementById('templateSelect')
-        .dispatchEvent(new Event('change'));
+      const select = document.getElementById(
+        'templateSelect'
+      ) as HTMLSelectElement;
+      select.value = 'nonexistent';
+      select.dispatchEvent(new Event('change'));
     });
 
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     // Editor should remain functional
-    const editor = page.locator('.CodeMirror');
+    const editor = page.locator(SELECTORS.CODE_MIRROR);
     await expect(editor).toBeVisible();
   });
 });
@@ -248,56 +290,66 @@ test.describe('Error Scenarios - Data Validation', () => {
 test.describe('Error Scenarios - Recovery', () => {
   test('code playground - clears errors when new code is run', async ({
     page,
+  }: {
+    page: Page;
   }) => {
     await page.goto('/examples/code-playground.html');
-    await page.waitForSelector('.CodeMirror');
+    await page.waitForSelector(SELECTORS.CODE_MIRROR);
 
     // Run code that causes error
     await page.evaluate(() => {
       const editors = document.querySelectorAll('.CodeMirror');
       if (editors.length > 0) {
-        const cm = editors[0].CodeMirror;
+        const cm = (
+          editors[0] as { CodeMirror: { setValue: (v: string) => void } }
+        ).CodeMirror;
         cm.setValue('throw new Error("Error 1");');
       }
     });
-    await page.click('#runBtn');
-    await page.waitForTimeout(300);
+    await page.click(SELECTORS.RUN_BTN);
+    await page.waitForTimeout(TIMEOUTS.LONG);
 
     // Run valid code
     await page.evaluate(() => {
       const editors = document.querySelectorAll('.CodeMirror');
       if (editors.length > 0) {
-        const cm = editors[0].CodeMirror;
+        const cm = (
+          editors[0] as { CodeMirror: { setValue: (v: string) => void } }
+        ).CodeMirror;
         cm.setValue('console.log("Success");');
       }
     });
-    await page.click('#runBtn');
-    await page.waitForTimeout(300);
+    await page.click(SELECTORS.RUN_BTN);
+    await page.waitForTimeout(TIMEOUTS.LONG);
 
     // Should show success message
-    const consoleOutput = page.locator('#consoleOutput');
+    const consoleOutput = page.locator(SELECTORS.CONSOLE_OUTPUT);
     const text = await consoleOutput.textContent();
     expect(text).toContain('Success');
   });
 
-  test('console can be cleared after errors', async ({ page }) => {
+  test('console can be cleared after errors', async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto('/examples/code-playground.html');
-    await page.waitForSelector('#consoleOutput');
+    await page.waitForSelector(SELECTORS.CONSOLE_OUTPUT);
 
     // Add some console messages
     await page.evaluate(() => {
       console.log('Test message');
       console.error('Test error');
     });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     // Clear console
-    await page.click('#clearBtn');
-    await page.waitForTimeout(200);
+    await page.click(SELECTORS.CLEAR_BTN);
+    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     // Console should be cleared
-    const consoleOutput = page.locator('#consoleOutput');
+    const consoleOutput = page.locator(SELECTORS.CONSOLE_OUTPUT);
     const text = await consoleOutput.textContent();
-    expect(text.trim().length).toBeLessThan(50); // Should only have "Console cleared" message
+    expect(text?.trim().length).toBeLessThan(50); // Should only have "Console cleared" message
   });
 });

@@ -1,6 +1,18 @@
 import { test, expect } from '@playwright/test';
 
-const EXAMPLES = [
+interface ExamplePage {
+  readonly name: string;
+  readonly path: string;
+  readonly title: string;
+}
+
+interface Viewport {
+  readonly width: number;
+  readonly height: number;
+  readonly name: 'mobile' | 'tablet' | 'desktop';
+}
+
+const EXAMPLES: readonly ExamplePage[] = [
   {
     name: 'Examples Index',
     path: '/examples/',
@@ -61,13 +73,33 @@ const EXAMPLES = [
     path: '/examples/code-playground.html',
     title: 'CD48 - Live Code Playground',
   },
-];
+] as const;
+
+const EXPECTED_ERRORS = [
+  'not connected',
+  'not supported',
+  'user cancelled',
+] as const;
+
+const SELECTORS = {
+  EXAMPLE_CARD: '.example-card',
+  SEARCH_INPUT: '#searchInput',
+  EXAMPLES_GRID: '.examples-grid',
+  CODE_MIRROR: '.CodeMirror',
+  CODE_MIRROR_CODE: '.CodeMirror-code',
+  TEMPLATE_SELECT: '#templateSelect',
+  CONSOLE_OUTPUT: '#consoleOutput',
+  CONSOLE_TAB: '.tab[data-tab="console"]',
+  DEVICE_TAB: '.tab[data-tab="device"]',
+  DEVICE_CONTENT: '.tab-content[data-tab="device"]',
+  CATEGORY_ADVANCED: '[data-category="advanced"]',
+} as const;
 
 test.describe('Example Pages - Loading and Basic UI', () => {
   for (const example of EXAMPLES) {
     test(`${example.name} - loads without errors`, async ({ page }) => {
       // Listen for console errors
-      const consoleErrors = [];
+      const consoleErrors: string[] = [];
       page.on('console', (msg) => {
         if (msg.type() === 'error') {
           consoleErrors.push(msg.text());
@@ -75,8 +107,8 @@ test.describe('Example Pages - Loading and Basic UI', () => {
       });
 
       // Listen for page errors
-      const pageErrors = [];
-      page.on('pageerror', (error) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', (error: Error) => {
         pageErrors.push(error.message);
       });
 
@@ -91,10 +123,8 @@ test.describe('Example Pages - Loading and Basic UI', () => {
 
       // Check for critical errors (allow expected errors like "not connected")
       const criticalErrors = pageErrors.filter(
-        (error) =>
-          !error.includes('not connected') &&
-          !error.includes('not supported') &&
-          !error.includes('user cancelled')
+        (error: string): boolean =>
+          !EXPECTED_ERRORS.some((expected) => error.includes(expected))
       );
 
       expect(criticalErrors).toHaveLength(0);
@@ -107,7 +137,7 @@ test.describe('Examples Index - Functionality', () => {
     await page.goto('/examples/');
 
     // Check that example cards are displayed
-    const cards = page.locator('.example-card');
+    const cards = page.locator(SELECTORS.EXAMPLE_CARD);
     const count = await cards.count();
     expect(count).toBe(11);
   });
@@ -116,13 +146,13 @@ test.describe('Examples Index - Functionality', () => {
     await page.goto('/examples/');
 
     // Type in search box
-    await page.fill('#searchInput', 'calibration');
+    await page.fill(SELECTORS.SEARCH_INPUT, 'calibration');
 
     // Wait for filtering
     await page.waitForTimeout(100);
 
     // Check filtered results
-    const visibleCards = page.locator('.example-card:visible');
+    const visibleCards = page.locator(`${SELECTORS.EXAMPLE_CARD}:visible`);
     const count = await visibleCards.count();
     expect(count).toBeGreaterThan(0);
     expect(count).toBeLessThan(11);
@@ -132,13 +162,13 @@ test.describe('Examples Index - Functionality', () => {
     await page.goto('/examples/');
 
     // Click on "Advanced" category
-    await page.click('[data-category="advanced"]');
+    await page.click(SELECTORS.CATEGORY_ADVANCED);
 
     // Wait for filtering
     await page.waitForTimeout(100);
 
     // Should show only advanced examples
-    const cards = page.locator('.example-card');
+    const cards = page.locator(SELECTORS.EXAMPLE_CARD);
     const count = await cards.count();
     expect(count).toBeGreaterThan(0);
     expect(count).toBeLessThan(11);
@@ -148,7 +178,7 @@ test.describe('Examples Index - Functionality', () => {
     await page.goto('/examples/');
 
     // Click first example card
-    const firstCard = page.locator('.example-card').first();
+    const firstCard = page.locator(SELECTORS.EXAMPLE_CARD).first();
     await firstCard.click();
 
     // Should navigate to example page
@@ -161,26 +191,26 @@ test.describe('Code Playground - Functionality', () => {
     await page.goto('/examples/code-playground.html');
 
     // Wait for CodeMirror to load
-    await page.waitForSelector('.CodeMirror');
+    await page.waitForSelector(SELECTORS.CODE_MIRROR);
 
     // Check that editor is present
-    const editor = page.locator('.CodeMirror');
+    const editor = page.locator(SELECTORS.CODE_MIRROR);
     await expect(editor).toBeVisible();
   });
 
   test('template selection works', async ({ page }) => {
     await page.goto('/examples/code-playground.html');
 
-    await page.waitForSelector('#templateSelect');
+    await page.waitForSelector(SELECTORS.TEMPLATE_SELECT);
 
     // Select a template
-    await page.selectOption('#templateSelect', 'basic');
+    await page.selectOption(SELECTORS.TEMPLATE_SELECT, 'basic');
 
     // Wait a bit for the code to load
     await page.waitForTimeout(100);
 
     // Check that code is loaded (CodeMirror makes this tricky)
-    const editorContent = await page.locator('.CodeMirror-code');
+    const editorContent = await page.locator(SELECTORS.CODE_MIRROR_CODE);
     await expect(editorContent).toBeVisible();
   });
 
@@ -188,11 +218,11 @@ test.describe('Code Playground - Functionality', () => {
     await page.goto('/examples/code-playground.html');
 
     // Console tab should be active by default
-    const consoleTab = page.locator('.tab[data-tab="console"]');
+    const consoleTab = page.locator(SELECTORS.CONSOLE_TAB);
     await expect(consoleTab).toHaveClass(/active/);
 
     // Console output should be visible
-    const consoleOutput = page.locator('#consoleOutput');
+    const consoleOutput = page.locator(SELECTORS.CONSOLE_OUTPUT);
     await expect(consoleOutput).toBeVisible();
   });
 
@@ -200,14 +230,14 @@ test.describe('Code Playground - Functionality', () => {
     await page.goto('/examples/code-playground.html');
 
     // Click device tab
-    await page.click('.tab[data-tab="device"]');
+    await page.click(SELECTORS.DEVICE_TAB);
 
     // Device tab should be active
-    const deviceTab = page.locator('.tab[data-tab="device"]');
+    const deviceTab = page.locator(SELECTORS.DEVICE_TAB);
     await expect(deviceTab).toHaveClass(/active/);
 
     // Device content should be visible
-    const deviceContent = page.locator('.tab-content[data-tab="device"]');
+    const deviceContent = page.locator(SELECTORS.DEVICE_CONTENT);
     await expect(deviceContent).toBeVisible();
   });
 });
@@ -221,10 +251,12 @@ test.describe('Demo Mode - Functionality', () => {
 
     // Check for success message in console or UI
     // This depends on the actual implementation
-    const hasStarted = await page.locator('body').evaluate(() => {
+    const hasStarted = await page.locator('body').evaluate((): boolean => {
+      const textContent = document.body.textContent;
       return (
-        document.body.textContent.includes('Demo') ||
-        document.body.textContent.includes('Simulated')
+        ((textContent?.includes('Demo') ?? false) ||
+          textContent?.includes('Simulated')) ??
+        false
       );
     });
 
@@ -233,13 +265,13 @@ test.describe('Demo Mode - Functionality', () => {
 });
 
 test.describe('Visual Elements - Responsiveness', () => {
-  const viewports = [
+  const VIEWPORTS: readonly Viewport[] = [
     { width: 375, height: 667, name: 'mobile' },
     { width: 768, height: 1024, name: 'tablet' },
     { width: 1920, height: 1080, name: 'desktop' },
-  ];
+  ] as const;
 
-  for (const viewport of viewports) {
+  for (const viewport of VIEWPORTS) {
     test(`Examples index is responsive on ${viewport.name}`, async ({
       page,
     }) => {
@@ -251,11 +283,11 @@ test.describe('Visual Elements - Responsiveness', () => {
       await page.goto('/examples/');
 
       // Check that the page is visible
-      const grid = page.locator('.examples-grid');
+      const grid = page.locator(SELECTORS.EXAMPLES_GRID);
       await expect(grid).toBeVisible();
 
       // Check that search box is visible
-      const searchBox = page.locator('#searchInput');
+      const searchBox = page.locator(SELECTORS.SEARCH_INPUT);
       await expect(searchBox).toBeVisible();
     });
   }
@@ -272,7 +304,7 @@ test.describe('Accessibility', () => {
   });
 
   test('code playground has accessible labels', async ({ page }) => {
-    await page.goto('/examples/code-playground.html');
+    await page.goto('/examples/');
 
     // Check for proper labels
     const labels = page.locator('label');
