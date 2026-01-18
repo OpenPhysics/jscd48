@@ -44,18 +44,23 @@ export default [
       quotes: ['error', 'single', { avoidEscape: true }],
     },
   },
-  // Apply to TypeScript files
+  // Apply to TypeScript files (basic rules for all TS files)
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
     files: ['**/*.ts'],
     ignores: ['node_modules/', 'dist/', 'docs/', 'coverage/'],
   })),
+  // Apply stricter type-aware rules only to src files
   {
-    files: ['**/*.ts'],
+    files: ['src/**/*.ts'],
     ignores: ['node_modules/', 'dist/', 'docs/', 'coverage/'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
       globals: {
         // Browser globals
         navigator: 'readonly',
@@ -88,6 +93,49 @@ export default [
         'warn',
         { argsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/explicit-function-return-type': [
+        'warn',
+        {
+          allowExpressions: true,
+          allowTypedFunctionExpressions: true,
+          allowHigherOrderFunctions: true,
+        },
+      ],
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      semi: ['error', 'always'],
+      quotes: ['error', 'single', { avoidEscape: true }],
+    },
+  },
+  // Apply to test files (without type-aware rules)
+  {
+    files: ['tests/**/*.ts'],
+    ignores: ['node_modules/', 'dist/', 'docs/', 'coverage/'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        // Node.js globals for testing
+        module: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        // Browser globals
+        navigator: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'error',
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],
     },

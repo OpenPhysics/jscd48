@@ -23,7 +23,7 @@
   "exclude": ["node_modules/**", "dist/**", "tests/**", "examples/**"],
   "excludePrivate": true,
   "excludeProtected": false,
-  "excludeInternal": false,
+  "excludeInternal": true,
   "name": "CD48 API Documentation",
   "titleLink": "https://github.com/OpenPhysics/jscd48",
   "navigationLinks": {
@@ -34,7 +34,7 @@
     "Troubleshooting": "https://github.com/OpenPhysics/jscd48/blob/main/TROUBLESHOOTING.md"
   },
   "validation": {
-    "notExported": true,
+    "notExported": false,
     "invalidLink": true,
     "notDocumented": false
   },

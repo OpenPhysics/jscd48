@@ -26,11 +26,13 @@ export const VOLTAGE_MAX = 4.08;
 
 /**
  * Unique symbol for Channel brand
+ * @internal
  */
 declare const ChannelBrand: unique symbol;
 
 /**
  * Unique symbol for Voltage brand
+ * @internal
  */
 declare const VoltageBrand: unique symbol;
 
