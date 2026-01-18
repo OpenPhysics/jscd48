@@ -12,28 +12,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/cd48.esm.js",
       "require": "./dist/cd48.umd.js"
-    },
-    "./errors": {
-      "types": "./dist/errors.d.ts",
-      "import": "./dist/errors.js"
-    },
-    "./validation": {
-      "types": "./dist/validation.d.ts",
-      "import": "./dist/validation.js"
-    },
-    "./analysis": {
-      "types": "./dist/analysis.d.ts",
-      "import": "./dist/analysis.js"
-    },
-    "./calibration": {
-      "types": "./dist/calibration.d.ts",
-      "import": "./dist/calibration.js"
-    },
-    "./dev-utils": {
-      "types": "./dist/dev-utils.d.ts",
-      "import": "./dist/dev-utils.js"
-    },
-    "./dist/*": "./dist/*"
+    }
   },
   "files": [
     "src",

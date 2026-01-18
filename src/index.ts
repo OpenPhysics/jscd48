@@ -46,6 +46,14 @@ export {
   BYTE_MAX,
   REPEAT_INTERVAL_MIN,
   REPEAT_INTERVAL_MAX,
+  // Branded type constructors
+  createChannel,
+  createVoltage,
+  createClampedVoltage,
+  // Type guards
+  isValidChannel,
+  isValidVoltage,
+  // Validation functions
   validateChannel,
   validateVoltage,
   validateByte,
@@ -60,7 +68,8 @@ export {
   byteToVoltage,
 } from './validation.js';
 
-export type { ImpedanceMode } from './validation.js';
+// Branded types for type-safe channel and voltage values
+export type { Channel, Voltage, ImpedanceMode } from './validation.js';
 
 // Analysis utilities
 export { Statistics, Histogram, TimeSeries, Coincidence } from './analysis.js';

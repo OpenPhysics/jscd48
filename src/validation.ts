@@ -20,6 +20,111 @@ export const CHANNEL_MAX = 7;
 export const VOLTAGE_MIN = 0.0;
 export const VOLTAGE_MAX = 4.08;
 
+// ============================================================================
+// Branded Types
+// ============================================================================
+
+/**
+ * Unique symbol for Channel brand
+ */
+declare const ChannelBrand: unique symbol;
+
+/**
+ * Unique symbol for Voltage brand
+ */
+declare const VoltageBrand: unique symbol;
+
+/**
+ * Branded type for validated channel numbers (0-7)
+ * Use `createChannel()` to create instances safely
+ */
+export type Channel = number & { readonly [ChannelBrand]: typeof ChannelBrand };
+
+/**
+ * Branded type for validated voltage values (0-4.08V)
+ * Use `createVoltage()` to create instances safely
+ */
+export type Voltage = number & { readonly [VoltageBrand]: typeof VoltageBrand };
+
+/**
+ * Type guard to check if a number is a valid Channel
+ * @param value - Value to check
+ * @returns True if value is a valid channel (0-7)
+ */
+export function isValidChannel(value: number): value is Channel {
+  return (
+    typeof value === 'number' &&
+    !isNaN(value) &&
+    Number.isInteger(value) &&
+    value >= CHANNEL_MIN &&
+    value <= CHANNEL_MAX
+  );
+}
+
+/**
+ * Type guard to check if a number is a valid Voltage
+ * @param value - Value to check
+ * @returns True if value is a valid voltage (0-4.08)
+ */
+export function isValidVoltage(value: number): value is Voltage {
+  return (
+    typeof value === 'number' &&
+    !isNaN(value) &&
+    value >= VOLTAGE_MIN &&
+    value <= VOLTAGE_MAX
+  );
+}
+
+/**
+ * Create a validated Channel from a number
+ * @param value - Channel number (0-7)
+ * @returns Branded Channel type
+ * @throws InvalidChannelError if value is out of range
+ */
+export function createChannel(value: number): Channel {
+  if (!isValidChannel(value)) {
+    if (typeof value !== 'number' || isNaN(value)) {
+      throw new ValidationError(
+        'channel',
+        value,
+        'must be an integer between 0 and 7'
+      );
+    }
+    throw new InvalidChannelError(value);
+  }
+  return value;
+}
+
+/**
+ * Create a validated Voltage from a number
+ * @param value - Voltage value (0-4.08V)
+ * @returns Branded Voltage type
+ * @throws InvalidVoltageError if value is out of range
+ */
+export function createVoltage(value: number): Voltage {
+  if (!isValidVoltage(value)) {
+    if (typeof value !== 'number' || isNaN(value)) {
+      throw new ValidationError(
+        'voltage',
+        value,
+        'must be a number between 0.0 and 4.08'
+      );
+    }
+    throw new InvalidVoltageError(value);
+  }
+  return value;
+}
+
+/**
+ * Create a Voltage by clamping the value to valid range
+ * @param value - Voltage value
+ * @returns Clamped and branded Voltage
+ */
+export function createClampedVoltage(value: number): Voltage {
+  const clamped = Math.max(VOLTAGE_MIN, Math.min(VOLTAGE_MAX, value));
+  return clamped as Voltage;
+}
+
 /**
  * Valid byte range (0-255)
  */
