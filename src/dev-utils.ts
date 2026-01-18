@@ -448,7 +448,9 @@ export class PerformanceMonitor {
     }
 
     const duration = performance.now() - startMark;
-    delete this.marks[name];
+    this.marks = Object.fromEntries(
+      Object.entries(this.marks).filter(([key]) => key !== name)
+    );
 
     const existingMetrics = this.metrics[name];
     if (existingMetrics === undefined) {

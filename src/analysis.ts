@@ -465,11 +465,8 @@ export const TimeSeries = {
       }
     }
 
-    for (let i = 0; i < data.length; i++) {
-      const value = data[i];
-      if (value !== undefined) {
-        denominator += Math.pow(value - mean, 2);
-      }
+    for (const value of data) {
+      denominator += Math.pow(value - mean, 2);
     }
 
     return denominator === 0 ? 0 : numerator / denominator;

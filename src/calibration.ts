@@ -388,8 +388,10 @@ export class CalibrationStorage {
    * @param name - Profile name
    */
   public delete(name: string): void {
-    const profiles = this.loadAll();
-    delete profiles[name];
+    const allProfiles = this.loadAll();
+    const profiles = Object.fromEntries(
+      Object.entries(allProfiles).filter(([key]) => key !== name)
+    );
     localStorage.setItem(this.storageKey, JSON.stringify(profiles));
   }
 
@@ -529,7 +531,6 @@ export class VoltageCalibration {
  * Calibration wizard helper class
  */
 export class CalibrationWizard {
-  public readonly cd48: CD48;
   public profile: CalibrationProfile;
   public readonly storage: CalibrationStorage;
   public currentStep: number;
@@ -539,8 +540,7 @@ export class CalibrationWizard {
    * Create a calibration wizard
    * @param cd48 - CD48 device instance
    */
-  constructor(cd48: CD48) {
-    this.cd48 = cd48;
+  constructor(public readonly cd48: CD48) {
     this.profile = new CalibrationProfile();
     this.storage = new CalibrationStorage();
     this.currentStep = 0;

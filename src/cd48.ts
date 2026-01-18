@@ -343,7 +343,7 @@ class CD48 {
    * Sleep for specified milliseconds.
    * @param ms - Milliseconds to sleep
    */
-  public sleep(ms: number): Promise<void> {
+  public async sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -714,6 +714,7 @@ class CD48 {
      * but TextDecoderStream expects Uint8Array. They're compatible at runtime
      * since BufferSource = ArrayBuffer | ArrayBufferView (which includes Uint8Array)
      */
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     this.readableStreamClosed = (readable as ReadableStream<Uint8Array>).pipeTo(
       textDecoder.writable as WritableStream<Uint8Array>
     );
@@ -725,7 +726,7 @@ class CD48 {
       throw new ConnectionError('Port writable stream not available');
     }
     this.writableStreamClosed = textEncoder.readable.pipeTo(
-      writable as WritableStream<Uint8Array>
+      writable as WritableStream<Uint8Array> // eslint-disable-line @typescript-eslint/no-unnecessary-type-assertion
     );
     this.writer = textEncoder.writable.getWriter();
 
