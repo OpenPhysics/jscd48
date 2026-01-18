@@ -130,8 +130,9 @@
       </div>
     </div>
 
-    <script src="../cd48.js"></script>
-    <script>
+    <script type="module">
+      import CD48 from '../src/cd48.js';
+
       let cd48 = null;
       let recordingInterval = null;
       let recordedData = [];
@@ -295,6 +296,16 @@
           cd48.disconnect();
         }
       });
+
+      // Expose functions to window for onclick handlers
+      window.connect = connect;
+      window.disconnect = disconnect;
+      window.startRecording = startRecording;
+      window.stopRecording = stopRecording;
+      window.clearData = clearData;
+      window.exportCSV = exportCSV;
+      window.exportJSON = exportJSON;
+      window.copyToClipboard = copyToClipboard;
     </script>
   </body>
 </html>

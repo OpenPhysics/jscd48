@@ -42,13 +42,14 @@
 
     <div id="output">Click Connect to start...</div>
 
-    <script src="../cd48.js"></script>
-    <script>
+    <script type="module">
+      import CD48 from '../src/cd48.js';
+
       let cd48 = null;
       let monitoring = false;
       let monitorInterval = null;
 
-      async function toggleConnection() {
+      window.toggleConnection = async function() {
         if (cd48 && cd48.isConnected()) {
           await disconnect();
         } else {
@@ -91,7 +92,7 @@
         log('Disconnected');
       }
 
-      async function readOnce() {
+      window.readOnce = async function() {
         if (!cd48) return;
 
         try {
@@ -108,7 +109,7 @@
         }
       }
 
-      async function toggleMonitor() {
+      window.toggleMonitor = async function() {
         if (monitoring) {
           clearInterval(monitorInterval);
           monitorInterval = null;

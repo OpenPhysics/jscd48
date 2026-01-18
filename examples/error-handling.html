@@ -129,8 +129,9 @@
       <div id="log"></div>
     </div>
 
-    <script src="../cd48.js"></script>
-    <script>
+    <script type="module">
+      import CD48 from '../src/cd48.js';
+
       let cd48 = null;
       let autoReconnect = false;
       let reconnectInterval = null;
@@ -324,6 +325,14 @@
         log('This example demonstrates robust error handling patterns', 'info');
         checkSupport();
       });
+
+      // Expose functions to window for onclick handlers
+      window.checkSupport = checkSupport;
+      window.connectWithTimeout = connectWithTimeout;
+      window.testDisconnection = testDisconnection;
+      window.testInvalidCommand = testInvalidCommand;
+      window.enableAutoReconnect = enableAutoReconnect;
+      window.disableAutoReconnect = disableAutoReconnect;
     </script>
   </body>
 </html>

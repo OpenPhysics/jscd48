@@ -147,8 +147,9 @@
       </div>
     </div>
 
-    <script src="../cd48.js"></script>
-    <script>
+    <script type="module">
+      import CD48 from '../src/cd48.js';
+
       let cd48 = null;
 
       async function toggleConnection() {
@@ -228,6 +229,10 @@
 
         document.getElementById('measureBtn').disabled = false;
       }
+
+      // Expose functions to window for onclick handlers
+      window.toggleConnection = toggleConnection;
+      window.startMeasurement = startMeasurement;
     </script>
   </body>
 </html>
