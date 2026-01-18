@@ -3,6 +3,8 @@
  * This file contains all magic numbers and configuration values used across the codebase
  */
 
+import type { LoggerColors } from './dev-utils.js';
+
 // ============================================================================
 // Device Communication Configuration
 // ============================================================================
@@ -161,7 +163,7 @@ export const LOGGER_COLORS = {
   warn: '#f59e0b',
   error: '#ef4444',
   success: '#10b981',
-} as const;
+} as const satisfies LoggerColors;
 
 /** Padding for milliseconds in timestamp display */
 export const LOGGER_TIMESTAMP_PADDING = 3;

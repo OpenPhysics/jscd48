@@ -89,42 +89,42 @@ export interface ChannelInputs {
  * Count data from device
  */
 export interface CountData {
-  counts: number[];
-  overflow: number;
+  readonly counts: ReadonlyArray<number>;
+  readonly overflow: number;
 }
 
 /**
  * Measurement uncertainty data
  */
 export interface MeasurementUncertainty {
-  counts: number;
-  rate: number;
-  relative: number;
+  readonly counts: number;
+  readonly rate: number;
+  readonly relative: number;
 }
 
 /**
  * Rate measurement result
  */
 export interface RateMeasurement {
-  counts: number;
-  duration: number;
-  rate: number;
-  channel: number;
-  uncertainty: MeasurementUncertainty;
+  readonly counts: number;
+  readonly duration: number;
+  readonly rate: number;
+  readonly channel: number;
+  readonly uncertainty: Readonly<MeasurementUncertainty>;
 }
 
 /**
  * Coincidence measurement uncertainty
  */
 export interface CoincidenceUncertainty {
-  singlesA: number;
-  singlesB: number;
-  coincidences: number;
-  rateA: number;
-  rateB: number;
-  coincidenceRate: number;
-  accidentalRate: number;
-  trueCoincidenceRate: number;
+  readonly singlesA: number;
+  readonly singlesB: number;
+  readonly coincidences: number;
+  readonly rateA: number;
+  readonly rateB: number;
+  readonly coincidenceRate: number;
+  readonly accidentalRate: number;
+  readonly trueCoincidenceRate: number;
 }
 
 /**
@@ -147,16 +147,16 @@ export interface CoincidenceMeasurementOptions {
  * Coincidence measurement result
  */
 export interface CoincidenceMeasurement {
-  singlesA: number;
-  singlesB: number;
-  coincidences: number;
-  duration: number;
-  rateA: number;
-  rateB: number;
-  coincidenceRate: number;
-  accidentalRate: number;
-  trueCoincidenceRate: number;
-  uncertainty: CoincidenceUncertainty;
+  readonly singlesA: number;
+  readonly singlesB: number;
+  readonly coincidences: number;
+  readonly duration: number;
+  readonly rateA: number;
+  readonly rateB: number;
+  readonly coincidenceRate: number;
+  readonly accidentalRate: number;
+  readonly trueCoincidenceRate: number;
+  readonly uncertainty: Readonly<CoincidenceUncertainty>;
 }
 
 /**

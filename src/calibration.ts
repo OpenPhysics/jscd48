@@ -117,48 +117,51 @@ export interface CalibrationPoint {
  * Calibration coefficients
  */
 export interface CalibrationCoefficients {
-  gain: number;
-  offset: number;
+  readonly gain: number;
+  readonly offset: number;
 }
 
 /**
  * Calibration error statistics
  */
 export interface CalibrationErrorStats {
-  mean: number;
-  std: number;
-  max: number;
-  errors: number[];
+  readonly mean: number;
+  readonly std: number;
+  readonly max: number;
+  readonly errors: ReadonlyArray<number>;
 }
 
 /**
  * Optimal threshold result
  */
 export interface OptimalThresholdResult {
-  optimal: number;
-  results: Array<{ threshold: number; rate: number }>;
+  readonly optimal: number;
+  readonly results: ReadonlyArray<{
+    readonly threshold: number;
+    readonly rate: number;
+  }>;
 }
 
 /**
  * Calibration validation result
  */
 export interface CalibrationValidationResult {
-  valid: boolean;
-  issues: string[];
-  warnings: string[];
+  readonly valid: boolean;
+  readonly issues: ReadonlyArray<string>;
+  readonly warnings: ReadonlyArray<string>;
 }
 
 /**
  * Calibration report
  */
 export interface CalibrationReport {
-  profile: CalibrationProfileJSON;
-  summary: {
-    name: string;
-    date: Date;
-    channelsCalibrated: number;
-    hasGainCalibration: boolean;
-    hasThresholdCalibration: boolean;
+  readonly profile: CalibrationProfileJSON;
+  readonly summary: {
+    readonly name: string;
+    readonly date: Date;
+    readonly channelsCalibrated: number;
+    readonly hasGainCalibration: boolean;
+    readonly hasThresholdCalibration: boolean;
   };
 }
 

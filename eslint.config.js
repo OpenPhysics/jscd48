@@ -163,6 +163,13 @@ export default [
           ignoreTypeIndexes: true,
         },
       ],
+      '@typescript-eslint/array-type': [
+        'warn',
+        { default: 'array-simple', readonly: 'generic' },
+      ],
+      '@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
+      '@typescript-eslint/explicit-module-boundary-types': 'warn',
+      '@typescript-eslint/prefer-readonly-parameter-types': 'off',
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],
     },

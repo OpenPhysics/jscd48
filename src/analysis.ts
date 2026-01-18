@@ -17,39 +17,39 @@ import {
  * Linear regression result
  */
 export interface LinearRegressionResult {
-  slope: number;
-  intercept: number;
-  r2: number;
+  readonly slope: number;
+  readonly intercept: number;
+  readonly r2: number;
 }
 
 /**
  * Statistical summary result
  */
 export interface StatisticalSummary {
-  mean: number;
-  median: number;
-  std: number;
-  variance: number;
-  min: number;
-  max: number;
-  count: number;
+  readonly mean: number;
+  readonly median: number;
+  readonly std: number;
+  readonly variance: number;
+  readonly min: number;
+  readonly max: number;
+  readonly count: number;
 }
 
 /**
  * Histogram result
  */
 export interface HistogramResult {
-  bins: number[];
-  counts: number[];
-  edges: number[];
-  binWidth: number;
+  readonly bins: ReadonlyArray<number>;
+  readonly counts: ReadonlyArray<number>;
+  readonly edges: ReadonlyArray<number>;
+  readonly binWidth: number;
 }
 
 /**
  * Cumulative histogram result
  */
 export interface CumulativeHistogramResult extends HistogramResult {
-  normalized: number[];
+  readonly normalized: ReadonlyArray<number>;
 }
 
 /**
