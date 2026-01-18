@@ -169,6 +169,38 @@ export default [
       ],
       '@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
       '@typescript-eslint/explicit-module-boundary-types': 'warn',
+      '@typescript-eslint/explicit-member-accessibility': [
+        'warn',
+        {
+          accessibility: 'explicit',
+          overrides: {
+            constructors: 'no-public',
+          },
+        },
+      ],
+      '@typescript-eslint/member-ordering': [
+        'warn',
+        {
+          default: [
+            // Fields
+            'public-static-field',
+            'protected-static-field',
+            'private-static-field',
+            'public-instance-field',
+            'protected-instance-field',
+            'private-instance-field',
+            // Constructors
+            'constructor',
+            // Methods
+            'public-static-method',
+            'protected-static-method',
+            'private-static-method',
+            'public-instance-method',
+            'protected-instance-method',
+            'private-instance-method',
+          ],
+        },
+      ],
       '@typescript-eslint/prefer-readonly-parameter-types': 'off',
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],

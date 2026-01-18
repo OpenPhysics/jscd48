@@ -130,19 +130,10 @@ export class DevLogger {
   }
 
   /**
-   * Format timestamp
-   */
-  private getTimestamp(): string {
-    if (!this.timestamps) return '';
-    const now = new Date();
-    return `[${now.toLocaleTimeString()}.${now.getMilliseconds().toString().padStart(LOGGER_TIMESTAMP_PADDING, '0')}]`;
-  }
-
-  /**
    * Log debug message
    * @param args - Arguments to log
    */
-  debug(...args: unknown[]): void {
+  public debug(...args: unknown[]): void {
     if (!this.enabled || this.minLevel > this.levels.debug) return;
     console.log(
       `%c${this.getTimestamp()} ${this.prefix} [DEBUG]`,
@@ -155,7 +146,7 @@ export class DevLogger {
    * Log info message
    * @param args - Arguments to log
    */
-  info(...args: unknown[]): void {
+  public info(...args: unknown[]): void {
     if (!this.enabled || this.minLevel > this.levels.info) return;
     console.log(
       `%c${this.getTimestamp()} ${this.prefix} [INFO]`,
@@ -168,7 +159,7 @@ export class DevLogger {
    * Log warning message
    * @param args - Arguments to log
    */
-  warn(...args: unknown[]): void {
+  public warn(...args: unknown[]): void {
     if (!this.enabled || this.minLevel > this.levels.warn) return;
     console.warn(
       `%c${this.getTimestamp()} ${this.prefix} [WARN]`,
@@ -181,7 +172,7 @@ export class DevLogger {
    * Log error message
    * @param args - Arguments to log
    */
-  error(...args: unknown[]): void {
+  public error(...args: unknown[]): void {
     if (!this.enabled) return;
     console.error(
       `%c${this.getTimestamp()} ${this.prefix} [ERROR]`,
@@ -194,7 +185,7 @@ export class DevLogger {
    * Log success message
    * @param args - Arguments to log
    */
-  success(...args: unknown[]): void {
+  public success(...args: unknown[]): void {
     if (!this.enabled || this.minLevel > this.levels.info) return;
     console.log(
       `%c${this.getTimestamp()} ${this.prefix} [SUCCESS]`,
@@ -208,7 +199,7 @@ export class DevLogger {
    * @param message - Message to log
    * @param style - CSS style string
    */
-  custom(message: string, style: string): void {
+  public custom(message: string, style: string): void {
     if (!this.enabled) return;
     console.log(`%c${this.getTimestamp()} ${this.prefix} ${message}`, style);
   }
@@ -218,7 +209,7 @@ export class DevLogger {
    * @param label - Timer label
    * @returns Function to end timer
    */
-  time(label: string): () => string {
+  public time(label: string): () => string {
     if (!this.enabled) return () => '0';
     const startTime = performance.now();
     this.debug(`Timer started: ${label}`);
@@ -233,7 +224,7 @@ export class DevLogger {
    * Log object in table format
    * @param obj - Object to log
    */
-  table(obj: Record<string, unknown> | unknown[]): void {
+  public table(obj: Record<string, unknown> | unknown[]): void {
     if (!this.enabled) return;
     console.table(obj);
   }
@@ -243,7 +234,7 @@ export class DevLogger {
    * @param label - Group label
    * @param fn - Function containing logs
    */
-  group<T>(label: string, fn: () => T): T {
+  public group<T>(label: string, fn: () => T): T {
     if (!this.enabled) return fn();
     console.group(`${this.getTimestamp()} ${this.prefix} ${label}`);
     try {
@@ -251,6 +242,15 @@ export class DevLogger {
     } finally {
       console.groupEnd();
     }
+  }
+
+  /**
+   * Format timestamp
+   */
+  private getTimestamp(): string {
+    if (!this.timestamps) return '';
+    const now = new Date();
+    return `[${now.toLocaleTimeString()}.${now.getMilliseconds().toString().padStart(LOGGER_TIMESTAMP_PADDING, '0')}]`;
   }
 }
 
@@ -267,38 +267,11 @@ export class ErrorOverlay {
   }
 
   /**
-   * Create overlay DOM element
-   */
-  private createOverlay(): void {
-    if (this.overlay !== null) return;
-
-    this.overlay = document.createElement('div');
-    this.overlay.id = 'dev-error-overlay';
-    this.overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.95);
-      color: #fff;
-      font-family: 'Courier New', monospace;
-      font-size: ${ERROR_OVERLAY_FONT_SIZE}px;
-      z-index: ${ERROR_OVERLAY_Z_INDEX};
-      overflow: auto;
-      padding: ${ERROR_OVERLAY_PADDING}px;
-      display: none;
-    `;
-
-    document.body.appendChild(this.overlay);
-  }
-
-  /**
    * Show error in overlay
    * @param error - Error to display
    * @param context - Additional context
    */
-  show(error: Error, context: ErrorContext = {}): void {
+  public show(error: Error, context: ErrorContext = {}): void {
     this.createOverlay();
     this.errors.push({ error, context, timestamp: new Date() });
 
@@ -391,7 +364,7 @@ export class ErrorOverlay {
   /**
    * Hide error overlay
    */
-  hide(): void {
+  public hide(): void {
     if (this.overlay !== null) {
       this.overlay.style.display = 'none';
     }
@@ -400,9 +373,36 @@ export class ErrorOverlay {
   /**
    * Clear all errors
    */
-  clear(): void {
+  public clear(): void {
     this.errors = [];
     this.hide();
+  }
+
+  /**
+   * Create overlay DOM element
+   */
+  private createOverlay(): void {
+    if (this.overlay !== null) return;
+
+    this.overlay = document.createElement('div');
+    this.overlay.id = 'dev-error-overlay';
+    this.overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      font-size: ${ERROR_OVERLAY_FONT_SIZE}px;
+      z-index: ${ERROR_OVERLAY_Z_INDEX};
+      overflow: auto;
+      padding: ${ERROR_OVERLAY_PADDING}px;
+      display: none;
+    `;
+
+    document.body.appendChild(this.overlay);
   }
 
   /**
@@ -431,7 +431,7 @@ export class PerformanceMonitor {
    * Start a performance measurement
    * @param name - Measurement name
    */
-  start(name: string): void {
+  public start(name: string): void {
     this.marks[name] = performance.now();
   }
 
@@ -440,7 +440,7 @@ export class PerformanceMonitor {
    * @param name - Measurement name
    * @returns Duration in milliseconds
    */
-  end(name: string): number {
+  public end(name: string): number {
     const startMark = this.marks[name];
     if (startMark === undefined) {
       console.warn(`No start mark found for: ${name}`);
@@ -464,7 +464,7 @@ export class PerformanceMonitor {
    * @param name - Metric name
    * @returns Statistics
    */
-  getStats(name: string): PerformanceStats | null {
+  public getStats(name: string): PerformanceStats | null {
     const values = this.metrics[name];
     if (values === undefined || values.length === 0) {
       return null;
@@ -491,7 +491,7 @@ export class PerformanceMonitor {
    * Get all metrics
    * @returns All metrics with statistics
    */
-  getAllStats(): Record<string, PerformanceStats | null> {
+  public getAllStats(): Record<string, PerformanceStats | null> {
     const stats: Record<string, PerformanceStats | null> = {};
     for (const name in this.metrics) {
       stats[name] = this.getStats(name);
@@ -502,7 +502,7 @@ export class PerformanceMonitor {
   /**
    * Clear all metrics
    */
-  clear(): void {
+  public clear(): void {
     this.metrics = {};
     this.marks = {};
   }
@@ -510,7 +510,7 @@ export class PerformanceMonitor {
   /**
    * Print performance report
    */
-  report(): void {
+  public report(): void {
     console.table(this.getAllStats());
   }
 }

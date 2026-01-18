@@ -221,10 +221,27 @@ class CD48 {
   }
 
   /**
+   * Check if Web Serial API is supported.
+   * @returns True if supported
+   */
+  public static isSupported(): boolean {
+    return 'serial' in navigator;
+  }
+
+  /**
+   * Get trigger level as voltage.
+   * @param byteValue - Raw byte value (0-255)
+   * @returns Voltage (0.0 to 4.08V)
+   */
+  public static byteToVoltage(byteValue: number): number {
+    return (byteValue / BYTE_MAX) * VOLTAGE_MAX;
+  }
+
+  /**
    * Set callback for disconnect events.
    * @param callback - Function called on disconnect
    */
-  onDisconnect(callback: DisconnectCallback): void {
+  public onDisconnect(callback: DisconnectCallback): void {
     this._onDisconnect = callback;
   }
 
@@ -232,16 +249,8 @@ class CD48 {
    * Set callback for reconnect events.
    * @param callback - Function called on successful reconnect
    */
-  onReconnect(callback: ReconnectCallback): void {
+  public onReconnect(callback: ReconnectCallback): void {
     this._onReconnect = callback;
-  }
-
-  /**
-   * Check if Web Serial API is supported.
-   * @returns True if supported
-   */
-  static isSupported(): boolean {
-    return 'serial' in navigator;
   }
 
   /**
@@ -249,7 +258,7 @@ class CD48 {
    * Opens a serial port picker dialog for the user.
    * @returns True if connected successfully
    */
-  async connect(): Promise<boolean> {
+  public async connect(): Promise<boolean> {
     if (!CD48.isSupported()) {
       throw new UnsupportedBrowserError();
     }
@@ -274,50 +283,10 @@ class CD48 {
   }
 
   /**
-   * Set up connection streams after port is opened.
-   */
-  private async _setupConnection(): Promise<void> {
-    if (this.port === null) {
-      throw new ConnectionError('No port available');
-    }
-
-    await this.port.open({ baudRate: this.baudRate });
-
-    // Set up reader and writer
-    const textDecoder = new TextDecoderStream();
-    const readable = this.port.readable;
-    if (readable === null) {
-      throw new ConnectionError('Port readable stream not available');
-    }
-    /**
-     * Type assertions needed here because Web Serial API uses BufferSource
-     * but TextDecoderStream expects Uint8Array. They're compatible at runtime
-     * since BufferSource = ArrayBuffer | ArrayBufferView (which includes Uint8Array)
-     */
-    this.readableStreamClosed = (readable as ReadableStream<Uint8Array>).pipeTo(
-      textDecoder.writable as WritableStream<Uint8Array>
-    );
-    this.reader = textDecoder.readable.getReader();
-
-    const textEncoder = new TextEncoderStream();
-    const writable = this.port.writable;
-    if (writable === null) {
-      throw new ConnectionError('Port writable stream not available');
-    }
-    this.writableStreamClosed = textEncoder.readable.pipeTo(
-      writable as WritableStream<Uint8Array>
-    );
-    this.writer = textEncoder.writable.getWriter();
-
-    // Wait for device to initialize
-    await this.sleep(CONNECTION_INIT_DELAY_MS);
-  }
-
-  /**
    * Attempt to reconnect to the device.
    * @returns True if reconnected successfully
    */
-  async reconnect(): Promise<boolean> {
+  public async reconnect(): Promise<boolean> {
     if (this._reconnecting) {
       return false;
     }
@@ -353,69 +322,9 @@ class CD48 {
   }
 
   /**
-   * Attempt auto-reconnection with retries.
-   * @returns True if reconnected successfully
-   */
-  private async _attemptAutoReconnect(): Promise<boolean> {
-    if (!this.autoReconnect || this._reconnecting) {
-      return false;
-    }
-
-    for (let attempt = 1; attempt <= this.reconnectAttempts; attempt++) {
-      try {
-        await this.sleep(this.reconnectDelay * attempt);
-        const success = await this.reconnect();
-        if (success) {
-          return true;
-        }
-      } catch {
-        // Continue to next attempt
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Clean up connection resources.
-   */
-  private async _cleanupConnection(): Promise<void> {
-    if (this.reader !== null) {
-      try {
-        await this.reader.cancel();
-        if (this.readableStreamClosed !== null) {
-          await this.readableStreamClosed.catch(() => {});
-        }
-      } catch {
-        // Ignore cleanup errors
-      }
-      this.reader = null;
-    }
-    if (this.writer !== null) {
-      try {
-        await this.writer.close();
-        if (this.writableStreamClosed !== null) {
-          await this.writableStreamClosed;
-        }
-      } catch {
-        // Ignore cleanup errors
-      }
-      this.writer = null;
-    }
-    if (this.port !== null) {
-      try {
-        await this.port.close();
-      } catch {
-        // Ignore cleanup errors
-      }
-      this.port = null;
-    }
-  }
-
-  /**
    * Disconnect from the CD48 device.
    */
-  async disconnect(): Promise<void> {
+  public async disconnect(): Promise<void> {
     await this._cleanupConnection();
     if (this._onDisconnect !== null) {
       this._onDisconnect();
@@ -426,7 +335,7 @@ class CD48 {
    * Check if connected to device.
    * @returns True if connected
    */
-  isConnected(): boolean {
+  public isConnected(): boolean {
     return this.port !== null && this.reader !== null;
   }
 
@@ -434,21 +343,8 @@ class CD48 {
    * Sleep for specified milliseconds.
    * @param ms - Milliseconds to sleep
    */
-  sleep(ms: number): Promise<void> {
+  public sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Apply rate limiting between commands.
-   */
-  private async _applyRateLimit(): Promise<void> {
-    if (this.rateLimitMs > 0) {
-      const elapsed = Date.now() - this._lastCommandTime;
-      if (elapsed < this.rateLimitMs) {
-        await this.sleep(this.rateLimitMs - elapsed);
-      }
-    }
-    this._lastCommandTime = Date.now();
   }
 
   /**
@@ -456,7 +352,7 @@ class CD48 {
    * @param command - Command to send
    * @returns Response from device
    */
-  async sendCommand(command: string): Promise<string> {
+  public async sendCommand(command: string): Promise<string> {
     if (!this.isConnected()) {
       // Attempt auto-reconnect if enabled
       if (this.autoReconnect) {
@@ -533,7 +429,7 @@ class CD48 {
    * Get firmware version.
    * @returns Firmware version string
    */
-  async getVersion(): Promise<string> {
+  public async getVersion(): Promise<string> {
     return await this.sendCommand('v');
   }
 
@@ -541,7 +437,7 @@ class CD48 {
    * Get help text from device.
    * @returns Help text
    */
-  async getHelp(): Promise<string> {
+  public async getHelp(): Promise<string> {
     return await this.sendCommand('H');
   }
 
@@ -550,9 +446,9 @@ class CD48 {
    * @param humanReadable - If true, returns formatted string
    * @returns Counts data or formatted string
    */
-  async getCounts(humanReadable: true): Promise<string>;
-  async getCounts(humanReadable?: false): Promise<CountData>;
-  async getCounts(humanReadable = false): Promise<CountData | string> {
+  public async getCounts(humanReadable: true): Promise<string>;
+  public async getCounts(humanReadable?: false): Promise<CountData>;
+  public async getCounts(humanReadable = false): Promise<CountData | string> {
     if (humanReadable) {
       return await this.sendCommand('C');
     }
@@ -576,7 +472,7 @@ class CD48 {
   /**
    * Clear all counters by reading them.
    */
-  async clearCounts(): Promise<void> {
+  public async clearCounts(): Promise<void> {
     await this.getCounts(false);
   }
 
@@ -585,7 +481,7 @@ class CD48 {
    * @param humanReadable - If true, returns formatted string
    * @returns Settings string
    */
-  async getSettings(humanReadable = true): Promise<string> {
+  public async getSettings(humanReadable = true): Promise<string> {
     return await this.sendCommand(humanReadable ? 'P' : 'p');
   }
 
@@ -595,7 +491,7 @@ class CD48 {
    * @param inputs - Input configuration
    * @returns Response from device
    */
-  async setChannel(
+  public async setChannel(
     channel: number,
     inputs: ChannelInputs = {}
   ): Promise<string> {
@@ -609,26 +505,17 @@ class CD48 {
    * @param voltage - Voltage threshold (0.0 to 4.08V)
    * @returns Response from device
    */
-  async setTriggerLevel(voltage: number): Promise<string> {
+  public async setTriggerLevel(voltage: number): Promise<string> {
     // Clamp voltage to valid range instead of throwing
     const byteVal = voltageToByte(voltage);
     return await this.sendCommand(`L${byteVal}`);
   }
 
   /**
-   * Get trigger level as voltage.
-   * @param byteValue - Raw byte value (0-255)
-   * @returns Voltage (0.0 to 4.08V)
-   */
-  static byteToVoltage(byteValue: number): number {
-    return (byteValue / BYTE_MAX) * VOLTAGE_MAX;
-  }
-
-  /**
    * Set input impedance to 50 Ohms.
    * @returns Response from device
    */
-  async setImpedance50Ohm(): Promise<string> {
+  public async setImpedance50Ohm(): Promise<string> {
     return await this.sendCommand('z');
   }
 
@@ -636,7 +523,7 @@ class CD48 {
    * Set input impedance to High-Z.
    * @returns Response from device
    */
-  async setImpedanceHighZ(): Promise<string> {
+  public async setImpedanceHighZ(): Promise<string> {
     return await this.sendCommand('Z');
   }
 
@@ -645,7 +532,7 @@ class CD48 {
    * @param intervalMs - Interval in milliseconds (100-65535)
    * @returns Response from device
    */
-  async setRepeat(intervalMs: number): Promise<string> {
+  public async setRepeat(intervalMs: number): Promise<string> {
     const clamped = Math.max(
       REPEAT_INTERVAL_MIN,
       Math.min(REPEAT_INTERVAL_MAX, intervalMs)
@@ -657,7 +544,7 @@ class CD48 {
    * Toggle automatic repeat mode.
    * @returns Response from device
    */
-  async toggleRepeat(): Promise<string> {
+  public async toggleRepeat(): Promise<string> {
     return await this.sendCommand('R');
   }
 
@@ -666,7 +553,7 @@ class CD48 {
    * @param voltage - Output voltage (0.0 to 4.08V)
    * @returns Response from device
    */
-  async setDacVoltage(voltage: number): Promise<string> {
+  public async setDacVoltage(voltage: number): Promise<string> {
     const byteVal = Math.max(
       0,
       Math.min(BYTE_MAX, Math.round((voltage / VOLTAGE_MAX) * BYTE_MAX))
@@ -678,7 +565,7 @@ class CD48 {
    * Get and clear overflow status.
    * @returns 8-bit overflow flag
    */
-  async getOverflow(): Promise<number> {
+  public async getOverflow(): Promise<number> {
     const response = await this.sendCommand('E');
     return parseInt(response, DECIMAL_RADIX);
   }
@@ -687,7 +574,7 @@ class CD48 {
    * Test all LEDs (lights for 1 second).
    * @returns Response from device
    */
-  async testLeds(): Promise<string> {
+  public async testLeds(): Promise<string> {
     return await this.sendCommand('T');
   }
 
@@ -697,7 +584,7 @@ class CD48 {
    * @param duration - Measurement duration in seconds
    * @returns Rate measurement result with uncertainties
    */
-  async measureRate(
+  public async measureRate(
     channel = 0,
     duration = DEFAULT_MEASUREMENT_DURATION
   ): Promise<RateMeasurement> {
@@ -735,7 +622,7 @@ class CD48 {
    * @param options - Measurement options
    * @returns Coincidence measurement result with uncertainties
    */
-  async measureCoincidenceRate(
+  public async measureCoincidenceRate(
     options: CoincidenceMeasurementOptions = {}
   ): Promise<CoincidenceMeasurement> {
     const {
@@ -804,6 +691,119 @@ class CD48 {
         trueCoincidenceRate: trueCoincidenceRateUncertainty,
       },
     };
+  }
+
+  /**
+   * Set up connection streams after port is opened.
+   */
+  private async _setupConnection(): Promise<void> {
+    if (this.port === null) {
+      throw new ConnectionError('No port available');
+    }
+
+    await this.port.open({ baudRate: this.baudRate });
+
+    // Set up reader and writer
+    const textDecoder = new TextDecoderStream();
+    const readable = this.port.readable;
+    if (readable === null) {
+      throw new ConnectionError('Port readable stream not available');
+    }
+    /**
+     * Type assertions needed here because Web Serial API uses BufferSource
+     * but TextDecoderStream expects Uint8Array. They're compatible at runtime
+     * since BufferSource = ArrayBuffer | ArrayBufferView (which includes Uint8Array)
+     */
+    this.readableStreamClosed = (readable as ReadableStream<Uint8Array>).pipeTo(
+      textDecoder.writable as WritableStream<Uint8Array>
+    );
+    this.reader = textDecoder.readable.getReader();
+
+    const textEncoder = new TextEncoderStream();
+    const writable = this.port.writable;
+    if (writable === null) {
+      throw new ConnectionError('Port writable stream not available');
+    }
+    this.writableStreamClosed = textEncoder.readable.pipeTo(
+      writable as WritableStream<Uint8Array>
+    );
+    this.writer = textEncoder.writable.getWriter();
+
+    // Wait for device to initialize
+    await this.sleep(CONNECTION_INIT_DELAY_MS);
+  }
+
+  /**
+   * Attempt auto-reconnection with retries.
+   * @returns True if reconnected successfully
+   */
+  private async _attemptAutoReconnect(): Promise<boolean> {
+    if (!this.autoReconnect || this._reconnecting) {
+      return false;
+    }
+
+    for (let attempt = 1; attempt <= this.reconnectAttempts; attempt++) {
+      try {
+        await this.sleep(this.reconnectDelay * attempt);
+        const success = await this.reconnect();
+        if (success) {
+          return true;
+        }
+      } catch {
+        // Continue to next attempt
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Clean up connection resources.
+   */
+  private async _cleanupConnection(): Promise<void> {
+    if (this.reader !== null) {
+      try {
+        await this.reader.cancel();
+        if (this.readableStreamClosed !== null) {
+          await this.readableStreamClosed.catch(() => {});
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+      this.reader = null;
+    }
+    if (this.writer !== null) {
+      try {
+        await this.writer.close();
+        if (this.writableStreamClosed !== null) {
+          await this.writableStreamClosed;
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+      this.writer = null;
+    }
+    if (this.port !== null) {
+      try {
+        await this.port.close();
+      } catch {
+        // Ignore cleanup errors
+      }
+      this.port = null;
+    }
+  }
+
+  /**
+   * Apply rate limiting between commands.
+   */
+  private async _applyRateLimit(): Promise<void> {
+    if (this.rateLimitMs > 0) {
+      const elapsed = Date.now() - this._lastCommandTime;
+      if (elapsed < this.rateLimitMs) {
+        await this.sleep(this.rateLimitMs - elapsed);
+      }
+    }
+    this._lastCommandTime = Date.now();
   }
 }
 
