@@ -34,6 +34,64 @@ export interface CalibrationProfileJSON {
 }
 
 /**
+ * Type guard for ChannelCalibrationMap
+ */
+function isChannelCalibrationMap(
+  value: unknown
+): value is ChannelCalibrationMap {
+  if (typeof value !== 'object' || value === null) return false;
+  return Object.entries(value).every(
+    ([key, val]) => !isNaN(Number(key)) && typeof val === 'number'
+  );
+}
+
+/**
+ * Type guard for CalibrationProfileJSON
+ */
+function isCalibrationProfileJSON(
+  value: unknown
+): value is CalibrationProfileJSON {
+  if (typeof value !== 'object' || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj['name'] === 'string' &&
+    typeof obj['description'] === 'string' &&
+    typeof obj['date'] === 'string' &&
+    isChannelCalibrationMap(obj['voltages']) &&
+    isChannelCalibrationMap(obj['thresholds']) &&
+    isChannelCalibrationMap(obj['gains']) &&
+    isChannelCalibrationMap(obj['offsets']) &&
+    typeof obj['metadata'] === 'object' &&
+    obj['metadata'] !== null
+  );
+}
+
+/**
+ * Type guard for Record<string, CalibrationProfileJSON>
+ */
+function isCalibrationProfileRecord(
+  value: unknown
+): value is Record<string, CalibrationProfileJSON> {
+  if (typeof value !== 'object' || value === null) return false;
+  return Object.entries(value).every(
+    ([key, val]) => typeof key === 'string' && isCalibrationProfileJSON(val)
+  );
+}
+
+/**
+ * Safely parse JSON as CalibrationProfileRecord
+ */
+function parseCalibrationProfiles(
+  data: string
+): Record<string, CalibrationProfileJSON> {
+  const parsed: unknown = JSON.parse(data);
+  if (!isCalibrationProfileRecord(parsed)) {
+    throw new Error('Invalid calibration profile data format');
+  }
+  return parsed;
+}
+
+/**
  * Two-point calibration point
  */
 export interface CalibrationPoint {
@@ -291,9 +349,13 @@ export class CalibrationStorage {
    */
   loadAll(): Record<string, CalibrationProfileJSON> {
     const data = localStorage.getItem(this.storageKey);
-    return data
-      ? (JSON.parse(data) as Record<string, CalibrationProfileJSON>)
-      : {};
+    if (!data) return {};
+    try {
+      return parseCalibrationProfiles(data);
+    } catch {
+      // If data is corrupted, return empty object
+      return {};
+    }
   }
 
   /**
@@ -333,12 +395,10 @@ export class CalibrationStorage {
    * Import profiles from JSON string
    * @param jsonString - JSON string of profiles
    * @param merge - Merge with existing profiles
+   * @throws Error if JSON format is invalid
    */
   import(jsonString: string, merge = false): void {
-    const imported = JSON.parse(jsonString) as Record<
-      string,
-      CalibrationProfileJSON
-    >;
+    const imported = parseCalibrationProfiles(jsonString);
     if (merge) {
       const existing = this.loadAll();
       const merged = { ...existing, ...imported };

@@ -225,7 +225,7 @@ export const Histogram = {
       };
     }
 
-    const counts: number[] = new Array(numBins).fill(0) as number[];
+    const counts: number[] = Array.from({ length: numBins }, () => 0);
     const edges: number[] = Array.from(
       { length: numBins + 1 },
       (_, i) => min + i * binWidth

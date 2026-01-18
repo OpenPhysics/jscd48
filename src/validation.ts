@@ -238,6 +238,13 @@ export function validateDuration(duration: number): void {
 }
 
 /**
+ * Type guard to check if a string is a valid ImpedanceMode
+ */
+function isImpedanceMode(value: string): value is ImpedanceMode {
+  return value === 'highz' || value === '50ohm';
+}
+
+/**
  * Validate impedance mode
  * @param mode - Impedance mode ('highz' or '50ohm')
  * @throws ValidationError If mode is invalid
@@ -245,13 +252,12 @@ export function validateDuration(duration: number): void {
 export function validateImpedanceMode(
   mode: string
 ): asserts mode is ImpedanceMode {
-  const validModes: ImpedanceMode[] = ['highz', '50ohm'];
-
   if (typeof mode !== 'string') {
     throw new ValidationError('impedance', mode, "must be 'highz' or '50ohm'");
   }
 
-  if (!validModes.includes(mode.toLowerCase() as ImpedanceMode)) {
+  const normalized = mode.toLowerCase();
+  if (!isImpedanceMode(normalized)) {
     throw new ValidationError('impedance', mode, "must be 'highz' or '50ohm'");
   }
 }
