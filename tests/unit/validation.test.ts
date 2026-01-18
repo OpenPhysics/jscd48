@@ -8,6 +8,14 @@ import {
   BYTE_MAX,
   REPEAT_INTERVAL_MIN,
   REPEAT_INTERVAL_MAX,
+  // Branded type constructors
+  createChannel,
+  createVoltage,
+  createClampedVoltage,
+  // Type guards
+  isValidChannel,
+  isValidVoltage,
+  // Validation functions
   validateChannel,
   validateVoltage,
   validateByte,
@@ -21,6 +29,7 @@ import {
   voltageToByte,
   byteToVoltage,
 } from '../../src/validation.js';
+import type { Channel, Voltage } from '../../src/validation.js';
 import {
   ValidationError,
   InvalidChannelError,
@@ -290,5 +299,186 @@ describe('byteToVoltage', () => {
     expect(() => byteToVoltage('128' as unknown as number)).toThrow(
       ValidationError
     );
+  });
+});
+
+// ============================================================================
+// Branded Types Tests
+// ============================================================================
+
+describe('isValidChannel', () => {
+  it('should return true for valid channel numbers', () => {
+    expect(isValidChannel(0)).toBe(true);
+    expect(isValidChannel(1)).toBe(true);
+    expect(isValidChannel(7)).toBe(true);
+  });
+
+  it('should return false for out of range values', () => {
+    expect(isValidChannel(-1)).toBe(false);
+    expect(isValidChannel(8)).toBe(false);
+    expect(isValidChannel(100)).toBe(false);
+  });
+
+  it('should return false for non-integer values', () => {
+    expect(isValidChannel(0.5)).toBe(false);
+    expect(isValidChannel(3.14)).toBe(false);
+    expect(isValidChannel(1.999)).toBe(false);
+  });
+
+  it('should return false for NaN', () => {
+    expect(isValidChannel(NaN)).toBe(false);
+  });
+
+  it('should narrow type correctly', () => {
+    const value = 3;
+    if (isValidChannel(value)) {
+      // TypeScript should recognize value as Channel here
+      const channel: Channel = value;
+      expect(channel).toBe(3);
+    }
+  });
+});
+
+describe('isValidVoltage', () => {
+  it('should return true for valid voltage values', () => {
+    expect(isValidVoltage(0)).toBe(true);
+    expect(isValidVoltage(2.04)).toBe(true);
+    expect(isValidVoltage(4.08)).toBe(true);
+  });
+
+  it('should return false for out of range values', () => {
+    expect(isValidVoltage(-0.01)).toBe(false);
+    expect(isValidVoltage(4.09)).toBe(false);
+    expect(isValidVoltage(10)).toBe(false);
+  });
+
+  it('should return false for NaN', () => {
+    expect(isValidVoltage(NaN)).toBe(false);
+  });
+
+  it('should narrow type correctly', () => {
+    const value = 2.5;
+    if (isValidVoltage(value)) {
+      // TypeScript should recognize value as Voltage here
+      const voltage: Voltage = value;
+      expect(voltage).toBe(2.5);
+    }
+  });
+});
+
+describe('createChannel', () => {
+  it('should create a Channel for valid values', () => {
+    const ch0 = createChannel(0);
+    const ch3 = createChannel(3);
+    const ch7 = createChannel(7);
+
+    expect(ch0).toBe(0);
+    expect(ch3).toBe(3);
+    expect(ch7).toBe(7);
+  });
+
+  it('should throw InvalidChannelError for out of range values', () => {
+    expect(() => createChannel(-1)).toThrow(InvalidChannelError);
+    expect(() => createChannel(8)).toThrow(InvalidChannelError);
+    expect(() => createChannel(100)).toThrow(InvalidChannelError);
+  });
+
+  it('should throw ValidationError for non-integer values', () => {
+    expect(() => createChannel(0.5)).toThrow(InvalidChannelError);
+    expect(() => createChannel(3.14)).toThrow(InvalidChannelError);
+  });
+
+  it('should throw ValidationError for NaN', () => {
+    expect(() => createChannel(NaN)).toThrow(ValidationError);
+  });
+
+  it('should throw ValidationError for non-number values', () => {
+    expect(() => createChannel('3' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => createChannel(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => createChannel(undefined as unknown as number)).toThrow(
+      ValidationError
+    );
+  });
+
+  it('should return a value usable as Channel type', () => {
+    const channel: Channel = createChannel(5);
+    // Channel is branded but still a number at runtime
+    expect(typeof channel).toBe('number');
+    expect(channel + 1).toBe(6);
+  });
+});
+
+describe('createVoltage', () => {
+  it('should create a Voltage for valid values', () => {
+    const v0 = createVoltage(0);
+    const v2 = createVoltage(2.04);
+    const vMax = createVoltage(4.08);
+
+    expect(v0).toBe(0);
+    expect(v2).toBe(2.04);
+    expect(vMax).toBe(4.08);
+  });
+
+  it('should throw InvalidVoltageError for out of range values', () => {
+    expect(() => createVoltage(-0.01)).toThrow(InvalidVoltageError);
+    expect(() => createVoltage(4.09)).toThrow(InvalidVoltageError);
+    expect(() => createVoltage(10)).toThrow(InvalidVoltageError);
+  });
+
+  it('should throw ValidationError for NaN', () => {
+    expect(() => createVoltage(NaN)).toThrow(ValidationError);
+  });
+
+  it('should throw ValidationError for non-number values', () => {
+    expect(() => createVoltage('2.5' as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => createVoltage(null as unknown as number)).toThrow(
+      ValidationError
+    );
+    expect(() => createVoltage(undefined as unknown as number)).toThrow(
+      ValidationError
+    );
+  });
+
+  it('should return a value usable as Voltage type', () => {
+    const voltage: Voltage = createVoltage(2.5);
+    // Voltage is branded but still a number at runtime
+    expect(typeof voltage).toBe('number');
+    expect(voltage * 2).toBe(5.0);
+  });
+});
+
+describe('createClampedVoltage', () => {
+  it('should create a Voltage for values within range', () => {
+    expect(createClampedVoltage(0)).toBe(0);
+    expect(createClampedVoltage(2.04)).toBe(2.04);
+    expect(createClampedVoltage(4.08)).toBe(4.08);
+  });
+
+  it('should clamp values below minimum to 0', () => {
+    expect(createClampedVoltage(-1)).toBe(0);
+    expect(createClampedVoltage(-100)).toBe(0);
+  });
+
+  it('should clamp values above maximum to 4.08', () => {
+    expect(createClampedVoltage(5)).toBe(4.08);
+    expect(createClampedVoltage(100)).toBe(4.08);
+  });
+
+  it('should return a value usable as Voltage type', () => {
+    const voltage: Voltage = createClampedVoltage(10);
+    expect(voltage).toBe(4.08);
+    expect(typeof voltage).toBe('number');
+  });
+
+  it('should not throw for any numeric input', () => {
+    expect(() => createClampedVoltage(-1000)).not.toThrow();
+    expect(() => createClampedVoltage(1000)).not.toThrow();
+    expect(() => createClampedVoltage(0)).not.toThrow();
   });
 });

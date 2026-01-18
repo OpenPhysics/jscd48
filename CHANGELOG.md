@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-01-18
+
+### ⚠️ BREAKING CHANGES
+
+- **Full TypeScript Migration**: The entire codebase has been converted from JavaScript to TypeScript
+- **New Module Structure**: Source files moved from root to `src/` directory
+- **New Build Output**: Built files now output to `dist/` directory instead of root
+- **Import Path Changes**:
+  - Old: `import CD48 from 'jscd48/cd48.js'`
+  - New: `import { CD48 } from 'jscd48'` or `import CD48 from 'jscd48'`
+
+### Added
+
+- **Branded Types**: Type-safe `Channel` and `Voltage` types that prevent invalid values at compile time
+  - `createChannel(n)` - Create validated channel (0-7)
+  - `createVoltage(v)` - Create validated voltage (0-4.08V)
+  - `createClampedVoltage(v)` - Create voltage clamped to valid range
+  - `isValidChannel(n)` - Type guard for channels
+  - `isValidVoltage(v)` - Type guard for voltages
+- **Strict TypeScript Configuration**:
+  - `strict: true` with all strict flags enabled
+  - `noImplicitAny: true` - No implicit any types
+  - `strictNullChecks: true` - Null safety
+  - `noUncheckedIndexedAccess: true` - Safe array/object access
+  - `exactOptionalPropertyTypes: true` - Stricter optional properties
+  - `verbatimModuleSyntax: true` - Explicit type imports
+- **Runtime Validation**: JSON.parse operations now validate data structure at runtime
+- **TypeScript ESLint**: Full TypeScript linting support
+- **CI TypeScript Check**: Dedicated typecheck job in CI pipeline
+- **Generated Type Declarations**: Automatic `.d.ts` generation from source
+
+### Changed
+
+- All source files converted from `.js` to `.ts`
+- All test files converted to TypeScript
+- Build output now includes ESM and UMD bundles with source maps
+- Package exports simplified to single entry point
+- Updated all HTML examples to use ES module imports
+
+### Removed
+
+- Individual module exports (`jscd48/errors`, `jscd48/validation`, etc.) - use main export instead
+- Root-level JavaScript files (now in `src/` as TypeScript)
+
+### Migration Guide
+
+```typescript
+// Before (v1.x)
+import CD48 from './cd48.js';
+
+// After (v2.0)
+import { CD48 } from 'jscd48';
+// or
+import CD48 from 'jscd48';
+
+// New: Use branded types for type safety
+import {
+  createChannel,
+  createVoltage,
+  type Channel,
+  type Voltage,
+} from 'jscd48';
+const ch: Channel = createChannel(3); // Validated at runtime, typed at compile time
+const v: Voltage = createVoltage(2.5); // Throws if invalid
+```
+
+## [1.0.0] - 2025-01-17
+
 ### Added
 
 - Comprehensive testing infrastructure with Vitest
@@ -63,5 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MIT License
 - README.md with comprehensive documentation
 
-[Unreleased]: https://github.com/OpenPhysics/jscd48/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/OpenPhysics/jscd48/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/OpenPhysics/jscd48/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/OpenPhysics/jscd48/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/OpenPhysics/jscd48/releases/tag/v0.1.0
