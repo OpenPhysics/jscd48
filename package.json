@@ -108,7 +108,7 @@
     "lab-equipment"
   ],
   "author": "OpenPhysics Contributors",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/OpenPhysics/jscd48/issues"
   },

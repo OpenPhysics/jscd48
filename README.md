@@ -1,6 +1,6 @@
 # jscd48 - JavaScript Interface for CD48 Coincidence Counter
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![CI](https://github.com/OpenPhysics/jscd48/workflows/CI/badge.svg)](https://github.com/OpenPhysics/jscd48/actions)
 [![codecov](https://codecov.io/gh/OpenPhysics/jscd48/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenPhysics/jscd48)
 [![npm version](https://img.shields.io/npm/v/jscd48.svg)](https://www.npmjs.com/package/jscd48)
@@ -571,7 +571,7 @@ git push origin feat/my-feature
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file.
+GPL-3.0 License - see [LICENSE](LICENSE) file.
 
 ## 🙏 Acknowledgments
 
