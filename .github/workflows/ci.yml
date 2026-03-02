@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-node-${{ matrix.node-version }}
           path: |
@@ -133,7 +133,7 @@ jobs:
 
       - name: Upload E2E test report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-report
           path: tests/e2e-report/
@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload E2E screenshots
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-screenshots
           path: test-results/
@@ -198,7 +198,7 @@ jobs:
           fi
 
       - name: Upload bundle artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundles
           path: dist/
@@ -280,7 +280,7 @@ jobs:
         run: npm run docs
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: build-artifacts
           path: |
