@@ -129,7 +129,7 @@
     "docdash": "^2.0.2",
     "eslint": "^9.39.4",
     "eslint-plugin-html": "^8.1.4",
-    "happy-dom": "^20.8.4",
+    "happy-dom": "^20.8.9",
     "husky": "^9.0.0",
     "jsdoc": "^4.0.2",
     "lint-staged": "^16.4.0",
@@ -137,11 +137,18 @@
     "prettier": "^3.8.1",
     "serve": "^14.2.6",
     "terser": "^5.46.1",
-    "vite": "^7.3.1",
+    "vite": "^7.3.2",
     "vitest": "^4.0.17"
   },
   "overrides": {
-    "tmp": "^0.2.5"
+    "tmp": "^0.2.6",
+    "lodash": "^4.18.0",
+    "picomatch": "^4.0.4",
+    "postcss": "^8.5.10",
+    "flatted": "^3.4.2",
+    "rollup": "^4.59.0",
+    "fast-uri": "^3.1.2",
+    "@babel/plugin-transform-modules-systemjs": "^7.29.4"
   },
   "lint-staged": {
     "*.js": [
