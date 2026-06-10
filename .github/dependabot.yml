@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # Enable version updates for npm
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -8,15 +7,12 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 5
-    reviewers:
-      - "OpenPhysics/maintainers"
     labels:
       - "dependencies"
       - "automated"
     commit-message:
       prefix: "chore"
       include: "scope"
-    # Group all patch and minor updates into a single PR
     groups:
       development-dependencies:
         dependency-type: "development"
@@ -28,15 +24,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Ignore specific packages if needed
-    ignore:
-      # Ignore major version updates for these packages (review manually)
-      - dependency-name: "vitest"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-
-  # Enable security updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
