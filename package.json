@@ -107,6 +107,10 @@
     "data-acquisition",
     "lab-equipment"
   ],
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.0.0"
+  },
   "author": "OpenPhysics Contributors",
   "license": "MIT",
   "bugs": {
