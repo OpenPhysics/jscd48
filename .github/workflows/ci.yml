@@ -84,7 +84,7 @@ jobs:
 
   dependency-review:
     if: github.event_name == 'pull_request'
-    uses: OpenPhysics/.github/.github/workflows/shared-dependency-review.yml@main
+    uses: OpenPhysics/Baton/.github/workflows/shared-dependency-review.yml@main
 
   codeql:
-    uses: OpenPhysics/.github/.github/workflows/shared-codeql.yml@main
+    uses: OpenPhysics/Baton/.github/workflows/shared-codeql.yml@main
