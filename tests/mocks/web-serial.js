@@ -169,11 +169,15 @@ export function setupWebSerialMock(options = {}) {
   const mockSerial = createMockNavigatorSerial(options);
   const mockPort = mockSerial._mockPort;
 
-  // Setup global navigator
-  global.navigator = {
-    ...global.navigator,
-    serial: mockSerial,
-  };
+  // Setup global navigator.serial (Vitest 5 / happy-dom: navigator is a getter-only)
+  Object.defineProperty(global, 'navigator', {
+    configurable: true,
+    writable: true,
+    value: {
+      ...global.navigator,
+      serial: mockSerial,
+    },
+  });
 
   // Setup TextDecoderStream
   global.TextDecoderStream = class MockTextDecoderStream {
