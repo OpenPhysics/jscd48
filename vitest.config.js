@@ -9,7 +9,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'tests/', 'examples/', '*.config.js', 'docs/'],
+      // Vitest 5 resolves coverage excludes as globs; bare `tests/` no longer matches.
+      exclude: [
+        '**/node_modules/**',
+        '**/tests/**',
+        '**/examples/**',
+        '**/*.config.js',
+        '**/docs/**',
+      ],
       // Minimum coverage thresholds. Set to just under the current measured
       // coverage of cd48.js (the gap is mostly auto-reconnect / advanced-measure
       // branches). Raise these as the corresponding unit tests are added.
