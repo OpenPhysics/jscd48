@@ -85,7 +85,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OpenPhysics/jscd48.git"
+    "url": "git+https://github.com/OpenLyceum/jscd48.git"
   },
   "keywords": [
     "cd48",
@@ -111,12 +111,12 @@
     "node": ">=22.12.0",
     "npm": ">=10.0.0"
   },
-  "author": "OpenPhysics Contributors",
+  "author": "OpenLyceum Contributors",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/OpenPhysics/jscd48/issues"
+    "url": "https://github.com/OpenLyceum/jscd48/issues"
   },
-  "homepage": "https://github.com/OpenPhysics/jscd48#readme",
+  "homepage": "https://github.com/OpenLyceum/jscd48#readme",
   "publishConfig": {
     "access": "public"
   },

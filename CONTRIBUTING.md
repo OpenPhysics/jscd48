@@ -29,7 +29,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 3. **Add the upstream repository**:
 
    ```bash
-   git remote add upstream https://github.com/OpenPhysics/jscd48.git
+   git remote add upstream https://github.com/OpenLyceum/jscd48.git
    ```
 
 4. **Install dependencies**:
