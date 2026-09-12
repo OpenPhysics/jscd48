@@ -42,8 +42,9 @@
 
     <div id="output">Click Connect to start...</div>
 
-    <script src="../cd48.js"></script>
-    <script>
+    <script type="module">
+      import CD48 from '../cd48.js';
+
       let cd48 = null;
       let monitoring = false;
       let monitorInterval = null;
@@ -141,6 +142,11 @@
       function log(message) {
         document.getElementById('output').textContent = message;
       }
+
+      // Expose handlers referenced by inline onclick attributes above -- a
+      // module script's top-level declarations aren't global like a classic
+      // script's, so the markup can't see them without this.
+      Object.assign(window, { readOnce, toggleConnection, toggleMonitor });
     </script>
   </body>
 </html>

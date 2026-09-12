@@ -373,7 +373,6 @@ npm run test:integration    # Test with mock hardware
 # E2E tests
 npm run test:e2e            # All E2E tests
 npm run test:e2e:examples   # Test all 11 examples
-npm run test:e2e:visual     # Visual regression tests
 npm run test:e2e:errors     # Error scenario tests
 npm run test:e2e:headed     # Run with browser visible
 

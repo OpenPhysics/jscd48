@@ -599,7 +599,5 @@ class CD48 {
   }
 }
 
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = CD48;
-}
+export { CD48 };
+export default CD48;

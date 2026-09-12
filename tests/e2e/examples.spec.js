@@ -9,42 +9,42 @@ const EXAMPLES = [
   {
     name: 'Simple Monitor',
     path: '/examples/simple-monitor.html',
-    title: 'CD48 - Simple Channel Monitor',
+    title: 'CD48 Simple Monitor',
   },
   {
     name: 'Error Handling',
     path: '/examples/error-handling.html',
-    title: 'CD48 - Error Handling Demo',
+    title: 'CD48 Error Handling Example',
   },
   {
     name: 'Demo Mode',
     path: '/examples/demo-mode.html',
-    title: 'CD48 - Demo Mode',
+    title: 'CD48 Demo Mode',
   },
   {
     name: 'Multi-Channel Display',
     path: '/examples/multi-channel-display.html',
-    title: 'CD48 - Multi-Channel Display',
+    title: 'CD48 Multi-Channel Display',
   },
   {
     name: 'Continuous Monitoring',
     path: '/examples/continuous-monitoring.html',
-    title: 'CD48 - Continuous Monitoring',
+    title: 'CD48 Continuous Monitoring',
   },
   {
     name: 'Coincidence Measurement',
     path: '/examples/coincidence-measurement.html',
-    title: 'CD48 - Coincidence Measurement',
+    title: 'CD48 Coincidence Measurement',
   },
   {
     name: 'Graphing',
     path: '/examples/graphing.html',
-    title: 'CD48 - Interactive Graphing',
+    title: 'CD48 Real-Time Graphing',
   },
   {
     name: 'Data Export',
     path: '/examples/data-export.html',
-    title: 'CD48 - Data Export',
+    title: 'CD48 Data Export Example',
   },
   {
     name: 'Statistical Analysis',

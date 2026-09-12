@@ -178,7 +178,7 @@ test.describe('CD48 Main Interface', () => {
     await expect(channelSelector).toBeVisible();
 
     // Check for 8 channel chips
-    const chips = channelSelector.locator('.channel-chip');
+    const chips = channelSelector.locator('.channel-toggle');
     const count = await chips.count();
     expect(count).toBe(8);
   });

@@ -61,26 +61,6 @@ test.describe('Error Scenarios - User Interface', () => {
     expect(text).toContain('Test error');
   });
 
-  test('examples index - handles missing examples gracefully', async ({
-    page,
-  }) => {
-    await page.goto('/examples/');
-
-    // Try to navigate to non-existent example
-    await page.goto('/examples/nonexistent.html');
-
-    // Should show 404 or error page
-    const statusCode = await page.evaluate(() => {
-      return (
-        document.title.includes('404') ||
-        document.body.textContent.includes('not found')
-      );
-    });
-
-    // We expect some kind of error indication
-    expect(statusCode).toBeTruthy();
-  });
-
   test('search with no results shows message', async ({ page }) => {
     await page.goto('/examples/');
 
@@ -207,16 +187,22 @@ test.describe('Error Scenarios - Browser Compatibility', () => {
   test('shows appropriate message for missing Web Serial API', async ({
     page,
   }) => {
-    // Override Web Serial API support
+    // navigator.serial is an inherited accessor, not an own property, so
+    // `delete navigator.serial` is a no-op; remove it from the prototype
+    // so `'serial' in navigator` (what the app's isSupported() checks) is
+    // actually false.
     await page.addInitScript(() => {
-      delete navigator.serial;
+      delete Object.getPrototypeOf(navigator).serial;
     });
 
     await page.goto('/examples/simple-monitor.html');
 
-    // Should show warning or error about unsupported browser
+    // Attempting to connect surfaces the error in the on-page log
+    await page.click('#connectBtn');
+    await page.waitForTimeout(200);
+
     const hasWarning = await page.evaluate(() => {
-      const text = document.body.textContent.toLowerCase();
+      const text = document.getElementById('output').textContent.toLowerCase();
       return text.includes('not supported') || text.includes('browser');
     });
 

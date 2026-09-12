@@ -147,8 +147,9 @@
       </div>
     </div>
 
-    <script src="../cd48.js"></script>
-    <script>
+    <script type="module">
+      import CD48 from '../cd48.js';
+
       let cd48 = null;
 
       async function toggleConnection() {
@@ -228,6 +229,11 @@
 
         document.getElementById('measureBtn').disabled = false;
       }
+
+      // Expose handlers referenced by inline onclick attributes above -- a
+      // module script's top-level declarations aren't global like a classic
+      // script's, so the markup can't see them without this.
+      Object.assign(window, { startMeasurement, toggleConnection });
     </script>
   </body>
 </html>
