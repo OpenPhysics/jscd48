@@ -1,5 +1,11 @@
 # jscd48 - JavaScript Interface for CD48 Coincidence Counter
 
+> **⚠️ Archived.** This repository is no longer maintained. It has been superseded by
+> [**tscd48**](https://github.com/OpenPhysics/tscd48), a TypeScript rewrite that is a strict
+> superset of this library's features (same `CD48` API, plus branded types, a richer
+> reconnect state machine, and more). Please migrate to
+> [tscd48](https://github.com/OpenPhysics/tscd48) for new and existing projects.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/OpenPhysics/jscd48/workflows/CI/badge.svg)](https://github.com/OpenPhysics/jscd48/actions)
 [![codecov](https://codecov.io/gh/OpenPhysics/jscd48/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenPhysics/jscd48)
