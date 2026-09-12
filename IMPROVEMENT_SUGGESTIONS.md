@@ -764,7 +764,7 @@ describe('Validation Edge Cases', () => {
     "scripts": [],
     "menu": {
       "GitHub": {
-        "href": "https://github.com/OpenLyceum/jscd48",
+        "href": "https://github.com/OpenPhysics/jscd48",
         "target": "_blank"
       },
       "NPM": {

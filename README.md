@@ -1,12 +1,12 @@
 # jscd48 - JavaScript Interface for CD48 Coincidence Counter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/OpenLyceum/jscd48/workflows/CI/badge.svg)](https://github.com/OpenLyceum/jscd48/actions)
-[![codecov](https://codecov.io/gh/OpenLyceum/jscd48/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenLyceum/jscd48)
+[![CI](https://github.com/OpenPhysics/jscd48/workflows/CI/badge.svg)](https://github.com/OpenPhysics/jscd48/actions)
+[![codecov](https://codecov.io/gh/OpenPhysics/jscd48/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenPhysics/jscd48)
 [![npm version](https://img.shields.io/npm/v/jscd48.svg)](https://www.npmjs.com/package/jscd48)
 [![Chrome](https://img.shields.io/badge/Chrome-89+-green.svg)](https://www.google.com/chrome/)
 [![Edge](https://img.shields.io/badge/Edge-89+-blue.svg)](https://www.microsoft.com/edge)
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://openlyceum.github.io/jscd48/)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://openphysics.github.io/jscd48/)
 
 A comprehensive browser-based JavaScript library and web interface for controlling the [Red Dog Physics CD48 Coincidence Counter](https://www.reddogphysics.com/cd48.html) using the Web Serial API.
 
@@ -26,7 +26,7 @@ A comprehensive browser-based JavaScript library and web interface for controlli
 
 ## 🚀 Live Demo
 
-**[https://openlyceum.github.io/jscd48/](https://openlyceum.github.io/jscd48/)**
+**[https://openphysics.github.io/jscd48/](https://openphysics.github.io/jscd48/)**
 
 Open the link above in Chrome or Edge, connect your CD48 via USB, and click "Connect".
 
@@ -398,7 +398,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 ### Setup
 
 ```bash
-git clone https://github.com/OpenLyceum/jscd48.git
+git clone https://github.com/OpenPhysics/jscd48.git
 cd jscd48
 npm install
 ```
@@ -579,9 +579,9 @@ This library interfaces with the CD48 Coincidence Counter designed and manufactu
 
 ## 🔗 Related Projects
 
-- [pycd48](https://github.com/OpenLyceum/pycd48) - Python interface for CD48
+- [pycd48](https://github.com/OpenPhysics/pycd48) - Python interface for CD48
 - [Red Dog Physics CD48](https://www.reddogphysics.com/cd48.html) - Official hardware
 
 ---
 
-**Made with ❤️ by the OpenLyceum community**
+**Made with ❤️ by the OpenPhysics community**
